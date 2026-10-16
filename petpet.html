@@ -6,6 +6,7 @@
 <title>Petpet · ImAPNG</title>
 <link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
 <script src="assets/os.js"></script>
+<script src="assets/petpet-hand.js"></script>
 <link rel="stylesheet" href="assets/os.css">
 <style>
   .boxes { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
@@ -38,10 +39,9 @@
             <div class="stack">
               <div class="field-row"><input type="checkbox" id="adjust"><label for="adjust">Modo ajuste (arraste a imagem na prévia, ou use as setas)</label></div>
               <div class="field-row"><input type="checkbox" id="flip"><label for="flip">Espelhar</label></div>
-              <label class="field"><span>Tamanho <output data-suffix="%"></output></span><input type="range" id="size" min="30" max="150" value="85"></label>
-              <label class="field"><span>Squish (amassar) <output data-suffix="%"></output></span><input type="range" id="squish" min="0" max="100" value="60"></label>
-              <label class="field"><span>Velocidade <output data-suffix=" fps"></output></span><input type="range" id="fps" min="4" max="30" value="16"></label>
-              <label class="field"><span>Cor da mão</span><select id="skin"><option value="cartoon">Cartoon branca</option><option value="light">Pele clara</option><option value="mid">Pele média</option><option value="dark">Pele escura</option><option value="pink">Rosa</option></select></label>
+              <label class="field"><span>Tamanho <output data-suffix="%"></output></span><input type="range" id="size" min="30" max="150" value="100"></label>
+              <label class="field"><span>Squish (amassar) <output data-suffix="%"></output></span><input type="range" id="squish" min="0" max="200" value="100"></label>
+              <label class="field"><span>Velocidade <output data-suffix=" fps"></output></span><input type="range" id="fps" min="4" max="30" value="14"></label>
               <label class="field"><span>Fundo</span><select id="bg"><option value="clear">Transparente</option><option value="white">Branco</option><option value="black">Preto</option><option value="green">Verde (chroma)</option></select></label>
               <label class="field"><span>Tamanho do GIF</span><select id="out"><option value="112">112 px (emoji)</option><option value="256" selected>256 px</option><option value="512">512 px</option></select></label>
               <button id="resetBtn">🔄 Resetar</button>
@@ -72,9 +72,21 @@
 import { GIFEncoder, quantize, applyPalette } from 'https://cdn.jsdelivr.net/npm/gifenc@1.0.3/dist/gifenc.esm.js';
 
 const $ = (id) => document.getElementById(id);
-const FRAMES = 5;
-const SQ = [0, .55, 1, .6, .15]; // quanto a mão aperta em cada quadro
-const SKINS = { cartoon: ['#ffffff', '#e8e8e8'], light: ['#ffdcc0', '#f2bf9a'], mid: ['#d9a073', '#bd8458'], dark: ['#8d5a3b', '#6e4329'], pink: ['#ffc0d8', '#f29ab9'] };
+// mão original (assets/petpet.gif → assets/petpet-hand.js), 5 quadros lado a lado
+const HAND = new Image();
+HAND.src = window.PETPET_HAND.src;
+const FRAMES = window.PETPET_HAND.frames, HW = window.PETPET_HAND.w, HH = window.PETPET_HAND.h;
+// cada quadro num canvas próprio, pra escala não puxar pixels do quadro vizinho
+const handFrames = [];
+HAND.decode().then(() => {
+  for (let i = 0; i < FRAMES; i++) {
+    const c = Object.assign(document.createElement('canvas'), { width: HW, height: HH });
+    c.getContext('2d').drawImage(HAND, i * HW, 0, HW, HH, 0, 0, HW, HH);
+    handFrames.push(c);
+  }
+});
+// quanto a imagem é amassada em cada quadro, no espaço 112×112 do petpet clássico: [x, y, largura, altura]
+const SQUISH = [[0, 0, 0, 0], [-4, 12, 4, -12], [-12, 18, 12, -18], [-8, 12, 4, -12], [-4, 0, 0, 0]];
 let img = sampleImage();
 let off = [0, 0];
 
@@ -90,47 +102,27 @@ function sampleImage() {
   return c;
 }
 
-/** Mão de desenho animado vindo do canto superior direito. p = 0 (solta) … 1 (apertando). */
-function drawHand(x, S, p, top, cx) {
-  const [fill, shade] = SKINS[$('skin').value];
-  x.save();
-  x.translate(cx + S * .06, top - S * .36 + p * S * .1);
-  x.rotate(-.18);
-  x.lineWidth = S * .022; x.strokeStyle = '#1a1a1a'; x.lineJoin = 'round'; x.lineCap = 'round';
-  const shape = (fn) => { x.beginPath(); fn(); x.fillStyle = fill; x.fill(); x.stroke(); };
-  // braço/punho saindo pra fora do quadro
-  shape(() => { x.roundRect(S * .05, -S * .35, S * .28, S * .42, S * .1); });
-  // dedos (de trás pra frente)
-  const fingers = [[-.2, .19, .075], [-.1, .25, .078], [.0, .27, .078], [.1, .24, .074]];
-  fingers.forEach(([fx, len, w], i) => {
-    shape(() => { x.ellipse(S * fx, S * (.06 + len * .55), S * w, S * len * .62, -.15 + i * .06, 0, 7); });
-  });
-  // palma por cima
-  shape(() => { x.ellipse(S * -.02, S * .03, S * .25, S * .15, 0, 0, 7); });
-  // dedão
-  shape(() => { x.ellipse(S * .2, S * .1, S * .07, S * .13, -.7, 0, 7); });
-  x.fillStyle = shade; x.globalAlpha = .55;
-  x.beginPath(); x.ellipse(S * -.02, S * .08, S * .18, S * .05, 0, 0, Math.PI); x.fill();
-  x.restore();
-}
-
 function renderFrame(x, S, i) {
-  const p = SQ[i % FRAMES];
+  i %= FRAMES;
   x.clearRect(0, 0, S, S);
   const bg = { white: '#fff', black: '#000', green: '#00b140' }[$('bg').value];
   if (bg) { x.fillStyle = bg; x.fillRect(0, 0, S, S); }
-  const k = +$('size').value / 100, sq = +$('squish').value / 100 * p;
-  const base = S * .78 * k;
-  const ar = img.width / img.height;
-  let w = ar >= 1 ? base : base * ar, h = ar >= 1 ? base / ar : base;
-  w *= 1 + sq * .22; h *= 1 - sq * .28;
-  const cx = S / 2 + off[0] * S, bottom = S * .98 + off[1] * S;
   x.save();
-  x.translate(cx, bottom - h);
-  if ($('flip').checked) x.scale(-1, 1);
-  x.drawImage(img, -w / 2, 0, w, h);
+  x.scale(S / 112, S / 112);
+  // imagem: caixa de 84×84 encostada embaixo, amassada conforme o quadro
+  const k = +$('size').value / 100, q = +$('squish').value / 100;
+  const ar = img.width / img.height;
+  const w0 = 84 * k * Math.min(1, ar), h0 = 84 * k * Math.min(1, 1 / ar);
+  const [ox, oy, ow, oh] = SQUISH[i];
+  const w = w0 + ow * q, h = h0 + oh * q;
+  const ix = (112 - w0) / 2 + 4 + ox * q + off[0] * 112, iy = 102 - h0 + oy * q + off[1] * 112;
+  x.save();
+  if ($('flip').checked) { x.translate(ix + w / 2, 0); x.scale(-1, 1); x.translate(-(ix + w / 2), 0); }
+  x.drawImage(img, ix, iy, w, h);
   x.restore();
-  drawHand(x, S, p, bottom - h, cx);
+  // mão por cima
+  if (handFrames[i]) x.drawImage(handFrames[i], 0, 0);
+  x.restore();
 }
 
 // ---------- prévia ----------
@@ -204,7 +196,7 @@ $('genBtn').onclick = () => {
   $('info').textContent = `${S}×${S} · ${FRAMES} quadros · ${(gifBlob.size / 1024).toFixed(0)} KB`;
 };
 $('dlBtn').onclick = () => gifBlob && OS.download(gifBlob, 'petpet.gif');
-$('genBtn').click();
+HAND.decode().then(() => setTimeout(() => $('genBtn').click()));
 </script>
 </body>
 </html>
