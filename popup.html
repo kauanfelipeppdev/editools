@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Criador de pop-up · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<style>
+  #pv { min-height: 420px; }
+  #pv.bg-desk { background: #3a6ea5; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="criador_de_popup.exe" data-icon="🪟">
+    <div class="window-body">
+      <div class="toolbar"><a class="btn" href="index.html">🏠 HOME</a><button data-open="help">? Ajuda</button></div>
+      <div class="tool">
+        <div class="panel" id="panel">
+          <fieldset>
+            <legend>Janela</legend>
+            <div class="stack">
+              <label class="field"><span>Estilo (sistema)</span><select id="os"><option value="xp">Windows XP</option><option value="98">Windows 98</option><option value="7">Windows 7 (Aero)</option></select></label>
+              <label class="field"><span>Tipo de pop-up</span><select id="type"><option value="alert">Alerta clássico (com ícone)</option><option value="simple">Mensagem simples (sem ícone)</option><option value="prompt">Prompt (com campo de texto)</option></select></label>
+            </div>
+          </fieldset>
+          <details open><summary>Conteúdo</summary>
+            <div class="stack">
+              <label class="field"><span>Título</span><input type="text" id="title" value="Aviso do Sistema"></label>
+              <label class="field"><span>Mensagem</span><textarea id="msg" rows="3">Renderização falhou.
+Deseja adicionar mais texturas e tentar novamente?</textarea></label>
+              <label class="field" id="promptRow"><span>Texto do prompt</span><input type="text" id="ptext" value="digite aqui…"></label>
+              <div class="row"><span class="lbl">Alinhar:</span><select id="align" style="flex:1"><option value="left">Esquerda</option><option value="center">Centro</option><option value="right">Direita</option></select></div>
+              <div class="row"><span class="lbl">Ícone:</span><select id="icon" style="flex:1"><option value="error">❌ Erro</option><option value="warn" selected>⚠️ Aviso</option><option value="info">ℹ️ Info</option><option value="question">❓ Pergunta</option><option value="disk">💿 Disco</option><option value="custom">🖼️ Logo personalizada</option></select></div>
+              <button id="logoBtn">📂 Upload logo…</button>
+              <label class="field"><span>Tamanho do ícone <output data-suffix="px"></output></span><input type="range" id="isize" min="16" max="96" value="32"></label>
+              <div class="row"><span class="lbl">Botões:</span><select id="btns" style="flex:1"><option value="OK">OK</option><option value="OK,Cancelar">OK / Cancelar</option><option value="Sim,Não" selected>Sim / Não</option><option value="Anular,Repetir,Ignorar">Anular / Repetir / Ignorar</option><option value="custom">Personalizado…</option></select></div>
+              <label class="field" id="customRow"><span>Botões personalizados (separados por vírgula)</span><input type="text" id="custom" value="Aceitar,Recusar,Talvez"></label>
+            </div>
+          </details>
+          <details open><summary>Dimensões</summary>
+            <div class="stack">
+              <label class="field"><span>Largura <output data-suffix="px"></output></span><input type="range" id="w" min="200" max="700" value="360"></label>
+              <label class="field"><span>Altura mínima <output data-suffix="px"></output></span><input type="range" id="h" min="100" max="500" value="140"></label>
+              <div class="field-row"><input type="checkbox" id="shadow" checked><label for="shadow">Sombra da janela</label></div>
+              <div class="row"><span class="lbl">Resolução:</span><select id="scale" style="flex:1"><option value="2">2x</option><option value="3" selected>3x (alta)</option><option value="4">4x</option></select></div>
+              <div class="row"><span class="lbl">Prévia:</span><select id="pbg" style="flex:1"><option value="chk">Xadrez</option><option value="desk">Área de trabalho</option></select></div>
+            </div>
+          </details>
+          <button id="saveBtn">💾 Salvar PNG</button>
+        </div>
+        <div id="pv" class="preview chk"><canvas id="cv"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="Dicas de uso - Ajuda" data-icon="📝">
+    <div class="window-body">
+      <p><b>Bem-vindo ao gerador retrô!</b></p>
+      <ul>
+        <li><b>Temas:</b> alterne entre XP, 98 e o vidro do 7 Aero.</li>
+        <li><b>Prompt:</b> gera caixas com campo de texto.</li>
+        <li><b>Ícone:</b> ajuste o tamanho na barra ou suba sua própria logo.</li>
+        <li><b>Exportação:</b> o PNG sai em alta resolução e com fundo transparente.</li>
+      </ul>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">Entendi!</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let logo = null;
+
+function wrap(x, text, maxW) {
+  const lines = [];
+  for (const para of text.split('\n')) {
+    let line = '';
+    for (const word of para.split(' ')) {
+      const t = line ? line + ' ' + word : word;
+      if (x.measureText(t).width > maxW && line) { lines.push(line); line = word; } else line = t;
+    }
+    lines.push(line);
+  }
+  return lines;
+}
+
+// ---------- ícones vetoriais ----------
+function drawIcon(x, kind, cx, cy, s, os) {
+  const r = s / 2;
+  x.save();
+  if (kind === 'custom') { if (logo) { const k = Math.min(s / logo.naturalWidth, s / logo.naturalHeight); x.drawImage(logo, cx - logo.naturalWidth * k / 2, cy - logo.naturalHeight * k / 2, logo.naturalWidth * k, logo.naturalHeight * k); } x.restore(); return; }
+  const glossy = os !== '98';
+  const circle = (c1, c2) => {
+    const g = x.createRadialGradient(cx - r * .3, cy - r * .35, r * .1, cx, cy, r);
+    g.addColorStop(0, glossy ? c1 : c2); g.addColorStop(1, c2);
+    x.beginPath(); x.arc(cx, cy, r * .92, 0, 7); x.fillStyle = g; x.fill();
+    x.lineWidth = Math.max(1, s / 32); x.strokeStyle = 'rgba(0,0,0,.45)'; x.stroke();
+    if (os === '98') { x.beginPath(); x.arc(cx + r * .08, cy + r * .08, r * .92, .2, 1.4); x.strokeStyle = 'rgba(0,0,0,.6)'; x.lineWidth = s / 16; x.stroke(); }
+  };
+  const glyph = (t, col = '#fff', k = 1) => { x.fillStyle = col; x.font = `bold ${s * .62 * k}px ${t === 'i' ? 'Georgia, serif' : 'Arial, sans-serif'}`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(t, cx, cy + s * .04); };
+  if (kind === 'error') {
+    circle('#ff8a80', '#d0021b');
+    x.strokeStyle = '#fff'; x.lineWidth = s * .12; x.lineCap = 'round';
+    x.beginPath(); x.moveTo(cx - r * .38, cy - r * .38); x.lineTo(cx + r * .38, cy + r * .38); x.moveTo(cx + r * .38, cy - r * .38); x.lineTo(cx - r * .38, cy + r * .38); x.stroke();
+  } else if (kind === 'warn') {
+    const g = x.createLinearGradient(0, cy - r, 0, cy + r); g.addColorStop(0, glossy ? '#fff3a0' : '#ffd800'); g.addColorStop(1, '#f5b800');
+    x.beginPath(); x.moveTo(cx, cy - r * .9); x.lineTo(cx + r * .95, cy + r * .8); x.lineTo(cx - r * .95, cy + r * .8); x.closePath();
+    x.lineJoin = 'round'; x.fillStyle = g; x.fill(); x.lineWidth = Math.max(1, s / 22); x.strokeStyle = '#7a5a00'; x.stroke();
+    x.fillStyle = '#000'; x.font = `bold ${s * .55}px Arial, sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('!', cx, cy + r * .22);
+  } else if (kind === 'info') { circle('#9ed0ff', '#1560d0'); glyph('i');
+  } else if (kind === 'question') { circle('#9ed0ff', '#1560d0'); glyph('?');
+  } else if (kind === 'disk') {
+    const g = x.createRadialGradient(cx - r * .3, cy - r * .3, 0, cx, cy, r);
+    g.addColorStop(0, '#ffffff'); g.addColorStop(.35, '#c9e7ff'); g.addColorStop(.6, '#f7c6ff'); g.addColorStop(.8, '#d6ffd0'); g.addColorStop(1, '#a7b8c8');
+    x.beginPath(); x.arc(cx, cy, r * .92, 0, 7); x.fillStyle = g; x.fill(); x.strokeStyle = '#6b7c8c'; x.lineWidth = Math.max(1, s / 32); x.stroke();
+    x.beginPath(); x.arc(cx, cy, r * .2, 0, 7); x.fillStyle = '#eef3f7'; x.fill(); x.stroke();
+  }
+  x.restore();
+}
+
+// ---------- botões ----------
+function drawButton(x, os, bx, by, bw, bh, label, def) {
+  x.save();
+  if (os === '98') {
+    x.fillStyle = '#c0c0c0'; x.fillRect(bx, by, bw, bh);
+    if (def) { x.fillStyle = '#000'; x.fillRect(bx - 1, by - 1, bw + 2, bh + 2); x.fillStyle = '#c0c0c0'; x.fillRect(bx, by, bw, bh); }
+    x.fillStyle = '#fff'; x.fillRect(bx, by, bw - 1, 1); x.fillRect(bx, by, 1, bh - 1);
+    x.fillStyle = '#0a0a0a'; x.fillRect(bx, by + bh - 1, bw, 1); x.fillRect(bx + bw - 1, by, 1, bh);
+    x.fillStyle = '#dfdfdf'; x.fillRect(bx + 1, by + 1, bw - 3, 1); x.fillRect(bx + 1, by + 1, 1, bh - 3);
+    x.fillStyle = '#808080'; x.fillRect(bx + 1, by + bh - 2, bw - 2, 1); x.fillRect(bx + bw - 2, by + 1, 1, bh - 2);
+    if (def) { x.setLineDash([1, 1]); x.strokeStyle = '#000'; x.lineWidth = 1; x.strokeRect(bx + 4.5, by + 4.5, bw - 9, bh - 9); x.setLineDash([]); }
+    x.fillStyle = '#000'; x.font = '11px Tahoma, "MS Sans Serif", sans-serif';
+  } else if (os === 'xp') {
+    const g = x.createLinearGradient(0, by, 0, by + bh); g.addColorStop(0, '#ffffff'); g.addColorStop(.85, '#ecebe6'); g.addColorStop(1, '#d6d0c5');
+    x.beginPath(); x.roundRect(bx + .5, by + .5, bw - 1, bh - 1, 3); x.fillStyle = g; x.fill();
+    x.strokeStyle = '#003c74'; x.lineWidth = 1; x.stroke();
+    if (def) { x.beginPath(); x.roundRect(bx + 1.5, by + 1.5, bw - 3, bh - 3, 2); x.strokeStyle = '#7da2ce'; x.lineWidth = 2; x.stroke(); }
+    x.fillStyle = '#000'; x.font = '11px Tahoma, sans-serif';
+  } else {
+    const g = x.createLinearGradient(0, by, 0, by + bh); g.addColorStop(0, def ? '#e5f4fc' : '#f2f2f2'); g.addColorStop(.48, def ? '#c4e5f6' : '#ebebeb'); g.addColorStop(.5, def ? '#98d1ef' : '#dddddd'); g.addColorStop(1, def ? '#68b3db' : '#cfcfcf');
+    x.beginPath(); x.roundRect(bx + .5, by + .5, bw - 1, bh - 1, 3); x.fillStyle = g; x.fill();
+    x.strokeStyle = def ? '#3c7fb1' : '#707070'; x.lineWidth = 1; x.stroke();
+    x.beginPath(); x.roundRect(bx + 1.5, by + 1.5, bw - 3, bh - 3, 2); x.strokeStyle = 'rgba(255,255,255,.75)'; x.stroke();
+    x.fillStyle = '#000'; x.font = '12px "Segoe UI", Tahoma, sans-serif';
+  }
+  x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText(label, bx + bw / 2, by + bh / 2 + .5);
+  x.restore();
+}
+
+function drawClose(x, os, cx, cy, active) {
+  x.save();
+  if (os === '98') {
+    const w = 16, h = 14, bx = cx - w, by = cy - h / 2;
+    drawButton(x, '98', bx, by, w, h, '', false);
+    x.strokeStyle = '#000'; x.lineWidth = 1.6; x.beginPath(); x.moveTo(bx + 4.5, by + 3.5); x.lineTo(bx + 10.5, by + 9.5); x.moveTo(bx + 10.5, by + 3.5); x.lineTo(bx + 4.5, by + 9.5); x.stroke();
+  } else if (os === 'xp') {
+    const s = 21, bx = cx - s, by = cy - s / 2;
+    const g = x.createRadialGradient(bx + s * .3, by + s * .3, 1, bx + s / 2, by + s / 2, s * .8); g.addColorStop(0, '#f5a28c'); g.addColorStop(.6, '#e35b33'); g.addColorStop(1, '#c4381b');
+    x.beginPath(); x.roundRect(bx, by, s, s, 3); x.fillStyle = g; x.fill(); x.strokeStyle = '#fff'; x.lineWidth = 1; x.stroke();
+    x.strokeStyle = '#fff'; x.lineWidth = 2.2; x.lineCap = 'round'; x.beginPath(); x.moveTo(bx + 6, by + 6); x.lineTo(bx + s - 6, by + s - 6); x.moveTo(bx + s - 6, by + 6); x.lineTo(bx + 6, by + s - 6); x.stroke();
+  } else {
+    const w = 43, h = 19, bx = cx - w, by = cy - h / 2 - 3;
+    const g = x.createLinearGradient(0, by, 0, by + h); g.addColorStop(0, '#e8a493'); g.addColorStop(.45, '#d1715a'); g.addColorStop(.5, '#c74126'); g.addColorStop(1, '#d6643f');
+    x.beginPath(); x.roundRect(bx, by, w, h, [0, 0, 4, 4]); x.fillStyle = g; x.fill(); x.strokeStyle = 'rgba(60,20,10,.7)'; x.lineWidth = 1; x.stroke();
+    x.strokeStyle = '#fff'; x.lineWidth = 2; x.lineCap = 'round'; x.beginPath(); x.moveTo(bx + 17, by + 5); x.lineTo(bx + 26, by + 14); x.moveTo(bx + 26, by + 5); x.lineTo(bx + 17, by + 14); x.stroke();
+  }
+  x.restore();
+}
+
+// ---------- janela ----------
+function render(scale) {
+  const os = $('os').value, type = $('type').value;
+  const W = +$('w').value, minH = +$('h').value;
+  const T = { '98': { title: 18, border: 3, pad: 12, btnW: 75, btnH: 23, font: '11px Tahoma, "MS Sans Serif", sans-serif', lh: 15 },
+    xp: { title: 30, border: 3, pad: 14, btnW: 75, btnH: 23, font: '11px Tahoma, sans-serif', lh: 15 },
+    '7': { title: 30, border: 7, pad: 16, btnW: 80, btnH: 24, font: '12px "Segoe UI", Tahoma, sans-serif', lh: 17 } }[os];
+  const labels = ($('btns').value === 'custom' ? $('custom').value : $('btns').value).split(',').map((s) => s.trim()).filter(Boolean);
+  const hasIcon = type !== 'simple';
+  const isz = +$('isize').value;
+  const m = document.createElement('canvas').getContext('2d');
+  m.font = T.font;
+  const textX0 = T.border + T.pad + (hasIcon ? isz + T.pad : 0);
+  const textW = W - textX0 - T.border - T.pad;
+  const lines = wrap(m, $('msg').value, textW);
+  const textH = lines.length * T.lh;
+  const promptH = type === 'prompt' ? 30 : 0;
+  const contentH = Math.max(hasIcon ? isz : 0, textH) + promptH;
+  const btnZone = labels.length ? T.btnH + T.pad * 2 + (os === '7' ? 4 : 0) : T.pad;
+  const H = Math.max(minH, T.title + T.pad + contentH + btnZone + T.border);
+  const sh = $('shadow').checked ? 18 : 2;
+  const c = document.createElement('canvas');
+  c.width = Math.ceil((W + sh * 2) * scale); c.height = Math.ceil((H + sh * 2) * scale);
+  const x = c.getContext('2d');
+  x.scale(scale, scale); x.translate(sh, sh - (sh > 2 ? 4 : 0));
+  const R = os === '98' ? 0 : os === 'xp' ? 8 : 7;
+  // sombra
+  if (sh > 2) { x.save(); x.shadowColor = 'rgba(0,0,0,.45)'; x.shadowBlur = 14; x.shadowOffsetY = 5; x.beginPath(); x.roundRect(0, 0, W, H, os === 'xp' ? [R, R, 0, 0] : R); x.fillStyle = '#888'; x.fill(); x.restore(); }
+  // moldura + barra de título
+  if (os === '98') {
+    x.fillStyle = '#c0c0c0'; x.fillRect(0, 0, W, H);
+    x.fillStyle = '#dfdfdf'; x.fillRect(0, 0, W - 1, 1); x.fillRect(0, 0, 1, H - 1);
+    x.fillStyle = '#fff'; x.fillRect(1, 1, W - 3, 1); x.fillRect(1, 1, 1, H - 3);
+    x.fillStyle = '#808080'; x.fillRect(1, H - 2, W - 2, 1); x.fillRect(W - 2, 1, 1, H - 2);
+    x.fillStyle = '#0a0a0a'; x.fillRect(0, H - 1, W, 1); x.fillRect(W - 1, 0, 1, H);
+    const g = x.createLinearGradient(3, 0, W - 3, 0); g.addColorStop(0, '#000080'); g.addColorStop(1, '#1084d0');
+    x.fillStyle = g; x.fillRect(3, 3, W - 6, T.title);
+    x.fillStyle = '#fff'; x.font = 'bold 11px Tahoma, "MS Sans Serif", sans-serif'; x.textBaseline = 'middle';
+    x.fillText($('title').value, 7, 3 + T.title / 2 + .5);
+    drawClose(x, '98', W - 5, 3 + T.title / 2, true);
+  } else if (os === 'xp') {
+    x.save(); x.beginPath(); x.roundRect(0, 0, W, H, [R, R, 0, 0]); x.clip();
+    const g = x.createLinearGradient(0, 0, 0, T.title);
+    g.addColorStop(0, '#0997ff'); g.addColorStop(.08, '#0053ee'); g.addColorStop(.4, '#0050ee'); g.addColorStop(.88, '#06f'); g.addColorStop(.93, '#06f'); g.addColorStop(1, '#005bff');
+    x.fillStyle = g; x.fillRect(0, 0, W, T.title);
+    x.fillStyle = '#0831d9'; x.fillRect(0, T.title, W, H - T.title);
+    x.fillStyle = '#ece9d8'; x.fillRect(T.border, T.title, W - T.border * 2, H - T.title - T.border);
+    const hl = x.createLinearGradient(0, 0, 0, 6); hl.addColorStop(0, 'rgba(255,255,255,.55)'); hl.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = hl; x.fillRect(0, 0, W, 6);
+    x.restore();
+    x.fillStyle = '#fff'; x.font = 'bold 13px "Trebuchet MS", Tahoma, sans-serif'; x.textBaseline = 'middle';
+    x.save(); x.shadowColor = '#0f1089'; x.shadowOffsetX = 1; x.shadowOffsetY = 1; x.fillText($('title').value, 8, T.title / 2 + 1); x.restore();
+    drawClose(x, 'xp', W - 6, T.title / 2 + 1, true);
+  } else {
+    x.save(); x.beginPath(); x.roundRect(0, 0, W, H, R); x.clip();
+    const g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, 'rgba(172,206,236,.92)'); g.addColorStop(.45, 'rgba(120,170,215,.85)'); g.addColorStop(.55, 'rgba(150,190,230,.88)'); g.addColorStop(1, 'rgba(110,160,210,.9)');
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    for (let i = -2; i < 6; i++) { x.fillStyle = 'rgba(255,255,255,.08)'; x.beginPath(); x.moveTo(i * 90, 0); x.lineTo(i * 90 + 40, 0); x.lineTo(i * 90 - 30, H); x.lineTo(i * 90 - 70, H); x.fill(); }
+    const hl = x.createLinearGradient(0, 0, 0, T.title); hl.addColorStop(0, 'rgba(255,255,255,.55)'); hl.addColorStop(1, 'rgba(255,255,255,.05)'); x.fillStyle = hl; x.fillRect(0, 0, W, T.title);
+    x.restore();
+    x.beginPath(); x.roundRect(.5, .5, W - 1, H - 1, R); x.strokeStyle = 'rgba(0,0,0,.55)'; x.lineWidth = 1; x.stroke();
+    x.beginPath(); x.roundRect(1.5, 1.5, W - 3, H - 3, R - 1); x.strokeStyle = 'rgba(255,255,255,.6)'; x.stroke();
+    // corpo branco + faixa de botões
+    const bx0 = T.border, by0 = T.title, bw0 = W - T.border * 2, bh0 = H - T.title - T.border;
+    x.fillStyle = '#fff'; x.fillRect(bx0, by0, bw0, bh0);
+    if (labels.length) { x.fillStyle = '#f0f0f0'; x.fillRect(bx0, by0 + bh0 - btnZone, bw0, btnZone); x.fillStyle = '#dfdfdf'; x.fillRect(bx0, by0 + bh0 - btnZone, bw0, 1); }
+    x.strokeStyle = 'rgba(0,0,0,.35)'; x.strokeRect(bx0 - .5, by0 - .5, bw0 + 1, bh0 + 1);
+    x.font = '12px "Segoe UI", Tahoma, sans-serif'; x.textBaseline = 'middle'; x.fillStyle = '#000';
+    x.save(); x.shadowColor = 'rgba(255,255,255,.95)'; x.shadowBlur = 10; for (let i = 0; i < 3; i++) x.fillText($('title').value, 10, T.title / 2); x.restore();
+    drawClose(x, '7', W - 6, T.title / 2 - 1, true);
+  }
+  // conteúdo
+  const top = T.title + T.pad;
+  if (hasIcon) drawIcon(x, $('icon').value, T.border + T.pad + isz / 2, top + isz / 2, isz, os);
+  x.font = T.font; x.fillStyle = os === '7' ? '#1e395b' : '#000'; x.textBaseline = 'top';
+  const al = $('align').value; x.textAlign = al;
+  const tx = al === 'left' ? textX0 : al === 'center' ? textX0 + textW / 2 : textX0 + textW;
+  const ty = top + Math.max(0, ((hasIcon ? isz : 0) - textH) / 2);
+  lines.forEach((ln, i) => x.fillText(ln, tx, ty + i * T.lh + 1));
+  x.textAlign = 'left';
+  if (type === 'prompt') {
+    const py = top + Math.max(hasIcon ? isz : 0, textH) + 8, px = textX0, pw = textW, ph = 21;
+    x.fillStyle = '#fff'; x.fillRect(px, py, pw, ph);
+    if (os === '98') { x.fillStyle = '#808080'; x.fillRect(px, py, pw, 1); x.fillRect(px, py, 1, ph); x.fillStyle = '#0a0a0a'; x.fillRect(px + 1, py + 1, pw - 2, 1); x.fillRect(px + 1, py + 1, 1, ph - 2); x.fillStyle = '#dfdfdf'; x.fillRect(px, py + ph - 1, pw, 1); x.fillRect(px + pw - 1, py, 1, ph); }
+    else { x.strokeStyle = os === 'xp' ? '#7f9db9' : '#abadb3'; x.strokeRect(px + .5, py + .5, pw - 1, ph - 1); }
+    x.fillStyle = '#000'; x.font = T.font; x.textBaseline = 'middle'; x.fillText($('ptext').value, px + 5, py + ph / 2 + .5);
+  }
+  // botões
+  if (labels.length) {
+    const gap = 8;
+    const widths = labels.map((l) => { m.font = T.font; return Math.max(T.btnW, m.measureText(l).width + 24); });
+    const total = widths.reduce((a, b) => a + b, 0) + gap * (labels.length - 1);
+    let bx = os === '7' ? W - T.border - T.pad - total : (W - total) / 2;
+    const by = H - T.border - (os === '7' ? (btnZone + T.btnH) / 2 : T.pad + T.btnH);
+    labels.forEach((l, i) => { drawButton(x, os, Math.round(bx), Math.round(by), Math.round(widths[i]), T.btnH, l, i === 0); bx += widths[i] + gap; });
+  }
+  return c;
+}
+
+const cv = $('cv');
+function draw() {
+  $('promptRow').hidden = $('type').value !== 'prompt';
+  $('customRow').hidden = $('btns').value !== 'custom';
+  $('logoBtn').hidden = $('icon').value !== 'custom';
+  const k = 2, c = render(k);
+  cv.width = c.width; cv.height = c.height;
+  cv.getContext('2d').drawImage(c, 0, 0);
+  cv.style.width = c.width / k * 1.25 + 'px';
+}
+$('panel').addEventListener('input', draw);
+$('pbg').onchange = () => { $('pv').classList.toggle('chk', $('pbg').value === 'chk'); $('pv').classList.toggle('bg-desk', $('pbg').value === 'desk'); };
+$('logoBtn').onclick = async () => { const f = await OS.pickFile('image/*'); if (!f) return; const i = new Image(); i.onload = () => { logo = i; draw(); }; i.src = URL.createObjectURL(f); };
+$('saveBtn').onclick = async () => OS.download(await OS.canvasBlob(render(+$('scale').value)), 'popup-' + OS.slug($('title').value) + '.png');
+document.fonts.ready.then(draw);
+draw();
+</script>
+</body>
+</html>

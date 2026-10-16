@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modulador VHS · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<script src="assets/glfx.js"></script>
+<script src="assets/media-tool.js"></script>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="modulador_VHS.exe" data-icon="📼">
+    <div class="window-body">
+      <div class="toolbar">
+        <a class="btn" href="index.html">🏠 Home</a>
+        <button id="loadBtn">📂 Carregar mídia</button>
+        <button id="demoBtn">🖼️ Exemplo</button>
+        <span class="spacer"></span>
+        <button id="pauseBtn">⏸ Pausar</button>
+        <button id="soundBtn">🔇 Áudio: OFF</button>
+        <button id="pngBtn">📸 Foto (PNG)</button>
+        <button id="recBtn">⏺ Gravar (REC)</button>
+      </div>
+      <div class="tool">
+        <div class="panel">
+          <fieldset>
+            <legend>Efeitos básicos</legend>
+            <div class="stack">
+              <label class="field"><span>Zoom <output data-suffix="%"></output></span><input type="range" id="zoom" min="50" max="200" value="100"></label>
+              <label class="field"><span>Ruído magnético <output data-suffix="%"></output></span><input type="range" id="noise" min="0" max="100" value="40"></label>
+              <label class="field"><span>Densidade de scanlines <output data-suffix="%"></output></span><input type="range" id="scan" min="0" max="100" value="45"></label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Distorção glitch</legend>
+            <div class="stack">
+              <label class="field"><span>Força do glitch (RGB) <output data-suffix="%"></output></span><input type="range" id="glitch" min="0" max="100" value="30"></label>
+              <label class="field"><span>Direção do glitch <output data-suffix="°"></output></span><input type="range" id="gang" min="0" max="360" value="0"></label>
+              <label class="field"><span>Sangramento de cor (chroma) <output data-suffix="%"></output></span><input type="range" id="chroma" min="0" max="100" value="50"></label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Cores e texturas</legend>
+            <div class="stack">
+              <label class="field"><span>Filtro de cor</span>
+                <select id="filter"><option value="0">-- Original --</option><option value="1">Matriz / Visão noturna (verde)</option><option value="2">Sépia (fita antiga)</option><option value="3">Preto e branco</option><option value="4">Fita desbotada (azulada)</option></select>
+              </label>
+              <label class="field"><span>Textura VHS</span>
+                <select id="tex"><option value="0">-- Nenhuma --</option><option value="1">Barra de tracking</option><option value="2">Chuvisco</option><option value="3">Faixas coloridas</option><option value="4">Dropouts (riscos brancos)</option></select>
+              </label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Letreiro da câmera (OSD)</legend>
+            <div class="stack">
+              <div class="field-row"><input type="checkbox" id="osd" checked><label for="osd">Mostrar letreiro</label></div>
+              <div class="two" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                <input type="text" id="osdTop" value="PLAY ▶" aria-label="Texto do topo">
+                <input type="text" id="osdDate" value="" aria-label="Data">
+              </div>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Gravação</legend>
+            <label class="field"><span>Duração (para fotos) <output data-suffix=" s"></output></span><input type="range" id="dur" min="2" max="30" value="6"></label>
+          </fieldset>
+        </div>
+        <div>
+          <div id="pv" class="preview">
+            <canvas id="cv"></canvas>
+            <div class="placeholder"><span class="big">📼</span><b>FAÇA UPLOAD</b>clique, arraste ou cole uma foto ou vídeo</div>
+          </div>
+          <div class="status-line" id="st">&gt; Status: sistema pronto. · processamento local</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const FRAG = `
+uniform float u_zoom, u_noise, u_scan, u_glitch, u_gang, u_chroma, u_filter, u_texm, u_osdOn;
+uniform sampler2D u_osd;
+vec3 src(vec2 uv){ if(uv.x<0.||uv.x>1.||uv.y<0.||uv.y>1.) return vec3(0.); return texture2D(u_tex, uv).rgb; }
+void main(){
+  float t = u_time;
+  vec2 uv = (v_uv - .5) / u_zoom + .5;
+  float rows = 240.;
+  float line = floor(v_uv.y * rows);
+  float ft = floor(t * 24.);
+  uv.x += (hash(vec2(line, ft)) - .5) * .003 * u_noise;
+  float band = floor(v_uv.y * 18.);
+  float gOn = step(1. - u_glitch * .22, hash(vec2(band, floor(t * 7.))));
+  uv.x += gOn * (hash(vec2(floor(t * 7.), band)) - .5) * .12 * u_glitch;
+  float hs = smoothstep(.94, 1., v_uv.y);
+  uv.x += hs * (.015 + .02 * sin(v_uv.y * 300. + t * 40.)) * (.3 + u_noise);
+  // tracking: faixa que rola
+  float trk = 0.;
+  if (u_texm == 1.) { float p = fract(t * .15); trk = smoothstep(.06, 0., abs(v_uv.y - p)); uv.x += trk * (hash(vec2(line, ft)) - .5) * .06; }
+
+  vec2 dir = vec2(cos(radians(u_gang)), sin(radians(u_gang))) * (.002 + u_glitch * .012);
+  vec3 base = vec3(src(uv + dir).r, src(uv).g, src(uv - dir).b);
+  // sangramento de croma em YIQ
+  vec2 iq = vec2(0.);
+  for (int i = -5; i <= 5; i++) { iq += rgb2yiq(src(uv + vec2(float(i) * u_chroma * .003 + u_chroma * .004, 0.))).yz; }
+  iq /= 11.;
+  vec3 yiq = vec3(rgb2yiq(base).x, mix(rgb2yiq(base).yz, iq, clamp(u_chroma * 1.4, 0., 1.)));
+  // perda de nitidez da luma
+  float yb = 0.; for (int i = -2; i <= 2; i++) yb += rgb2yiq(src(uv + vec2(float(i) * .0012, 0.))).x;
+  yiq.x = mix(yiq.x, yb / 5., .6);
+  vec3 col = yiq2rgb(yiq);
+
+  col = mix(lum3(col), col, 1.18);
+  col = col * .9 + .045;
+  if (u_filter == 1.) col = vec3(.15, 1.15, .3) * lum3(col).x * 1.2;
+  else if (u_filter == 2.) col = vec3(dot(col, vec3(.393,.769,.189)), dot(col, vec3(.349,.686,.168)), dot(col, vec3(.272,.534,.131)));
+  else if (u_filter == 3.) col = lum3(col) * 1.05;
+  else if (u_filter == 4.) col = mix(col, lum3(col) * vec3(.8, .95, 1.15), .55);
+
+  if (u_osdOn > .5) { vec4 o = texture2D(u_osd, v_uv + vec2((hash(vec2(line, ft)) - .5) * .0015, 0.)); col = mix(col, o.rgb, o.a * .92); }
+
+  float g = hash(v_uv * u_res + fract(t * 13.));
+  col += (g - .5) * u_noise * .22;
+  float streak = step(.9985 - u_noise * .004, hash(vec2(floor(v_uv.y * 480.), floor(t * 30.)))) * step(.4, hash(vec2(floor(v_uv.x * 6.), floor(t * 30.))));
+  col += streak * .7;
+  col = mix(col, vec3(hash(v_uv * u_res + t)), hs * .5 * u_noise);
+  col = mix(col, vec3(hash(v_uv * u_res * .7 + t)), trk * .6);
+  if (u_texm == 2.) col = mix(col, vec3(hash(v_uv * u_res + t * 3.)), .28);
+  if (u_texm == 3.) col += .12 * vec3(sin(v_uv.y * 9. + t * 2.), sin(v_uv.y * 9. + t * 2. + 2.), sin(v_uv.y * 9. + t * 2. + 4.));
+  if (u_texm == 4.) col += step(.993, hash(vec2(floor(v_uv.y * 300.), floor(t * 20.)))) * step(.7, noise(vec2(v_uv.x * 30., t * 5.)));
+
+  float sl = .5 + .5 * sin(v_uv.y * u_res.y * 3.14159 / max(1.5, u_res.y / 360.));
+  col *= 1. - u_scan * .45 * (1. - sl);
+  vec2 vq = v_uv * (1. - v_uv);
+  col *= pow(vq.x * vq.y * 16., .12);
+  gl_FragColor = vec4(clamp(col, 0., 1.), 1.);
+}`;
+
+const osd = document.createElement('canvas');
+osd.width = 1280; osd.height = 720;
+const d0 = new Date();
+$('osdDate').value = `${['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'][d0.getMonth()]}. ${String(d0.getDate()).padStart(2, '0')} 1998`;
+function drawOSD() {
+  const w = tool.canvas.width || 1280, h = tool.canvas.height || 720;
+  if (osd.width !== w || osd.height !== h) { osd.width = w; osd.height = h; }
+  const g = osd.getContext('2d');
+  g.clearRect(0, 0, w, h);
+  const s = h / 16;
+  g.font = `bold ${s}px "VCR OSD Mono", "Courier New", monospace`;
+  g.fillStyle = '#fff'; g.shadowColor = 'rgba(0,0,0,.9)'; g.shadowOffsetX = s * .08; g.shadowOffsetY = s * .08;
+  g.textBaseline = 'top';
+  g.fillText($('osdTop').value, s * .9, s * .8);
+  g.textBaseline = 'bottom';
+  const now = new Date();
+  g.fillText(`${now.getHours() < 12 ? 'AM' : 'PM'} ${String(now.getHours() % 12 || 12).padStart(2, ' ')}:${String(now.getMinutes()).padStart(2, '0')}`, s * .9, h - s * 2.1);
+  g.fillText($('osdDate').value, s * .9, h - s * .9);
+  tool.fx.texture('u_osd', osd);
+}
+
+const tool = new MediaTool({
+  preview: $('pv'), canvas: $('cv'), frag: FRAG,
+  uniforms: () => ({
+    u_zoom: $('zoom').value / 100, u_noise: $('noise').value / 100, u_scan: $('scan').value / 100,
+    u_glitch: $('glitch').value / 100, u_gang: +$('gang').value, u_chroma: $('chroma').value / 100,
+    u_filter: +$('filter').value, u_texm: +$('tex').value, u_osdOn: $('osd').checked,
+  }),
+  onLoad: drawOSD,
+});
+['osdTop', 'osdDate'].forEach((id) => $(id).addEventListener('input', drawOSD));
+setInterval(() => tool.media && drawOSD(), 30000);
+$('osd').onchange = () => tool.frame(true);
+
+$('loadBtn').onclick = () => tool.pick();
+$('demoBtn').onclick = () => tool.useDemo();
+$('pauseBtn').onclick = () => { $('pauseBtn').textContent = tool.togglePause() ? '▶ Continuar' : '⏸ Pausar'; };
+$('soundBtn').onclick = () => { $('soundBtn').textContent = tool.toggleSound() ? '🔊 Áudio: ON' : '🔇 Áudio: OFF'; };
+$('pngBtn').onclick = () => tool.savePNG('vhs');
+$('recBtn').onclick = () => tool.toggleRecord($('recBtn'), +$('dur').value, 'vhs');
+
+let frames = 0, t0 = performance.now();
+(function fps() { frames++; const n = performance.now(); if (n - t0 > 1000) { if (tool.media) $('st').textContent = `> Status: ${tool.rec ? '● GRAVANDO' : 'rodando'} · FPS: ${(frames * 1000 / (n - t0)).toFixed(1)} · ${tool.canvas.width}×${tool.canvas.height} · processamento local`; frames = 0; t0 = n; } requestAnimationFrame(fps); })();
+</script>
+</body>
+</html>

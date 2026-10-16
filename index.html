@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ImAPNG</title>
+<meta name="description" content="Ferramentas gratuitas para editores: removedor de fundo, criador de botões, VHS, texto 3D, letras recortadas e mais. Tudo roda no seu navegador.">
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<style>
+  .home { display: grid; grid-template-columns: auto 1fr; gap: 18px; padding: 16px; align-items: start; }
+  .home .icons { grid-template-columns: repeat(2, 88px); }
+  .wins { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+  .progs { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+  .prog { display: flex; gap: 10px; align-items: center; padding: 8px; border: 1px solid rgba(0,0,0,.18); background: rgba(255,255,255,.55); text-decoration: none; color: inherit; }
+  .prog:hover, .prog:focus-visible { background: #dbe8fb; border-color: #316ac5; outline: none; }
+  .prog .ico { font-size: 28px; width: 36px; text-align: center; }
+  .prog b { display: block; font-size: 12px; }
+  .prog small { color: #555; font-size: 11px; }
+  .prog.new { border-color: #e2a400; background: #fff6d6; }
+  .tag { font-size: 9px; background: #e2a400; color: #fff; padding: 1px 4px; border-radius: 2px; vertical-align: middle; margin-left: 4px; }
+  .notepad { color: #000; font: 13px/1.5 'Lucida Console', 'Courier New', monospace; background: #fff; border: 1px solid #999; padding: 8px 10px; margin: 0; white-space: pre-wrap; }
+  .menubar { display: flex; gap: 12px; font-size: 12px; padding: 0 0 6px; }
+  .menubar span:first-letter { text-decoration: underline; }
+  .theme-pick { display: flex; flex-direction: column; gap: 6px; }
+  @media (max-width: 760px) { .home { grid-template-columns: 1fr; } .home .icons { grid-template-columns: repeat(auto-fill, 76px); } }
+</style>
+</head>
+<body class="os">
+<div class="home">
+  <nav class="icons" id="icons" aria-label="Atalhos da área de trabalho"></nav>
+
+  <div class="wins">
+    <section class="window app" data-title="ferramentas.exe" data-icon="🗂️" style="width:min(780px,100%)">
+      <div class="window-body">
+        <div class="menubar" aria-hidden="true"><span>Arquivo</span><span>Editar</span><span>Exibir</span><span>Ajuda</span></div>
+        <p style="margin:0 0 10px">Ferramentas gratuitas pra quem edita vídeo. Tudo roda no seu navegador: suas imagens não saem do computador.</p>
+        <div class="progs" id="progs"></div>
+      </div>
+    </section>
+
+    <div style="display:flex;flex-direction:column;gap:16px;width:min(320px,100%)">
+      <section class="window" id="dicas" data-title="dicas.txt - Bloco de Notas" data-icon="📝">
+        <div class="window-body">
+          <div class="menubar" aria-hidden="true"><span>Arquivo</span><span>Editar</span><span>Formatar</span></div>
+<pre class="notepad">Bem-vindo ao ImAPNG!
+
+Mova tudo: no computador, clique na barra de título de qualquer janela e arraste.
+
+Removedor de fundo: tira o fundo de várias imagens de uma vez, com retoque no pincel.
+
+Criador de botões: monte o botão com o estilo que quiser e baixe em PNG transparente.
+
+Menu Iniciar: todas as ferramentas ficam lá também.</pre>
+          <div class="btns end" style="margin-top:8px"><button data-close-self>OK</button></div>
+        </div>
+      </section>
+
+      <section class="window" id="temas" data-title="temas.exe" data-icon="🎨">
+        <div class="window-body">
+          <p style="margin-top:0">Escolha a versão do Windows:</p>
+          <div class="theme-pick" id="themePick"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+  const icons = document.getElementById('icons');
+  const progs = document.getElementById('progs');
+  OS.TOOLS.forEach((t, i) => {
+    icons.insertAdjacentHTML('beforeend', `<a class="dicon" href="${t.file}"><span class="ico">${t.icon}</span>${t.name}</a>`);
+    const isNew = t.file === 'botoes.html';
+    progs.insertAdjacentHTML('beforeend', `<a class="prog${isNew ? ' new' : ''}" href="${t.file}"><span class="ico">${t.icon}</span><span><b>${t.name}${isNew ? '<span class="tag">NOVO</span>' : ''}</b><small>${t.desc}</small></span></a>`);
+  });
+  const pick = document.getElementById('themePick');
+  for (const [k, v] of Object.entries(OS.THEMES)) {
+    pick.insertAdjacentHTML('beforeend', `<div class="field-row"><input type="radio" name="th" id="th${k}" value="${k}"><label for="th${k}">${v.name}</label></div>`);
+  }
+  const sync = () => pick.querySelectorAll('input').forEach((r) => (r.checked = r.value === document.documentElement.dataset.theme));
+  pick.addEventListener('change', (e) => OS.setTheme(e.target.value));
+  document.addEventListener('themechange', sync);
+  sync();
+  document.querySelector('[data-close-self]').onclick = (e) => e.target.closest('.window').querySelector('[aria-label=Close]').click();
+</script>
+</body>
+</html>

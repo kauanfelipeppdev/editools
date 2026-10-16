@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Câmera digital · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<script src="assets/glfx.js"></script>
+<script src="assets/media-tool.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap">
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="câmera_digital_online.exe" data-icon="📷">
+    <div class="window-body">
+      <div class="toolbar">
+        <a class="btn" href="index.html">🏠</a>
+        <button id="loadBtn">📂 Mídia…</button><button id="demoBtn">🖼️ Exemplo</button>
+        <span class="spacer"></span>
+        <button id="pauseBtn">⏸ Pause</button><button id="stopBtn">⏹ Stop</button><button id="soundBtn">🔇 Som</button><button id="frameBtn">📸 Frame</button>
+        <button data-open="help">?</button>
+      </div>
+      <div class="tool">
+        <div class="panel" id="panel">
+          <fieldset>
+            <legend>Lente & aparelho</legend>
+            <div class="stack">
+              <label class="field"><span>Câmera</span><select id="cam"></select></label>
+              <p class="hint" id="camInfo"></p>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Defeitos</legend>
+            <div class="stack">
+              <div class="field-row"><input type="checkbox" id="hw"><label for="hw">Defeitos de hardware (glitches)</label></div>
+              <div class="field-row"><input type="checkbox" id="bloom" checked><label for="bloom">Estouro de luz (bloom)</label></div>
+              <div class="field-row"><input type="checkbox" id="sub" checked><label for="sub">Chroma subsampling (4:2:0)</label></div>
+              <div class="field-row"><input type="checkbox" id="res" checked><label for="res">Resolução real da câmera</label></div>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Carimbo digital (timestamp)</legend>
+            <div class="stack">
+              <div class="field-row"><input type="checkbox" id="ts" checked><label for="ts">Ativar</label></div>
+              <select id="tsStyle"><option value="0">Digital clássica</option><option value="1">Interface limpa</option><option value="2">Terminal</option><option value="3">Amadora 2000s</option></select>
+              <div class="row"><input type="datetime-local" id="tsDate" style="flex:1"><button id="rndDate" title="Data aleatória nostálgica">🎲</button></div>
+            </div>
+          </fieldset>
+          <div class="btns grow"><button id="hitBtn">💥 Bater câmera</button><button id="resetBtn">🔄 Resetar</button></div>
+          <button id="saveBtn">💾 Renderizar & salvar</button>
+          <button id="recBtn">⏺ Gravar vídeo</button>
+        </div>
+        <div id="pv" class="preview">
+          <canvas id="cv"></canvas>
+          <div class="placeholder"><span class="big">📷</span><b>Abra uma foto ou vídeo</b>clique, arraste ou cole aqui</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="Ajuda - câmera digital" data-icon="📝">
+    <div class="window-body">
+      <p><b>Como ter o melhor resultado?</b></p>
+      <ul>
+        <li>Use fotos bem iluminadas: o app "estraga" a imagem de propósito.</li>
+        <li>O botão 🎲 sorteia uma data nostálgica.</li>
+        <li><b>Bater câmera</b> acumula falhas. Um clique é um glitch pequeno; vários, o caos total.</li>
+        <li><b>Resolução real</b> salva no tamanho que a câmera de verdade tirava (VGA, 1.3 MP…).</li>
+        <li>No celular, se o download não começar, segure a imagem e escolha "Baixar imagem".</li>
+      </ul>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">OK</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+// tint rgb, contraste, saturação, ruído, jpeg, vinheta, aberração, pretos lavados, estouro, p&b, nitidez, resolução máx.
+const CAMS = [
+  { n: 'Cyber-Cool 2004 (azulada / contraste)', i: '3.2 MP, CCD frio, sharpen agressivo', tint: [.92, 1., 1.12], con: 1.25, sat: 1.05, noise: .08, jpeg: .35, vig: .25, ca: .2, lift: .02, blow: .15, bw: 0, sharp: .8, res: 2048 },
+  { n: 'TekCam 1.3MP (esverdeada / ruído extremo)', i: '1.3 MP, sensor CMOS barato', tint: [.94, 1.08, .9], con: 1.05, sat: .8, noise: .35, jpeg: .6, vig: .35, ca: .35, lift: .06, blow: .2, bw: 0, sharp: .3, res: 1280 },
+  { n: 'EasyWarm 2005 (quente / nostálgica)', i: '4 MP, cores quentes de fábrica', tint: [1.1, 1., .84], con: 1.08, sat: 1.15, noise: .1, jpeg: .3, vig: .3, ca: .15, lift: .04, blow: .3, bw: 0, sharp: .4, res: 2272 },
+  { n: 'Celular VGA 2006 (pixelada / magenta)', i: '0.3 MP (640×480), lente de plástico', tint: [1.08, .9, 1.08], con: 1.12, sat: .9, noise: .28, jpeg: .9, vig: .45, ca: .5, lift: .05, blow: .35, bw: 0, sharp: .1, res: 640 },
+  { n: 'Câmera de plástico (aberração / vinheta)', i: 'lente de brinquedo, cantos escuros', tint: [1.04, 1., .95], con: 1.2, sat: 1.2, noise: .12, jpeg: .3, vig: .8, ca: 1., lift: .03, blow: .2, bw: 0, sharp: 0, res: 1600 },
+  { n: 'Modo noturno (lavada / alto ISO)', i: 'ISO 1600, pretos cinzas e granulado', tint: [.95, 1., 1.05], con: .8, sat: .6, noise: .55, jpeg: .5, vig: .3, ca: .2, lift: .14, blow: .1, bw: 0, sharp: .2, res: 1600 },
+  { n: 'Flash estourado (brancos fortes)', i: 'flash embutido colado no rosto', tint: [1.02, 1., 1.02], con: 1.35, sat: 1., noise: .08, jpeg: .35, vig: .55, ca: .2, lift: 0, blow: 1., bw: 0, sharp: .5, res: 2048, flash: 1 },
+  { n: 'P&B digital (contraste duro)', i: 'modo preto e branco da câmera', tint: [1, 1, 1], con: 1.5, sat: 0, noise: .15, jpeg: .35, vig: .3, ca: 0, lift: .02, blow: .3, bw: 1, sharp: .6, res: 2048 },
+];
+CAMS.forEach((c, i) => $('cam').add(new Option(c.n, i)));
+
+const FRAG = `
+uniform vec3 u_tint; uniform float u_con, u_sat, u_noise, u_jpeg, u_vig, u_ca, u_lift, u_blow, u_bw, u_sharp, u_flash, u_hw, u_bloom, u_sub, u_hits, u_tsOn;
+uniform sampler2D u_ts;
+vec3 S(vec2 uv){ return texture2D(u_tex, clamp(uv, 0., 1.)).rgb; }
+void main(){
+  vec2 uv = v_uv; vec2 px = 1. / u_res;
+  float t = floor(u_time * 12.);
+  // glitches de hardware + batidas acumuladas
+  float g = u_hw * .4 + u_hits * .12;
+  float band = floor(uv.y * 40.);
+  if (g > 0.) {
+    float on = step(1. - min(g, .9) * .35, hash(vec2(band, u_hits + (u_hw > .5 ? t * .1 : 0.))));
+    uv.x += on * (hash(vec2(band * 3., u_hits)) - .5) * .15 * min(g, 2.);
+    if (hash(vec2(floor(uv.y * 8.), u_hits * 2.)) < u_hits * .04) uv.y = floor(uv.y * 8.) / 8. + .02;
+  }
+  vec2 d = (uv - .5);
+  float ca = u_ca * .008 * (.3 + length(d) * 2.);
+  vec3 c = vec3(S(uv + d * ca).r, S(uv).g, S(uv - d * ca).b);
+  // nitidez (unsharp barato)
+  vec3 bl = (S(uv + vec2(px.x, 0.)) + S(uv - vec2(px.x, 0.)) + S(uv + vec2(0., px.y)) + S(uv - vec2(0., px.y))) * .25;
+  c += (c - bl) * u_sharp * 1.5;
+  // bloom
+  if (u_bloom > .5) { vec3 b = vec3(0.); for (int i = 0; i < 12; i++) { float a = float(i) * .5236; b += max(S(uv + vec2(cos(a), sin(a)) * .015) - .7, 0.); } c += b / 12. * (1. + u_blow) * 2.; }
+  // blocos jpeg 8x8
+  vec2 blk = (floor(v_uv * u_res / 8.) * 8. + 4.) / u_res;
+  vec3 bc = S(blk);
+  c = mix(c, bc, u_jpeg * .35);
+  // subsampling: croma em blocos 2x2 (ou maior se jpeg alto)
+  if (u_sub > .5) { float s = 2. + floor(u_jpeg * 3.); vec2 cb = (floor(v_uv * u_res / s) * s + s * .5) / u_res;
+    vec3 y = rgb2yiq(c); vec3 ch = rgb2yiq(S(cb)); c = yiq2rgb(vec3(y.x, ch.yz)); }
+  // cor
+  c *= u_tint;
+  c = (c - .5) * u_con + .5;
+  c = mix(lum3(c), c, u_sat);
+  if (u_bw > .5) c = lum3(c);
+  c += u_flash * exp(-dot(d, d) * 6.) * .35;
+  c = mix(c, smoothstep(0., 1. - u_blow * .35, c), u_blow * .6);
+  c = c * (1. - u_lift) + u_lift;
+  // ruído de sensor (croma + luma)
+  vec2 np = floor(v_uv * u_res);
+  c += (vec3(hash(np + t), hash(np + t + 17.), hash(np + t + 31.)) - .5) * u_noise * .35;
+  c += (hash(np * .5 + t) - .5) * u_noise * .2;
+  // pixels mortos
+  if (u_hw > .5 || u_hits > 3.) { if (hash(np) > .99985) c = vec3(1., 0., 0.); }
+  c *= 1. - u_vig * smoothstep(.25, .85, length(d * vec2(1., u_res.y / u_res.x) * 1.4));
+  c = clamp(c, 0., 1.);
+  if (u_tsOn > .5) { vec4 o = texture2D(u_ts, v_uv); c = mix(c, o.rgb, o.a); }
+  gl_FragColor = vec4(c, 1.);
+}`;
+
+let hits = 0;
+const ts = document.createElement('canvas');
+function camSize(w, h) {
+  const c = CAMS[$('cam').value];
+  const max = $('res').checked ? c.res : 1920;
+  return MediaTool.fit(w, h, max);
+}
+function drawTS() {
+  const w = tool.canvas.width, h = tool.canvas.height;
+  ts.width = w; ts.height = h;
+  const g = ts.getContext('2d');
+  g.clearRect(0, 0, w, h);
+  if (!$('ts').checked) return tool.fx.texture('u_ts', ts);
+  const d = $('tsDate').value ? new Date($('tsDate').value) : new Date();
+  const p2 = (n) => String(n).padStart(2, '0');
+  const style = +$('tsStyle').value, s = h * .055;
+  g.textAlign = 'right'; g.textBaseline = 'bottom';
+  const x = w - s * .9, y = h - s * .8;
+  if (style === 0) {
+    g.font = `${s * 1.15}px VT323, monospace`; g.fillStyle = '#ff8a1c'; g.shadowColor = 'rgba(255,90,0,.9)'; g.shadowBlur = s * .35;
+    g.fillText(`'${String(d.getFullYear()).slice(2)}  ${p2(d.getMonth() + 1)}  ${p2(d.getDate())}`, x, y);
+  } else if (style === 1) {
+    g.font = `${s * .75}px Arial, sans-serif`; g.fillStyle = '#fff'; g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 3;
+    g.fillText(`${p2(d.getDate())}/${p2(d.getMonth() + 1)}/${d.getFullYear()}  ${p2(d.getHours())}:${p2(d.getMinutes())}`, x, y);
+  } else if (style === 2) {
+    g.font = `${s * .8}px "Share Tech Mono", monospace`; g.fillStyle = '#39ff14'; g.shadowColor = '#000'; g.shadowOffsetX = 2; g.shadowOffsetY = 2;
+    g.fillText(`${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`, x, y);
+  } else {
+    g.font = `bold ${s * .9}px Arial, sans-serif`; g.fillStyle = '#ffe600'; g.strokeStyle = '#7a3c00'; g.lineWidth = s * .12;
+    const txt = `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()}`; g.strokeText(txt, x, y); g.fillText(txt, x, y);
+  }
+  tool.fx.texture('u_ts', ts);
+}
+const tool = new MediaTool({
+  preview: $('pv'), canvas: $('cv'), frag: FRAG, size: camSize, onLoad: drawTS,
+  uniforms: () => {
+    const c = CAMS[$('cam').value];
+    return { u_tint: c.tint, u_con: c.con, u_sat: c.sat, u_noise: c.noise, u_jpeg: c.jpeg, u_vig: c.vig, u_ca: c.ca, u_lift: c.lift, u_blow: c.blow, u_bw: c.bw, u_sharp: c.sharp,
+      u_flash: c.flash || 0, u_hw: $('hw').checked, u_bloom: $('bloom').checked, u_sub: $('sub').checked, u_hits: hits, u_tsOn: $('ts').checked };
+  },
+});
+const resize = () => { $('camInfo').textContent = CAMS[$('cam').value].i; if (tool.media) tool.setMedia(tool.media); };
+$('cam').onchange = resize; $('res').onchange = resize;
+['ts', 'tsStyle', 'tsDate'].forEach((id) => $(id).addEventListener('input', () => { if (tool.media) { drawTS(); tool.frame(true); } }));
+$('panel').addEventListener('change', () => tool.frame(true));
+const toLocal = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
+$('tsDate').value = toLocal(new Date(2004, 6, 17, 15, 42));
+$('rndDate').onclick = () => { const d = new Date(1999 + Math.random() * 10, Math.random() * 12, 1 + Math.random() * 28, 8 + Math.random() * 14, Math.random() * 60); $('tsDate').value = toLocal(d); $('tsDate').dispatchEvent(new Event('input')); };
+$('hitBtn').onclick = () => { hits++; tool.frame(true); };
+$('resetBtn').onclick = () => { hits = 0; tool.frame(true); };
+$('camInfo').textContent = CAMS[0].i;
+
+$('loadBtn').onclick = () => tool.pick();
+$('demoBtn').onclick = () => tool.useDemo();
+$('pauseBtn').onclick = () => { $('pauseBtn').textContent = tool.togglePause() ? '▶ Play' : '⏸ Pause'; };
+$('stopBtn').onclick = () => tool.stop();
+$('soundBtn').onclick = () => { $('soundBtn').textContent = tool.toggleSound() ? '🔊 Som' : '🔇 Som'; };
+$('frameBtn').onclick = () => tool.savePNG('camera-frame');
+$('saveBtn').onclick = async () => {
+  if (!tool.media) return OS.dialog('Nada carregado', 'Carregue uma foto ou vídeo primeiro.', '⚠️');
+  tool.frame(true);
+  OS.download(await OS.canvasBlob(tool.canvas, 'image/jpeg', .82), `DSC0${Math.floor(1000 + Math.random() * 8999)}.jpg`);
+};
+$('recBtn').onclick = () => tool.toggleRecord($('recBtn'), 5, 'camera');
+document.fonts.ready.then(() => tool.media && drawTS());
+</script>
+</body>
+</html>

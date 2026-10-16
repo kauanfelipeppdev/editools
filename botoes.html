@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Criador de botões · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Bungee&family=Inter:wght@400;600;700;800;900&family=Montserrat:wght@400;700;800;900&family=Pacifico&family=Poppins:wght@400;600;700;800&family=Press+Start+2P&family=Roboto:wght@400;500;700;900&family=Rubik:wght@400;600;800&family=Space+Grotesk:wght@400;700&family=VT323&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  .tool { grid-template-columns: 360px minmax(0, 1fr); }
+  .right { position: sticky; top: 10px; display: flex; flex-direction: column; gap: 8px; }
+  #pv { min-height: 380px; cursor: pointer; }
+  #pv canvas { max-width: 100%; max-height: 60vh; image-rendering: auto; }
+  #pv.bg-white { background: #fff; } #pv.bg-black { background: #111; }
+  .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  .presets button { min-width: 0; padding: 2px 4px; font-size: 11px; }
+  details { border: 1px solid rgba(0,0,0,.2); background: rgba(255,255,255,.5); padding: 4px 8px; }
+  details[open] { padding-bottom: 8px; }
+  summary { cursor: pointer; font-weight: bold; padding: 3px 0; user-select: none; }
+  details > .stack { margin-top: 6px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
+  .colrow { display: flex; align-items: center; gap: 6px; }
+  .colrow label { flex: 1; }
+  .meta { font-size: 11px; color: #555; text-align: center; }
+  @media (max-width: 900px) { .tool { grid-template-columns: 1fr; } .right { position: static; order: -1; } }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="criador_de_botoes.exe" data-icon="🔘">
+    <div class="window-body">
+      <div class="toolbar">
+        <a class="btn" href="index.html">🏠 Home</a>
+        <button data-open="help">? Ajuda</button>
+        <span class="spacer"></span>
+        <button id="randomBtn">🎲 Aleatório</button>
+        <button id="resetBtn">🔄 Resetar</button>
+      </div>
+
+      <div class="tool">
+        <div class="panel" id="panel">
+          <fieldset>
+            <legend>Estilos prontos</legend>
+            <div class="presets" id="presets"></div>
+          </fieldset>
+
+          <details open>
+            <summary>✏️ Texto</summary>
+            <div class="stack">
+              <input type="text" data-k="text" maxlength="60" aria-label="Texto do botão">
+              <div class="two">
+                <label class="field"><span>Fonte</span>
+                  <select data-k="font" id="fontSel">
+                    <option>Inter</option><option>Poppins</option><option>Montserrat</option><option>Roboto</option><option>Rubik</option>
+                    <option>Space Grotesk</option><option>Bebas Neue</option><option>Bungee</option><option>Press Start 2P</option>
+                    <option>VT323</option><option>Pacifico</option><option>Tahoma</option><option>Arial</option><option>Verdana</option>
+                    <option>Trebuchet MS</option><option>Georgia</option><option>Impact</option><option>Comic Sans MS</option><option>Courier New</option>
+                  </select>
+                </label>
+                <label class="field"><span>Peso</span>
+                  <select data-k="weight"><option value="400">Normal</option><option value="500">Médio</option><option value="600">Semi</option><option value="700">Negrito</option><option value="800">Extra</option><option value="900">Black</option></select>
+                </label>
+              </div>
+              <button id="fontUp">📁 Importar fonte (.ttf / .otf)</button>
+              <label class="field"><span>Tamanho <output data-suffix="px"></output></span><input type="range" data-k="size" min="8" max="72" value="18"></label>
+              <label class="field"><span>Espaço entre letras <output data-suffix="px"></output></span><input type="range" data-k="spacing" min="-3" max="16" step="0.5" value="0"></label>
+              <div class="colrow"><label>Cor do texto</label><input type="color" data-k="textColor"></div>
+              <div class="field-row"><input type="checkbox" id="upper" data-k="upper"><label for="upper">TUDO MAIÚSCULO</label></div>
+              <div class="field-row"><input type="checkbox" id="italic" data-k="italic"><label for="italic">Itálico</label></div>
+            </div>
+          </details>
+
+          <details>
+            <summary>😀 Ícone</summary>
+            <div class="stack">
+              <div class="two">
+                <label class="field"><span>Emoji / símbolo</span><input type="text" data-k="icon" maxlength="4" placeholder="ex: ▶ ⭐ 🔔"></label>
+                <label class="field"><span>Posição</span><select data-k="iconPos"><option value="left">Esquerda</option><option value="right">Direita</option></select></label>
+              </div>
+              <div class="btns grow"><button id="iconUp">🖼️ Usar imagem</button><button id="iconClear">✕ Tirar imagem</button></div>
+            </div>
+          </details>
+
+          <details open>
+            <summary>📐 Forma</summary>
+            <div class="stack">
+              <label class="field"><span>Espaço lateral <output data-suffix="px"></output></span><input type="range" data-k="padX" min="0" max="80" value="24"></label>
+              <label class="field"><span>Espaço vertical <output data-suffix="px"></output></span><input type="range" data-k="padY" min="0" max="50" value="12"></label>
+              <label class="field"><span>Largura mínima <output data-suffix="px"></output></span><input type="range" data-k="minW" min="0" max="600" value="0"></label>
+              <label class="field"><span>Arredondamento <output data-suffix="px"></output></span><input type="range" data-k="radius" min="0" max="60" value="8"></label>
+              <div class="field-row"><input type="checkbox" id="pill" data-k="pill"><label for="pill">Formato pílula (todo redondo)</label></div>
+            </div>
+          </details>
+
+          <details open>
+            <summary>🎨 Fundo</summary>
+            <div class="stack">
+              <label class="field"><span>Tipo</span>
+                <select data-k="bgType"><option value="solid">Cor sólida</option><option value="linear">Gradiente linear</option><option value="radial">Gradiente radial</option><option value="none">Sem fundo</option></select>
+              </label>
+              <div class="colrow"><label>Cor 1</label><input type="color" data-k="bg1"><label>Cor 2</label><input type="color" data-k="bg2"></div>
+              <label class="field"><span>Ângulo do gradiente <output data-suffix="°"></output></span><input type="range" data-k="angle" min="0" max="360" value="180"></label>
+              <label class="field"><span>Opacidade do fundo <output data-suffix="%"></output></span><input type="range" data-k="bgAlpha" min="0" max="100" value="100"></label>
+              <label class="field"><span>Brilho (gloss) <output data-suffix="%"></output></span><input type="range" data-k="gloss" min="0" max="100" value="0"></label>
+            </div>
+          </details>
+
+          <details>
+            <summary>🔲 Borda e 3D</summary>
+            <div class="stack">
+              <label class="field"><span>Espessura da borda <output data-suffix="px"></output></span><input type="range" data-k="borderW" min="0" max="10" value="0"></label>
+              <div class="colrow"><label>Cor da borda</label><input type="color" data-k="borderColor"></div>
+              <div class="field-row"><input type="checkbox" id="bevel" data-k="bevel"><label for="bevel">Relevo clássico (Windows 98)</label></div>
+              <label class="field"><span>Profundidade 3D <output data-suffix="px"></output></span><input type="range" data-k="depth" min="0" max="20" value="0"></label>
+              <div class="colrow"><label>Cor da lateral 3D</label><input type="color" data-k="depthColor"></div>
+            </div>
+          </details>
+
+          <details>
+            <summary>🌫️ Sombra e brilho</summary>
+            <div class="stack">
+              <div class="colrow"><label>Cor da sombra</label><input type="color" data-k="shadowColor"></div>
+              <label class="field"><span>Opacidade <output data-suffix="%"></output></span><input type="range" data-k="shadowAlpha" min="0" max="100" value="0"></label>
+              <label class="field"><span>Desfoque <output data-suffix="px"></output></span><input type="range" data-k="shadowBlur" min="0" max="60" value="12"></label>
+              <div class="two">
+                <label class="field"><span>X <output></output></span><input type="range" data-k="shadowX" min="-30" max="30" value="0"></label>
+                <label class="field"><span>Y <output></output></span><input type="range" data-k="shadowY" min="-30" max="30" value="4"></label>
+              </div>
+              <div class="colrow"><label>Cor do neon (glow)</label><input type="color" data-k="glowColor"></div>
+              <label class="field"><span>Força do neon <output data-suffix="px"></output></span><input type="range" data-k="glow" min="0" max="50" value="0"></label>
+            </div>
+          </details>
+
+          <details>
+            <summary>🅰️ Efeitos no texto</summary>
+            <div class="stack">
+              <label class="field"><span>Contorno <output data-suffix="px"></output></span><input type="range" data-k="strokeW" min="0" max="10" step="0.5" value="0"></label>
+              <div class="colrow"><label>Cor do contorno</label><input type="color" data-k="strokeColor"></div>
+              <div class="colrow"><label>Cor da sombra do texto</label><input type="color" data-k="tShadowColor"></div>
+              <div class="two">
+                <label class="field"><span>X <output></output></span><input type="range" data-k="tShadowX" min="-10" max="10" value="0"></label>
+                <label class="field"><span>Y <output></output></span><input type="range" data-k="tShadowY" min="-10" max="10" value="0"></label>
+              </div>
+              <label class="field"><span>Desfoque da sombra <output data-suffix="px"></output></span><input type="range" data-k="tShadowBlur" min="0" max="30" value="0"></label>
+            </div>
+          </details>
+        </div>
+
+        <div class="right">
+          <div id="pv" class="preview chk" title="Passe o mouse e clique pra ver os estados"><canvas id="cv"></canvas></div>
+          <div class="meta" id="meta"></div>
+          <fieldset>
+            <legend>Visualizar</legend>
+            <div class="row">
+              <span class="lbl">Estado:</span>
+              <select id="stateSel" style="flex:1"><option value="auto">Interativo (mouse)</option><option value="normal">Normal</option><option value="hover">Mouse em cima</option><option value="active">Pressionado</option></select>
+            </div>
+            <div class="row" style="margin-top:6px">
+              <span class="lbl">Fundo da prévia:</span>
+              <select id="bgSel" style="flex:1"><option value="chk">Xadrez (transparente)</option><option value="white">Branco</option><option value="black">Preto</option></select>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Exportar</legend>
+            <div class="row">
+              <span class="lbl">Resolução:</span>
+              <select id="scaleSel" style="flex:1"><option value="1">1x</option><option value="2" selected>2x (recomendado)</option><option value="3">3x</option><option value="4">4x</option><option value="8">8x (vídeo 4K)</option></select>
+            </div>
+            <div class="btns grow" style="margin-top:8px">
+              <button id="dlBtn">💾 Baixar PNG</button>
+              <button id="zipBtn">📦 3 estados (.zip)</button>
+              <button id="copyBtn">📋 Copiar</button>
+            </div>
+            <p class="hint" style="margin-top:6px">PNG com fundo transparente, cortado no tamanho certo (com espaço pra sombra).</p>
+          </fieldset>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="ajuda - criador de botões" data-icon="📝">
+    <div class="window-body">
+      <p><b>Como criar o seu botão</b></p>
+      <ul>
+        <li>Comece por um <b>estilo pronto</b> e ajuste o que quiser nas abas.</li>
+        <li>Passe o mouse e clique na prévia pra ver o botão <b>em cima</b> e <b>pressionado</b>.</li>
+        <li><b>3 estados (.zip)</b> baixa normal, hover e pressionado de uma vez, pronto pra animar.</li>
+        <li>Use <b>2x ou mais</b> se for usar em vídeo, pra não ficar borrado.</li>
+        <li>Duplo clique no nome de um controle volta ele pro padrão.</li>
+      </ul>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">Entendi!</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const BASE = {
+  text: 'Clique aqui', font: 'Inter', weight: '700', size: 18, spacing: 0, textColor: '#ffffff', upper: false, italic: false,
+  icon: '', iconPos: 'left',
+  padX: 26, padY: 13, minW: 0, radius: 10, pill: false,
+  bgType: 'linear', bg1: '#6a5cff', bg2: '#4a36e0', angle: 180, bgAlpha: 100, gloss: 0,
+  borderW: 0, borderColor: '#2b1fa8', bevel: false, depth: 0, depthColor: '#2b1fa8',
+  shadowColor: '#000000', shadowAlpha: 30, shadowBlur: 14, shadowX: 0, shadowY: 5, glowColor: '#ff2bd6', glow: 0,
+  strokeW: 0, strokeColor: '#000000', tShadowColor: '#000000', tShadowX: 0, tShadowY: 0, tShadowBlur: 0,
+};
+const PRESETS = {
+  'Windows 98': { text: 'OK', font: 'Tahoma', weight: '400', size: 13, textColor: '#000000', padX: 26, padY: 7, minW: 90, radius: 0, bgType: 'solid', bg1: '#c0c0c0', bevel: true, shadowAlpha: 0 },
+  'Windows XP': { text: 'OK', font: 'Tahoma', weight: '400', size: 13, textColor: '#000000', padX: 26, padY: 6, minW: 90, radius: 3, bgType: 'linear', bg1: '#ffffff', bg2: '#e3e0d4', borderW: 1, borderColor: '#003c74', shadowAlpha: 0 },
+  'Aero (7)': { text: 'Avançar', font: 'Arial', weight: '400', size: 13, textColor: '#000000', padX: 26, padY: 6, minW: 90, radius: 3, bgType: 'linear', bg1: '#f6f6f6', bg2: '#cfcfcf', gloss: 45, borderW: 1, borderColor: '#707070', shadowAlpha: 0 },
+  'Web 2.0': { text: 'Download grátis', font: 'Trebuchet MS', weight: '700', size: 20, padX: 30, padY: 14, radius: 12, bgType: 'linear', bg1: '#86e05b', bg2: '#2b9a2b', gloss: 55, borderW: 1, borderColor: '#1f7a1f', shadowAlpha: 40, shadowBlur: 8, shadowY: 3, tShadowColor: '#1f6b1f', tShadowY: -1, icon: '⬇' },
+  'Neon': { text: 'PLAY', font: 'Montserrat', weight: '900', size: 24, spacing: 3, padX: 34, padY: 14, radius: 12, bgType: 'solid', bg1: '#12002b', borderW: 2, borderColor: '#ff2bd6', glow: 22, glowColor: '#ff2bd6', shadowAlpha: 0, tShadowColor: '#ff2bd6', tShadowBlur: 12 },
+  'Flat': { text: 'Continuar', font: 'Poppins', weight: '600', size: 16, padX: 28, padY: 12, radius: 8, bgType: 'solid', bg1: '#6c5ce7', shadowAlpha: 0 },
+  'Pílula': { text: 'Assinar agora', font: 'Poppins', weight: '700', size: 18, padX: 34, padY: 15, pill: true, bgType: 'linear', bg1: '#ff5f6d', bg2: '#ffc371', angle: 90, shadowColor: '#ff5f6d', shadowAlpha: 45, shadowBlur: 20, shadowY: 8 },
+  'Jogo 3D': { text: 'Começar', upper: true, font: 'Rubik', weight: '800', size: 20, spacing: 1, padX: 34, padY: 14, radius: 16, bgType: 'solid', bg1: '#58cc02', depth: 7, depthColor: '#46a302', shadowAlpha: 0 },
+  'Pixel 8-bit': { text: 'START', font: 'Press Start 2P', weight: '400', size: 14, padX: 24, padY: 14, radius: 0, bgType: 'solid', bg1: '#e43b44', borderW: 3, borderColor: '#000000', depth: 5, depthColor: '#9e2835', shadowAlpha: 0, tShadowColor: '#000000', tShadowX: 2, tShadowY: 2 },
+  'Brutalista': { text: 'Clique aqui', font: 'Space Grotesk', weight: '700', size: 18, textColor: '#000000', padX: 28, padY: 14, radius: 0, bgType: 'solid', bg1: '#ffde59', borderW: 3, borderColor: '#000000', shadowColor: '#000000', shadowAlpha: 100, shadowBlur: 0, shadowX: 6, shadowY: 6 },
+  'Vidro': { text: 'Entrar', font: 'Inter', weight: '600', size: 16, padX: 30, padY: 13, radius: 14, bgType: 'linear', bg1: '#ffffff', bg2: '#ffffff', bgAlpha: 22, gloss: 25, borderW: 1, borderColor: '#ffffff', shadowAlpha: 25, shadowBlur: 24, shadowY: 8 },
+  'Inscreva-se': { text: 'Inscrever-se', font: 'Roboto', weight: '500', size: 16, padX: 22, padY: 11, radius: 4, bgType: 'solid', bg1: '#ff0000', shadowAlpha: 0, upper: true, icon: '🔔', iconPos: 'right' },
+};
+
+let S = { ...BASE, ...PRESETS['Web 2.0'] };
+let iconImg = null;
+let viewState = 'normal';
+
+// ---------- controles ----------
+const ctrls = [...document.querySelectorAll('[data-k]')];
+function syncControls() {
+  for (const el of ctrls) {
+    const v = S[el.dataset.k];
+    if (el.type === 'checkbox') el.checked = !!v;
+    else el.value = v;
+    el.dispatchEvent(new Event('input')); // atualiza <output>
+  }
+}
+let syncing = false;
+for (const el of ctrls) {
+  el.addEventListener('input', () => {
+    if (syncing) return;
+    const k = el.dataset.k;
+    S[k] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value;
+    draw();
+  });
+  el.addEventListener('change', () => el.dispatchEvent(new Event('input')));
+}
+function applyState(next) { S = next; syncing = true; syncControls(); syncing = false; loadFont().then(draw); draw(); }
+
+const presetBox = $('presets');
+for (const name of Object.keys(PRESETS)) {
+  const b = document.createElement('button');
+  b.textContent = name;
+  b.onclick = () => applyState({ ...BASE, ...PRESETS[name], text: S.text === BASE.text || Object.values(PRESETS).some((p) => p.text === S.text) ? PRESETS[name].text || BASE.text : S.text });
+  presetBox.appendChild(b);
+}
+$('resetBtn').onclick = () => { iconImg = null; applyState({ ...BASE, ...PRESETS['Web 2.0'] }); };
+$('randomBtn').onclick = () => {
+  const r = (a, b) => Math.round(a + Math.random() * (b - a));
+  const hsl = (h, s, l) => { l /= 100; const a = s * Math.min(l, 1 - l) / 100; const f = (n) => { const k = (n + h / 30) % 12; return Math.round(255 * (l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1))).toString(16).padStart(2, '0'); }; return '#' + f(0) + f(8) + f(4); };
+  const h = r(0, 360), fonts = [...$('fontSel').options].map((o) => o.value);
+  applyState({ ...S, font: fonts[r(0, 10)], weight: ['600', '700', '800'][r(0, 2)], bgType: ['solid', 'linear', 'radial'][r(0, 2)], bg1: hsl(h, 80, 60), bg2: hsl((h + r(20, 70)) % 360, 85, 45), angle: r(0, 360), radius: r(0, 24), pill: Math.random() < .2,
+    gloss: Math.random() < .4 ? r(20, 60) : 0, depth: Math.random() < .35 ? r(3, 8) : 0, depthColor: hsl(h, 70, 32), borderW: Math.random() < .4 ? r(1, 3) : 0, borderColor: hsl(h, 70, 25),
+    shadowAlpha: r(0, 50), shadowBlur: r(4, 30), shadowY: r(0, 10), glow: Math.random() < .15 ? r(10, 30) : 0, glowColor: hsl(h, 100, 60), textColor: '#ffffff', bgAlpha: 100, bevel: false });
+};
+
+// fonte e ícone
+$('fontUp').onclick = async () => {
+  const f = await OS.pickFile('.ttf,.otf,.woff,.woff2');
+  if (!f) return;
+  const name = 'Custom ' + f.name.replace(/\.[^.]+$/, '');
+  try {
+    const face = new FontFace(name, await f.arrayBuffer());
+    await face.load(); document.fonts.add(face);
+    const opt = new Option(name, name); $('fontSel').add(opt, 0);
+    applyState({ ...S, font: name });
+  } catch { OS.dialog('Erro', 'Não consegui ler essa fonte.', '❌'); }
+};
+$('iconUp').onclick = async () => {
+  const f = await OS.pickFile('image/*');
+  if (!f) return;
+  const img = new Image();
+  img.onload = () => { iconImg = img; draw(); };
+  img.src = URL.createObjectURL(f);
+};
+$('iconClear').onclick = () => { iconImg = null; draw(); };
+
+function loadFont() {
+  return document.fonts.load(`${S.italic ? 'italic ' : ''}${S.weight} ${S.size}px "${S.font}"`, S.text || 'A').catch(() => {});
+}
+document.fonts.ready.then(draw);
+document.fonts.addEventListener?.('loadingdone', () => draw());
+
+// ---------- desenho ----------
+function rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
+function shade(hex, amt) { const n = parseInt(hex.slice(1), 16); const f = (c) => Math.max(0, Math.min(255, Math.round(c + amt * 255))); return '#' + [n >> 16 & 255, n >> 8 & 255, n & 255].map((c) => f(c).toString(16).padStart(2, '0')).join(''); }
+
+function layout(st) {
+  const m = document.createElement('canvas').getContext('2d');
+  const label = st.upper ? st.text.toLocaleUpperCase('pt-BR') : st.text;
+  m.font = `${st.italic ? 'italic ' : ''}${st.weight} ${st.size}px "${st.font}"`;
+  if ('letterSpacing' in m) m.letterSpacing = st.spacing + 'px';
+  const tw = label ? m.measureText(label).width + ('letterSpacing' in m ? 0 : st.spacing * label.length) : 0;
+  const hasIcon = !!(iconImg || st.icon);
+  const iconSize = st.size * 1.15;
+  let iw = 0;
+  if (iconImg) iw = iconSize * iconImg.naturalWidth / iconImg.naturalHeight;
+  else if (st.icon) { m.font = `${st.size}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`; iw = m.measureText(st.icon).width; }
+  const gap = hasIcon && label ? st.size * .45 : 0;
+  const contentW = tw + iw + gap;
+  const w = Math.max(st.minW, Math.ceil(contentW + st.padX * 2));
+  const h = Math.ceil(st.size * 1.25 + st.padY * 2);
+  const r = st.pill ? h / 2 : Math.min(st.radius, h / 2, w / 2);
+  const sh = st.shadowAlpha > 0 ? st.shadowBlur + Math.max(Math.abs(st.shadowX), Math.abs(st.shadowY)) : 0;
+  const pad = Math.ceil(Math.max(sh, st.glow * 1.6, st.tShadowBlur, 1) + 2);
+  return { label, tw, iw, gap, contentW, w, h, r, pad, iconSize, W: w + pad * 2, H: h + st.depth + pad * 2 };
+}
+
+function render(st, state, scale) {
+  const L = layout(st);
+  const c = document.createElement('canvas');
+  c.width = Math.ceil(L.W * scale); c.height = Math.ceil(L.H * scale);
+  const x = c.getContext('2d');
+  x.scale(scale, scale);
+  const press = state === 'active';
+  const sink = press ? (st.depth ? st.depth * .8 : 1) : 0;
+  const bx = L.pad, by = L.pad + sink, w = L.w, h = L.h, r = L.r;
+  const shape = (ox = 0, oy = 0, inset = 0) => { x.beginPath(); x.roundRect(bx + ox + inset, by + oy + inset, w - inset * 2, h - inset * 2, Math.max(0, r - inset)); };
+
+  // sombra (some no pressionado)
+  const shadowK = press ? .45 : state === 'hover' ? 1.15 : 1;
+  if (st.shadowAlpha > 0) {
+    x.save();
+    x.shadowColor = rgba(st.shadowColor, Math.min(1, st.shadowAlpha / 100 * shadowK));
+    x.shadowBlur = st.shadowBlur * shadowK; x.shadowOffsetX = st.shadowX * (press ? .4 : 1); x.shadowOffsetY = st.shadowY * (press ? .4 : 1);
+    x.fillStyle = '#000';
+    shape(0, st.depth - sink); x.fill(); // sombra sai da base do botão
+    x.restore();
+    // apaga o preenchimento usado só pra gerar a sombra
+    x.save(); x.globalCompositeOperation = 'destination-out'; shape(0, st.depth - sink); x.fill(); x.restore();
+  }
+  // neon
+  if (st.glow > 0) {
+    x.save();
+    const g = st.glow * (state === 'hover' ? 1.35 : press ? .7 : 1);
+    x.shadowColor = st.glowColor; x.shadowBlur = g;
+    x.strokeStyle = st.glowColor; x.lineWidth = Math.max(1, st.borderW || 2);
+    for (let i = 0; i < 2; i++) { shape(0, 0, x.lineWidth / 2); x.stroke(); }
+    x.restore();
+  }
+  // lateral 3D
+  if (st.depth - sink > 0) {
+    x.fillStyle = st.depthColor;
+    shape(0, st.depth - sink); x.fill();
+    x.fillRect(bx, by + h / 2, w, st.depth - sink);
+  }
+  // corpo
+  x.save();
+  shape(); x.clip();
+  if (st.bgType !== 'none') {
+    let fill;
+    if (st.bgType === 'solid') fill = st.bg1;
+    else if (st.bgType === 'linear') {
+      const a = (st.angle - 90) * Math.PI / 180, cx = bx + w / 2, cy = by + h / 2;
+      const len = Math.abs(w / 2 * Math.cos(a)) + Math.abs(h / 2 * Math.sin(a));
+      fill = x.createLinearGradient(cx - Math.cos(a) * len, cy - Math.sin(a) * len, cx + Math.cos(a) * len, cy + Math.sin(a) * len);
+      fill.addColorStop(0, st.bg1); fill.addColorStop(1, st.bg2);
+    } else {
+      fill = x.createRadialGradient(bx + w / 2, by + h * .35, 0, bx + w / 2, by + h / 2, Math.max(w, h) * .7);
+      fill.addColorStop(0, st.bg1); fill.addColorStop(1, st.bg2);
+    }
+    x.globalAlpha = st.bgAlpha / 100;
+    x.fillStyle = fill; x.fillRect(bx, by, w, h);
+    x.globalAlpha = 1;
+  }
+  if (state === 'hover') { x.fillStyle = 'rgba(255,255,255,.12)'; x.fillRect(bx, by, w, h); }
+  if (press) { x.fillStyle = 'rgba(0,0,0,.12)'; x.fillRect(bx, by, w, h); }
+  if (st.gloss > 0) {
+    const g = x.createLinearGradient(0, by, 0, by + h * .55);
+    g.addColorStop(0, `rgba(255,255,255,${st.gloss / 100 * .9})`);
+    g.addColorStop(1, `rgba(255,255,255,${st.gloss / 100 * .15})`);
+    x.fillStyle = g;
+    x.beginPath(); x.roundRect(bx + 1.5, by + 1.5, w - 3, h * .5, [Math.max(0, r - 1.5), Math.max(0, r - 1.5), r * .4, r * .4]); x.fill();
+  }
+  if (st.bevel) {
+    const L1 = press ? '#0a0a0a' : '#ffffff', D1 = press ? '#ffffff' : '#0a0a0a', L2 = press ? '#808080' : '#dfdfdf', D2 = press ? '#dfdfdf' : '#808080';
+    const line = (col, pts) => { x.strokeStyle = col; x.lineWidth = 1; x.beginPath(); pts.forEach(([px, py], i) => (i ? x.lineTo(px, py) : x.moveTo(px, py))); x.stroke(); };
+    line(L1, [[bx + .5, by + h - 1], [bx + .5, by + .5], [bx + w - 1, by + .5]]);
+    line(D1, [[bx + w - .5, by], [bx + w - .5, by + h - .5], [bx, by + h - .5]]);
+    line(L2, [[bx + 1.5, by + h - 2], [bx + 1.5, by + 1.5], [bx + w - 2, by + 1.5]]);
+    line(D2, [[bx + w - 1.5, by + 1], [bx + w - 1.5, by + h - 1.5], [bx + 1, by + h - 1.5]]);
+  }
+  x.restore();
+  // borda
+  if (st.borderW > 0) {
+    x.strokeStyle = state === 'hover' && !st.glow ? shade(st.borderColor, .08) : st.borderColor;
+    x.lineWidth = st.borderW;
+    shape(0, 0, st.borderW / 2); x.stroke();
+  }
+  // conteúdo
+  const off = st.bevel && press ? 1 : 0;
+  let cx = bx + (w - L.contentW) / 2 + off;
+  const cy = by + h / 2 + off;
+  const drawIcon = (px) => {
+    if (iconImg) x.drawImage(iconImg, px, cy - L.iconSize / 2, L.iw, L.iconSize);
+    else if (st.icon) { x.font = `${st.size}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`; x.textBaseline = 'middle'; x.fillStyle = st.textColor; x.fillText(st.icon, px, cy + st.size * .04); }
+  };
+  if (st.iconPos === 'left' && L.iw) { drawIcon(cx); cx += L.iw + L.gap; }
+  if (L.label) {
+    x.save();
+    x.font = `${st.italic ? 'italic ' : ''}${st.weight} ${st.size}px "${st.font}"`;
+    if ('letterSpacing' in x) x.letterSpacing = st.spacing + 'px';
+    x.textBaseline = 'middle'; x.textAlign = 'left';
+    const ty = cy + st.size * .05;
+    if (st.tShadowBlur || st.tShadowX || st.tShadowY) {
+      x.shadowColor = st.tShadowColor; x.shadowBlur = st.tShadowBlur; x.shadowOffsetX = st.tShadowX; x.shadowOffsetY = st.tShadowY;
+    }
+    if (st.strokeW > 0) { x.lineJoin = 'round'; x.lineWidth = st.strokeW * 2; x.strokeStyle = st.strokeColor; x.strokeText(L.label, cx, ty); x.shadowColor = 'transparent'; }
+    x.fillStyle = st.textColor;
+    x.fillText(L.label, cx, ty);
+    x.restore();
+    cx += L.tw + L.gap;
+  }
+  if (st.iconPos === 'right' && L.iw) drawIcon(cx);
+  return c;
+}
+
+const cv = $('cv'), pv = $('pv');
+function draw() {
+  const st = $('stateSel').value === 'auto' ? viewState : $('stateSel').value;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const scale = 2 * dpr;
+  const out = render(S, st, scale);
+  cv.width = out.width; cv.height = out.height;
+  cv.getContext('2d').drawImage(out, 0, 0);
+  cv.style.width = out.width / scale * 2 + 'px';
+  const L = layout(S), k = +$('scaleSel').value;
+  $('meta').textContent = `Botão ${L.w}×${L.h + S.depth}px · arquivo ${Math.ceil(L.W * k)}×${Math.ceil(L.H * k)}px`;
+}
+pv.addEventListener('pointerenter', () => { viewState = 'hover'; draw(); });
+pv.addEventListener('pointerleave', () => { viewState = 'normal'; draw(); });
+pv.addEventListener('pointerdown', () => { viewState = 'active'; draw(); });
+pv.addEventListener('pointerup', () => { viewState = 'hover'; draw(); });
+$('stateSel').onchange = draw;
+$('scaleSel').onchange = draw;
+$('bgSel').onchange = () => { pv.classList.toggle('chk', $('bgSel').value === 'chk'); pv.classList.toggle('bg-white', $('bgSel').value === 'white'); pv.classList.toggle('bg-black', $('bgSel').value === 'black'); };
+
+// ---------- exportar ----------
+const fileBase = () => 'botao-' + OS.slug(S.text || 'icone');
+const exportState = () => ($('stateSel').value === 'auto' ? 'normal' : $('stateSel').value);
+$('dlBtn').onclick = async () => OS.download(await OS.canvasBlob(render(S, exportState(), +$('scaleSel').value)), fileBase() + '.png');
+$('zipBtn').onclick = async () => {
+  const zip = new JSZip(), k = +$('scaleSel').value;
+  for (const [st, n] of [['normal', 'normal'], ['hover', 'hover'], ['active', 'pressionado']]) zip.file(`${fileBase()}-${n}.png`, await OS.canvasBlob(render(S, st, k)));
+  OS.download(await zip.generateAsync({ type: 'blob' }), fileBase() + '.zip');
+};
+$('copyBtn').onclick = async () => {
+  try {
+    const blob = await OS.canvasBlob(render(S, exportState(), +$('scaleSel').value));
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+    $('copyBtn').textContent = '✅ Copiado!';
+    setTimeout(() => ($('copyBtn').textContent = '📋 Copiar'), 1500);
+  } catch { OS.dialog('Não deu', 'Seu navegador não deixou copiar a imagem. Use o Baixar PNG.', '⚠️'); }
+};
+
+document.addEventListener('DOMContentLoaded', () => applyState(S));
+</script>
+</body>
+</html>

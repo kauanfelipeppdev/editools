@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Letras recortadas · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Alfa+Slab+One&family=Anton&family=Archivo+Black&family=Bebas+Neue&family=Bodoni+Moda:wght@700;900&family=Courier+Prime:wght@700&family=DM+Serif+Display&family=Lobster&family=Oswald:wght@700&family=Permanent+Marker&family=Playfair+Display:ital,wght@0,900;1,900&family=Rubik+Mono+One&family=Shrikhand&family=Ultra&display=swap">
+<style>
+  #txt { font-size: 15px; min-height: 70px; }
+  #pv { min-height: 420px; }
+  #pv canvas { cursor: grab; touch-action: none; }
+  #pv canvas.grabbing { cursor: grabbing; }
+  #pv.green { background: #00b140; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="gerador_de_letras_recortadas.exe" data-icon="✉️">
+    <div class="window-body">
+      <div class="toolbar">
+        <a class="btn" href="index.html">🏠 Home</a>
+        <button data-open="help">? Ajuda</button>
+      </div>
+      <div class="tool">
+        <div class="panel">
+          <fieldset>
+            <legend>Texto</legend>
+            <div class="stack">
+              <textarea id="txt" placeholder="escreva aqui…">seu texto
+aqui</textarea>
+              <div class="btns grow"><button id="genBtn">✂️ Gerar</button><button id="rollBtn" title="Sortear recortes de novo">🎲</button></div>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Layout</legend>
+            <div class="stack">
+              <label class="field"><span>Tamanho <output data-suffix="px"></output></span><input type="range" id="size" min="30" max="220" value="96"></label>
+              <label class="field"><span>Espaço entre letras <output></output></span><input type="range" id="sp" min="-30" max="40" value="2"></label>
+              <label class="field"><span>Espaço entre linhas <output></output></span><input type="range" id="lsp" min="-40" max="80" value="8"></label>
+              <label class="field"><span>Bagunça (rotação) <output data-suffix="°"></output></span><input type="range" id="rot" min="0" max="25" value="7"></label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Animação</legend>
+            <div class="stack">
+              <div class="row"><span class="lbl">Estilo:</span>
+                <select id="style" style="flex:1"><option value="chaos">Caos (troca + treme)</option><option value="stop">Stop Motion (só treme)</option><option value="blink">Pisca-pisca (só troca)</option></select>
+              </div>
+              <label class="field"><span>Velocidade <output data-suffix=" fps"></output></span><input type="range" id="fps" min="1" max="15" value="6"></label>
+              <div class="field-row"><input type="checkbox" id="desync" checked><label for="desync">Desync (letras fora de sincronia)</label></div>
+              <button id="animBtn">▶️ Animar</button>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Exportar</legend>
+            <div class="stack">
+              <div class="row"><span class="lbl">Duração do vídeo:</span>
+                <select id="dur" style="flex:1"><option value="3">3 s</option><option value="5" selected>5 s</option><option value="10">10 s</option></select>
+              </div>
+              <div class="btns grow"><button id="pngBtn">💾 Baixar imagem</button><button id="vidBtn">🎬 Vídeo (fundo verde)</button></div>
+            </div>
+          </fieldset>
+        </div>
+        <div id="pv" class="preview chk"><canvas id="cv"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="ajuda & dicas" data-icon="📝">
+    <div class="window-body">
+      <p><b>⌨️ Atalhos</b></p>
+      <ul><li><kbd>Enter</kbd> gera na hora.</li><li><kbd>Shift</kbd>+<kbd>Enter</kbd> quebra a linha.</li></ul>
+      <p><b>🎬 Estilos</b></p>
+      <ul>
+        <li><b>Caos:</b> troca os recortes e treme ao mesmo tempo.</li>
+        <li><b>Stop Motion:</b> só treme, mantendo a mesma letra.</li>
+        <li><b>Pisca-pisca:</b> fica parado, mas troca os recortes.</li>
+        <li><b>Desync:</b> cada letra muda num momento diferente, fica mais orgânico.</li>
+      </ul>
+      <p><b>👆 Dica:</b> clique e arraste qualquer letra pra ajustar a posição antes de exportar.</p>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">Entendi</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const FONTS = [
+  ['Anton', '400'], ['Abril Fatface', '400'], ['Alfa Slab One', '400'], ['Archivo Black', '400'], ['Bebas Neue', '400'],
+  ['Bodoni Moda', '900'], ['Courier Prime', '700'], ['DM Serif Display', '400'], ['Lobster', '400'], ['Oswald', '700'],
+  ['Permanent Marker', '400'], ['Playfair Display', '900'], ['Playfair Display', 'italic 900'], ['Rubik Mono One', '400'],
+  ['Shrikhand', '400'], ['Ultra', '400'], ['Georgia', 'bold'], ['Times New Roman', 'bold'], ['Impact', '400'], ['Arial Black', '400'],
+];
+const PAPERS = [
+  ['#f3ecd9', '#111'], ['#fffdf6', '#c1121f'], ['#111111', '#ffffff'], ['#ffd60a', '#111'], ['#e63946', '#fff'], ['#2a6fdb', '#fff'],
+  ['#f1faee', '#1d3557'], ['#ff8fab', '#3d0c11'], ['#90be6d', '#102a12'], ['#f8f4e3', '#2b2b2b'], ['#e9c46a', '#3a2a00'], ['#ffffff', '#000'],
+  ['#d8d2c4', '#5b1a1a'], ['#7b2cbf', '#ffe066'], ['#ff6b00', '#fff'], ['#000000', '#ffd60a'],
+];
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+
+function makeCut(ch, size) {
+  const [fam, wt] = pick(FONTS);
+  let [bg, fg] = pick(PAPERS);
+  if (Math.random() < .2) [bg, fg] = [fg.length === 4 ? fg.replace(/^#(.)(.)(.)$/, '#$1$1$2$2$3$3') : fg, bg];
+  const s = size * rnd(.82, 1.2);
+  const m = document.createElement('canvas').getContext('2d');
+  m.font = `${wt} ${s}px "${fam}"`;
+  const met = m.measureText(ch);
+  const tw = Math.max(met.width, s * .3);
+  const asc = met.actualBoundingBoxAscent || s * .75, desc = met.actualBoundingBoxDescent || s * .05;
+  const padX = s * rnd(.08, .22), padT = s * rnd(.08, .2), padB = s * rnd(.08, .2);
+  const w = Math.ceil(tw + padX * 2), h = Math.ceil(asc + desc + padT + padB);
+  const c = document.createElement('canvas');
+  c.width = w + 4; c.height = h + 4;
+  const x = c.getContext('2d');
+  // contorno irregular de tesoura
+  const pts = [], n = 4 + Math.floor(Math.random() * 4);
+  const j = s * .05;
+  const edge = (x0, y0, x1, y1) => { for (let i = 0; i < n; i++) { const t = i / n; pts.push([x0 + (x1 - x0) * t + rnd(-j, j), y0 + (y1 - y0) * t + rnd(-j, j)]); } };
+  edge(2, 2, w + 2, 2); edge(w + 2, 2, w + 2, h + 2); edge(w + 2, h + 2, 2, h + 2); edge(2, h + 2, 2, 2);
+  x.beginPath(); pts.forEach(([px, py], i) => (i ? x.lineTo(px, py) : x.moveTo(px, py))); x.closePath();
+  x.save(); x.clip();
+  x.fillStyle = bg; x.fillRect(0, 0, c.width, c.height);
+  // textura de papel: pontilhado de impressão ou grão
+  if (Math.random() < .3) {
+    x.fillStyle = 'rgba(0,0,0,.08)';
+    const g = Math.max(3, s * .06);
+    for (let yy = 0; yy < c.height; yy += g) for (let xx = (yy / g) % 2 ? g / 2 : 0; xx < c.width; xx += g) { x.beginPath(); x.arc(xx, yy, g * .28, 0, 7); x.fill(); }
+  }
+  for (let i = 0; i < w * h / 60; i++) { x.fillStyle = `rgba(${Math.random() < .5 ? '0,0,0' : '255,255,255'},${rnd(.02, .08)})`; x.fillRect(rnd(0, c.width), rnd(0, c.height), rnd(.5, 2), rnd(.5, 2)); }
+  // letra
+  x.font = `${wt} ${s}px "${fam}"`;
+  x.fillStyle = fg; x.textBaseline = 'alphabetic';
+  x.fillText(ch, 2 + padX + (tw - met.width) / 2, 2 + padT + asc);
+  // vinco/dobra ocasional
+  if (Math.random() < .25) { const gr = x.createLinearGradient(0, 0, c.width, c.height); gr.addColorStop(.48, 'rgba(255,255,255,0)'); gr.addColorStop(.5, 'rgba(255,255,255,.25)'); gr.addColorStop(.52, 'rgba(0,0,0,.08)'); gr.addColorStop(.56, 'rgba(0,0,0,0)'); x.fillStyle = gr; x.fillRect(0, 0, c.width, c.height); }
+  x.restore();
+  return { c, w: c.width, h: c.height, base: 2 + padT + asc };
+}
+
+let letters = [];
+let W = 800, H = 400, lockSize = false;
+const cv = $('cv'), ctx = cv.getContext('2d');
+
+function opts() { return { size: +$('size').value, sp: +$('sp').value, lsp: +$('lsp').value, rot: +$('rot').value }; }
+
+async function generate(reroll = true) {
+  const text = $('txt').value.replace(/\s+$/, '');
+  if (!text.trim()) return OS.dialog('Erro do Sistema', 'Nenhum texto detectado! Digite alguma coisa antes de gerar.', '❌');
+  await Promise.all(FONTS.map(([f, w]) => document.fonts.load(`${w} 40px "${f}"`, 'Aa').catch(() => {})));
+  const o = opts();
+  const old = letters;
+  letters = [];
+  let k = 0;
+  for (const ch of [...text]) {
+    if (ch === '\n') { letters.push({ br: true }); continue; }
+    const prev = old[k] && old[k].ch === ch && !reroll ? old[k] : null;
+    letters.push(ch === ' ' ? { ch, space: true } : { ch, cut: prev && prev.size === o.size ? prev.cut : makeCut(ch, o.size), size: o.size, ang: prev ? prev.ang : rnd(-1, 1), dx: prev ? prev.dx : 0, dy: prev ? prev.dy : 0, jx: 0, jy: 0, ja: 0 });
+    k++;
+  }
+  layout();
+}
+
+function layout() {
+  const o = opts();
+  const lines = [[]];
+  letters.forEach((l) => (l.br ? lines.push([]) : lines.at(-1).push(l)));
+  const lineH = o.size * 1.3 + o.lsp;
+  const widths = lines.map((ln) => ln.reduce((a, l) => a + (l.space ? o.size * .4 : l.cut.w * .94) + o.sp, -o.sp));
+  const margin = o.size * .5;
+  if (!lockSize) {
+    W = Math.ceil(Math.max(200, ...widths) + margin * 2);
+    H = Math.ceil(lines.length * lineH + margin * 2);
+    cv.width = W; cv.height = H;
+  }
+  lines.forEach((ln, i) => {
+    let x = margin + (W - margin * 2 - widths[i]) / 2;
+    const yBase = margin + i * lineH + o.size * 1.05;
+    for (const l of ln) {
+      if (l.space) { x += o.size * .4 + o.sp; continue; }
+      l.x = x; l.y = yBase - l.cut.base;
+      x += l.cut.w * .94 + o.sp;
+    }
+  });
+  draw();
+}
+
+function draw(bg) {
+  const o = opts();
+  ctx.clearRect(0, 0, W, H);
+  if (bg) { ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H); }
+  for (const l of letters) {
+    if (!l.cut) continue;
+    const cx = l.x + l.dx + l.jx + l.cut.w / 2, cy = l.y + l.dy + l.jy + l.cut.h / 2;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate((l.ang * o.rot + l.ja) * Math.PI / 180);
+    ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = o.size * .05; ctx.shadowOffsetX = o.size * .015; ctx.shadowOffsetY = o.size * .03;
+    ctx.drawImage(l.cut.c, -l.cut.w / 2, -l.cut.h / 2);
+    ctx.restore();
+  }
+}
+
+// ---------- animação ----------
+let anim = null;
+function tick() {
+  const style = $('style').value, desync = $('desync').checked, o = opts();
+  for (const l of letters) {
+    if (!l.cut) continue;
+    if (desync && Math.random() < .5) continue;
+    if (style !== 'stop') { l.cut = makeCut(l.ch, o.size); l.ang = rnd(-1, 1); }
+    if (style !== 'blink') { const j = o.size * .03; l.jx = rnd(-j, j); l.jy = rnd(-j, j); l.ja = rnd(-3, 3); }
+  }
+  layout();
+}
+function startAnim() {
+  stopAnim();
+  const loop = () => { tick(); anim = setTimeout(loop, 1000 / +$('fps').value); };
+  loop();
+  $('animBtn').textContent = '⏸ Parar animação';
+}
+function stopAnim() {
+  clearTimeout(anim); anim = null;
+  letters.forEach((l) => { l.jx = l.jy = l.ja = 0; });
+  $('animBtn').textContent = '▶️ Animar';
+}
+$('animBtn').onclick = () => { if (anim) { stopAnim(); draw(); } else startAnim(); };
+
+// ---------- arrastar letras ----------
+let dragL = null, dragStart;
+function toCanvas(e) { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height]; }
+cv.addEventListener('pointerdown', (e) => {
+  const [px, py] = toCanvas(e);
+  for (let i = letters.length - 1; i >= 0; i--) {
+    const l = letters[i];
+    if (!l.cut) continue;
+    const x = l.x + l.dx, y = l.y + l.dy;
+    if (px >= x && px <= x + l.cut.w && py >= y && py <= y + l.cut.h) {
+      dragL = l; dragStart = [px - l.dx, py - l.dy];
+      cv.setPointerCapture(e.pointerId); cv.classList.add('grabbing');
+      break;
+    }
+  }
+});
+cv.addEventListener('pointermove', (e) => {
+  if (!dragL) return;
+  const [px, py] = toCanvas(e);
+  dragL.dx = px - dragStart[0]; dragL.dy = py - dragStart[1];
+  draw();
+});
+const endDrag = () => { dragL = null; cv.classList.remove('grabbing'); };
+cv.addEventListener('pointerup', endDrag);
+cv.addEventListener('pointercancel', endDrag);
+
+// ---------- eventos ----------
+$('txt').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); generate(true); } });
+$('genBtn').onclick = () => generate(true);
+$('rollBtn').onclick = () => generate(true);
+['sp', 'lsp'].forEach((id) => $(id).addEventListener('input', layout));
+$('rot').addEventListener('input', () => draw());
+$('size').addEventListener('change', () => generate(true));
+
+$('pngBtn').onclick = async () => {
+  const was = !!anim; if (was) stopAnim();
+  draw();
+  OS.download(await OS.canvasBlob(cv), 'letras-' + OS.slug($('txt').value.slice(0, 30)) + '.png');
+  if (was) startAnim(); else draw();
+};
+$('vidBtn').onclick = async () => {
+  if (!window.MediaRecorder) return OS.dialog('Sem suporte', 'Seu navegador não grava vídeo. Use Chrome ou Edge.', '❌');
+  const btn = $('vidBtn'); btn.disabled = true;
+  $('pv').classList.add('green');
+  const origDraw = draw;
+  draw = (bg) => origDraw(bg || '#00b140');
+  draw();
+  if (!anim) startAnim();
+  // trava o tamanho (com folga) pra o vídeo não mudar de resolução no meio
+  W = cv.width = Math.ceil(W * 1.06 / 2) * 2; H = cv.height = Math.ceil(H * 1.06 / 2) * 2; lockSize = true; layout();
+  const rec = OS.recordCanvas(cv, { fps: 30 });
+  // mantém o canvas "vivo" pro captureStream mesmo entre os ticks
+  const keep = setInterval(() => draw(), 1000 / 30);
+  await new Promise((r) => setTimeout(r, +$('dur').value * 1000));
+  clearInterval(keep);
+  const { blob, ext } = await rec.stop();
+  draw = origDraw; stopAnim(); lockSize = false; layout();
+  $('pv').classList.remove('green');
+  btn.disabled = false;
+  OS.download(blob, 'letras-fundo-verde.' + ext);
+};
+
+generate(true);
+</script>
+</body>
+</html>

@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Olho de peixe · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<script src="assets/glfx.js"></script>
+<script src="assets/media-tool.js"></script>
+<style>
+  #cv { cursor: grab; touch-action: none; }
+  .layer { border-top: 1px dashed #aaa; padding-top: 6px; margin-top: 4px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="olho_de_peixe.exe" data-icon="🐟">
+    <div class="window-body">
+      <div class="toolbar">
+        <a class="btn" href="index.html">🏠 Home</a>
+        <button id="loadBtn">📂 Abrir foto ou vídeo…</button>
+        <button id="demoBtn">🖼️ Exemplo</button>
+        <span class="spacer"></span>
+        <button id="pauseBtn">⏸ Pause</button><button id="stopBtn">⏹ Stop</button>
+        <button id="soundBtn">🔇 Som</button><button id="frameBtn">📸 Frame</button>
+        <button data-open="help">?</button>
+      </div>
+      <div class="tool wide-panel">
+        <div class="panel" id="panel">
+          <details open><summary>Lente e enquadramento</summary>
+            <div class="stack">
+              <div class="field-row"><input type="checkbox" id="peep" checked><label for="peep">Forçar borda circular (peephole)</label></div>
+              <div class="field-row"><input type="checkbox" id="green"><label for="green">Fundo verde (chroma key)</label></div>
+              <label class="field"><span>Zoom na foto <output data-suffix="%"></output></span><input type="range" id="zoom" min="50" max="300" value="100"></label>
+              <label class="field"><span>Força fisheye <output data-suffix="%"></output></span><input type="range" id="fish" min="0" max="100" value="60"></label>
+              <label class="field"><span>Desfoque na borda <output data-suffix="%"></output></span><input type="range" id="blur" min="0" max="100" value="35"></label>
+              <label class="field"><span>Distância do desfoque <output data-suffix="%"></output></span><input type="range" id="blurDist" min="0" max="100" value="55"></label>
+            </div>
+          </details>
+          <details open><summary>Luz e cor</summary>
+            <div class="stack">
+              <label class="field"><span>Flash frontal <output data-suffix="%"></output></span><input type="range" id="flash" min="0" max="100" value="20"></label>
+              <label class="field"><span>Força da vinheta <output data-suffix="%"></output></span><input type="range" id="vig" min="0" max="100" value="55"></label>
+              <label class="field"><span>Suavidade da vinheta <output data-suffix="%"></output></span><input type="range" id="vigSoft" min="5" max="100" value="45"></label>
+              <label class="field"><span>Aberração cromática <output data-suffix="%"></output></span><input type="range" id="ca" min="0" max="100" value="30"></label>
+              <label class="field"><span>Halation (sangramento vermelho) <output data-suffix="%"></output></span><input type="range" id="hal" min="0" max="100" value="25"></label>
+            </div>
+          </details>
+          <details><summary>Texturas</summary>
+            <div class="stack">
+              <div class="layer" data-l="1"><b>Camada 1 (principal)</b></div>
+              <div class="layer" data-l="2"><b>Camada 2 (extra)</b></div>
+              <label class="field"><span>Ruído procedural <output data-suffix="%"></output></span><input type="range" id="noise" min="0" max="100" value="20"></label>
+              <label class="field"><span>Sujeira procedural <output data-suffix="%"></output></span><input type="range" id="dirt" min="0" max="100" value="15"></label>
+            </div>
+          </details>
+          <div class="btns grow">
+            <button id="resetBtn">🔄 Resetar configs</button>
+            <button id="origBtn">👁️ Ver original (segure)</button>
+          </div>
+          <button id="saveBtn">💾 Renderizar & salvar PNG</button>
+          <button id="recBtn">⏺ Gravar vídeo</button>
+        </div>
+        <div id="pv" class="preview">
+          <canvas id="cv"></canvas>
+          <div class="placeholder"><span class="big">🐟</span><b>Nenhuma imagem carregada</b>clique, arraste ou cole uma foto ou vídeo</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="Ajuda & instruções" data-icon="📝">
+    <div class="window-body">
+      <ul>
+        <li><b>Enquadramento:</b> clique na foto e arraste pra posicionar a imagem atrás da lente.</li>
+        <li><b>Reset individual:</b> duplo clique no nome de qualquer controle.</li>
+        <li><b>Comparação:</b> segure "Ver original" pra ver o antes e depois.</li>
+        <li><b>Texturas:</b> "Tela" clareia (riscos, vazamentos de luz); "Multiplicação" escurece.</li>
+        <li><b>Fundo verde:</b> fora do círculo vira verde pra recortar no editor.</li>
+      </ul>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">OK</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+document.querySelectorAll('.layer').forEach((el) => {
+  const n = el.dataset.l;
+  el.insertAdjacentHTML('beforeend', `<div class="stack" style="margin-top:4px">
+    <label class="field"><span>Textura</span><select id="l${n}m"><option value="0">Nenhuma</option><option value="1">Riscos na lente</option><option value="2">Poeira</option><option value="3"${n === '1' ? ' selected' : ''}>Vazamento de luz quente</option><option value="4">Vazamento de luz frio</option><option value="5">Bokeh</option></select></label>
+    <label class="field"><span>Mesclagem</span><select id="l${n}b"><option value="0">Tela (clarear)</option><option value="1">Multiplicação (escurecer)</option></select></label>
+    <div class="two"><label class="field"><span>Opacidade <output data-suffix="%"></output></span><input type="range" id="l${n}o" min="0" max="100" value="${n === '1' ? 45 : 60}"></label>
+    <label class="field"><span>Escala <output data-suffix="%"></output></span><input type="range" id="l${n}s" min="25" max="300" value="100"></label></div></div>`);
+});
+
+const FRAG = `
+uniform vec2 u_pan; uniform float u_zoom, u_fish, u_blur, u_blurDist, u_flash, u_vig, u_vigSoft, u_ca, u_hal, u_peep, u_green, u_noise, u_dirt, u_orig;
+uniform vec4 u_l1, u_l2;
+uniform float u_seed;
+vec2 A;
+vec4 S(vec2 q){ vec2 uv = q / A / u_zoom + .5 + u_pan; if (uv.x<0.||uv.x>1.||uv.y<0.||uv.y>1.) return vec4(0.,0.,0.,1.); return texture2D(u_tex, uv); }
+vec3 layer(float m, float sc, vec2 p){
+  p /= sc;
+  if (m == 1.) { float v = 0.;
+    for (int i = 0; i < 10; i++) { float fi = float(i) + u_seed;
+      float a = hash(vec2(fi, 1.3)) * 3.1416; vec2 n = vec2(cos(a), sin(a)); vec2 c = vec2(hash(vec2(fi, 2.)), hash(vec2(fi, 3.))) - .5;
+      float d = abs(dot(p - c, n)); float along = dot(p - c, vec2(-n.y, n.x));
+      v += exp(-d * 900.) * step(abs(along), hash(vec2(fi, 4.)) * .4) * (.4 + .6 * noise(vec2(along * 40., fi))); }
+    return vec3(v); }
+  if (m == 2.) { vec2 g = p * 28.; vec2 id = floor(g); vec2 f = fract(g) - .5; float h = hash(id + u_seed);
+    vec2 o = vec2(hash(id + 7.), hash(id + 9.)) - .5; float r = .05 + .12 * hash(id + 3.);
+    return vec3(step(.86, h) * smoothstep(r, r * .3, length(f - o * .5))); }
+  if (m == 3.) { float a = smoothstep(.9, 0., length(p - vec2(.75, -.35))); float b = smoothstep(.6, 0., length(p - vec2(-.8, .45)));
+    return vec3(1., .45, .12) * a * (.7 + .5 * fbm(p * 3. + u_seed)) + vec3(1., .15, .3) * b * .7; }
+  if (m == 4.) { float a = smoothstep(.9, 0., length(p - vec2(-.75, -.3)));
+    return vec3(.2, .7, 1.) * a * (.7 + .5 * fbm(p * 3. + u_seed)) + vec3(.8, .3, 1.) * smoothstep(.5, 0., length(p - vec2(.8, .5))) * .6; }
+  if (m == 5.) { vec3 v = vec3(0.); for (int i = 0; i < 14; i++) { float fi = float(i) + u_seed; vec2 c = vec2(hash(vec2(fi, 5.)), hash(vec2(fi, 6.))) - .5; c.x *= 1.6; float r = .03 + .08 * hash(vec2(fi, 7.));
+      v += mix(vec3(1., .8, .5), vec3(.6, .8, 1.), hash(vec2(fi, 8.))) * smoothstep(r, r * .85, length(p - c)) * .5; } return v; }
+  return vec3(0.);
+}
+vec3 blend(vec3 c, vec4 L, vec2 p){ if (L.x == 0.) return c; vec3 t = layer(L.x, L.w, p);
+  return L.y < .5 ? 1. - (1. - c) * (1. - t * L.z) : c * (1. - t * L.z); }
+void main(){
+  A = vec2(u_res.x / u_res.y, 1.);
+  vec2 p = (v_uv - .5) * A;
+  float R = .5 * min(A.x, 1.);
+  float r = length(p) / R;
+  if (u_orig > .5) { gl_FragColor = vec4(S(p).rgb, 1.); return; }
+  float k = u_fish * 1.6;
+  vec2 q = p * (1. + k * r * r) / (1. + k * .35);
+  // aberração cromática
+  float ca = u_ca * .035 * r * r;
+  vec3 col = vec3(S(q * (1. + ca)).r, S(q).g, S(q * (1. - ca)).b);
+  // desfoque radial nas bordas
+  float bl = smoothstep(u_blurDist, 1.05, r) * u_blur * .02;
+  vec3 acc = col; vec3 bright = max(col - .6, 0.);
+  if (bl > 0.0001) {
+    for (int i = 0; i < 12; i++) { float a = float(i) * .5236; vec2 o = vec2(cos(a), sin(a)) * bl * (1. + mod(float(i), 2.));
+      vec3 s = S(q + o).rgb; acc += s; bright += max(s - .6, 0.); }
+    acc /= 13.; bright /= 13.;
+  }
+  col = acc;
+  // halation
+  vec3 hb = vec3(0.); for (int i = 0; i < 8; i++) { float a = float(i) * .785; hb += max(S(q + vec2(cos(a), sin(a)) * .012).rgb - .55, 0.); }
+  col += vec3(1., .25, .1) * dot(hb / 8., vec3(.33)) * u_hal * 2.5;
+  // flash
+  col += u_flash * exp(-r * r * 2.5) * .55; col = mix(col, col * col * 1.6, u_flash * .3);
+  col = mix(lum3(col), col, 1.15);
+  // vinheta
+  col *= 1. - u_vig * smoothstep(1. - u_vigSoft, 1.08, r);
+  col = blend(col, u_l1, p); col = blend(col, u_l2, p);
+  // sujeira e ruído
+  float dirt = smoothstep(.62, .78, fbm(p * 7. + u_seed * 3.)) * u_dirt;
+  col *= 1. - dirt * .6;
+  col += (hash(v_uv * u_res + fract(u_time)) - .5) * u_noise * .25;
+  if (u_peep > .5) { float e = smoothstep(1., .985, r); vec3 bg = u_green > .5 ? vec3(0., .694, .251) : vec3(0.); col = mix(bg, col, e); }
+  gl_FragColor = vec4(clamp(col, 0., 1.), 1.);
+}`;
+
+let pan = [0, 0], orig = false;
+const L = (n) => [+$(`l${n}m`).value, +$(`l${n}b`).value, $(`l${n}o`).value / 100, $(`l${n}s`).value / 100];
+const tool = new MediaTool({
+  preview: $('pv'), canvas: $('cv'), frag: FRAG,
+  uniforms: () => ({
+    u_pan: pan, u_zoom: $('zoom').value / 100, u_fish: $('fish').value / 100, u_blur: $('blur').value / 100, u_blurDist: $('blurDist').value / 100,
+    u_flash: $('flash').value / 100, u_vig: $('vig').value / 100, u_vigSoft: $('vigSoft').value / 100, u_ca: $('ca').value / 100, u_hal: $('hal').value / 100,
+    u_peep: $('peep').checked, u_green: $('green').checked, u_noise: $('noise').value / 100, u_dirt: $('dirt').value / 100, u_orig: orig,
+    u_l1: L(1), u_l2: L(2), u_seed: 3.7,
+  }),
+});
+document.getElementById('panel').addEventListener('input', () => tool.frame(true));
+
+// arrastar pra enquadrar
+const cv = $('cv'); let drag = null;
+cv.addEventListener('pointerdown', (e) => { drag = [e.clientX, e.clientY, ...pan]; cv.setPointerCapture(e.pointerId); cv.style.cursor = 'grabbing'; });
+cv.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  const r = cv.getBoundingClientRect(), z = $('zoom').value / 100;
+  pan = [drag[2] - (e.clientX - drag[0]) / r.width / z, drag[3] - (e.clientY - drag[1]) / r.height / z];
+  tool.frame(true);
+});
+cv.addEventListener('pointerup', () => { drag = null; cv.style.cursor = 'grab'; });
+
+const ob = $('origBtn');
+const setOrig = (v) => { orig = v; tool.frame(true); };
+ob.addEventListener('pointerdown', () => setOrig(true));
+['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => ob.addEventListener(ev, () => setOrig(false)));
+$('resetBtn').onclick = () => {
+  document.querySelectorAll('#panel input[type=range]').forEach((r) => { r.value = r.defaultValue; r.dispatchEvent(new Event('input', { bubbles: true })); });
+  document.querySelectorAll('#panel input[type=checkbox]').forEach((c) => (c.checked = c.defaultChecked));
+  document.querySelectorAll('#panel select').forEach((s) => (s.selectedIndex = [...s.options].findIndex((o) => o.defaultSelected) || 0));
+  pan = [0, 0]; tool.frame(true);
+};
+$('loadBtn').onclick = () => tool.pick();
+$('demoBtn').onclick = () => tool.useDemo();
+$('pauseBtn').onclick = () => { $('pauseBtn').textContent = tool.togglePause() ? '▶ Play' : '⏸ Pause'; };
+$('stopBtn').onclick = () => tool.stop();
+$('soundBtn').onclick = () => { $('soundBtn').textContent = tool.toggleSound() ? '🔊 Som' : '🔇 Som'; };
+$('frameBtn').onclick = () => tool.savePNG('fisheye-frame');
+$('saveBtn').onclick = () => tool.savePNG('fisheye');
+$('recBtn').onclick = () => tool.toggleRecord($('recBtn'), 5, 'fisheye');
+</script>
+</body>
+</html>

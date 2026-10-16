@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Áudio analógico · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+<script src="assets/mp3.js"></script>
+<style>
+  #scope { width: 100%; height: 180px; background: #001400; border: 2px inset #888; display: block; }
+  .main { width: min(620px, 100%); }
+  .conv { width: min(380px, 100%); }
+  progress { width: 100%; }
+  #fileName { font-size: 12px; color: #444; word-break: break-all; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app main" data-title="audio_analógico.exe" data-icon="🎙️">
+    <div class="window-body">
+      <div class="toolbar">
+        <a class="btn" href="index.html">🏠 Home</a>
+        <button data-open="conv">🎬 Extrair MP3 de vídeo</button>
+        <button data-open="help">? Dicas</button>
+      </div>
+      <div class="stack">
+        <fieldset>
+          <legend>1. Entrada de áudio</legend>
+          <div class="btns">
+            <button id="openBtn">📂 Abrir áudio/vídeo</button>
+            <button id="micBtn">🎤 Gravar</button>
+          </div>
+          <p id="fileName">Nenhum áudio carregado.</p>
+        </fieldset>
+        <fieldset>
+          <legend>2. Efeitos e texturas</legend>
+          <div class="stack">
+            <div class="row"><span class="lbl">Perfil:</span><select id="prof" style="flex:1"></select></div>
+            <label class="field"><span>Intensidade <output data-suffix="%"></output></span><input type="range" id="amt" min="0" max="100" value="80"></label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>3. Osciloscópio</legend>
+          <canvas id="scope" width="1000" height="260"></canvas>
+          <div class="btns" style="margin-top:8px">
+            <button id="playBtn">▶ Reproduzir</button>
+            <button id="stopBtn">⏹ Parar</button>
+            <span class="spacer" style="flex:1"></span>
+            <select id="kbps"><option value="128">128 kbps</option><option value="192" selected>192 kbps</option><option value="320">320 kbps</option></select>
+            <button id="dlBtn">📥 Baixar MP3</button>
+          </div>
+          <progress id="prog" max="1" value="0" hidden></progress>
+        </fieldset>
+      </div>
+    </div>
+  </section>
+
+  <section class="window conv closed" id="conv" data-title="conversor_mp4_to_mp3.exe" data-icon="💿">
+    <div class="window-body">
+      <p style="margin-top:0"><b>Extrair áudio de vídeo (MP4 → MP3)</b></p>
+      <div class="stack">
+        <button id="cOpen">1. Selecionar vídeo (MP4, WEBM, MOV)</button>
+        <div class="row"><span class="lbl">Qualidade:</span><select id="cKbps" style="flex:1"><option value="128">128 kbps (padrão)</option><option value="192">192 kbps (boa)</option><option value="320">320 kbps (alta)</option></select></div>
+        <button id="cGo" disabled>🎵 Converter para MP3</button>
+        <progress id="cProg" max="1" value="0"></progress>
+        <div class="status-line" id="cSt">&gt; Pronto. Aguardando arquivo…</div>
+        <div class="btns grow"><button id="cDl" disabled>💾 Baixar MP3</button><button id="cUse" disabled>➡️ Usar no áudio analógico</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="dicas_de_uso.txt - Bloco de Notas" data-icon="📝">
+    <div class="window-body">
+      <p><b>Áudio analógico:</b> carregue um arquivo ou grave sua voz. Teste os perfis e a intensidade e clique em Reproduzir. Quando gostar, baixe o MP3.</p>
+      <p><b>Extrair MP3 de vídeo:</b> se o seu áudio está num vídeo, extraia o MP3 primeiro (ou abra o vídeo direto aqui, também funciona).</p>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">OK</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+// hp/lp: filtros · peak: [freq, ganho] · drive: distorção · hiss/hum/whine: ruídos · wow: oscilação de fita · verb: eco de ambiente (s)
+const PROFILES = {
+  clean: { n: 'Original (limpo)' },
+  am: { n: 'Rádio AM antigo', hp: 280, lp: 3600, peak: [1200, 4], drive: .35, hiss: .025, fade: .25, mono: 1 },
+  tv: { n: 'TV de tubo (CRT)', hp: 160, lp: 6500, peak: [900, 5], drive: .18, hum: .012, whine: .004, verb: .25, mono: 1 },
+  mega: { n: 'Megafone / P.A.', hp: 650, lp: 3000, peak: [1800, 12], drive: .8, verb: .6, mono: 1 },
+  cassette: { n: 'Fita cassete', hp: 50, lp: 9000, drive: .2, hiss: .018, wow: 1, mono: 0 },
+  vinyl: { n: 'Lo-fi / vinil', hp: 90, lp: 5200, drive: .15, hiss: .006, crackle: 1, wow: .5, crush: 10 },
+  phone: { n: 'Telefone anos 90', hp: 420, lp: 3200, peak: [1500, 6], drive: .45, hiss: .01, mono: 1, comp: 1 },
+  market: { n: 'Alto-falante de supermercado', hp: 500, lp: 4200, peak: [2200, 6], drive: .25, verb: 2.4, mono: 1 },
+  police: { n: 'Rádio policial (walkie-talkie)', hp: 750, lp: 2700, peak: [1600, 10], drive: .95, hiss: .03, squelch: 1, mono: 1, comp: 1 },
+};
+for (const [k, p] of Object.entries(PROFILES)) $('prof').add(new Option(p.n, k));
+$('prof').value = 'cassette';
+
+let buffer = null, baseName = 'audio';
+
+function noiseBuffer(ctx, secs = 2) {
+  const b = ctx.createBuffer(1, ctx.sampleRate * secs, ctx.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  return b;
+}
+function crackleBuffer(ctx, secs = 4) {
+  const b = ctx.createBuffer(1, ctx.sampleRate * secs, ctx.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) if (Math.random() < .0004) { const a = (Math.random() * .8 + .2) * (Math.random() < .5 ? -1 : 1); for (let j = 0; j < 30 && i + j < d.length; j++) d[i + j] += a * Math.exp(-j / 5); }
+  return b;
+}
+function impulse(ctx, secs) {
+  const n = Math.max(1, Math.floor(ctx.sampleRate * secs)), b = ctx.createBuffer(2, n, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); }
+  return b;
+}
+function curve(k) {
+  const n = 2048, c = new Float32Array(n), a = k * 60 + 1;
+  for (let i = 0; i < n; i++) { const x = i * 2 / n - 1; c[i] = (1 + a) * x / (1 + a * Math.abs(x)) / (1 + a * .15); }
+  return c;
+}
+function crushCurve(bits) { const n = 4096, c = new Float32Array(n), q = Math.pow(2, bits); for (let i = 0; i < n; i++) { const x = i * 2 / n - 1; c[i] = Math.round(x * q) / q; } return c; }
+
+/** Monta a cadeia de efeitos. `dur` é o instante (no relógio do contexto) em que tudo para. Retorna o nó de saída. */
+function build(ctx, src, P, amt, dur) {
+  const out = ctx.createGain();
+  const dry = ctx.createGain(), wet = ctx.createGain();
+  dry.gain.value = P.n === PROFILES.clean.n ? 1 : 1 - amt;
+  wet.gain.value = P.n === PROFILES.clean.n ? 0 : amt;
+  src.connect(dry).connect(out);
+  if (P === PROFILES.clean) return out;
+  let node = src;
+  const chain = (n) => { node.connect(n); node = n; return n; };
+  if (P.mono) { const m = ctx.createGain(); m.channelCount = 1; m.channelCountMode = 'explicit'; m.channelInterpretation = 'speakers'; chain(m); }
+  if (P.wow) {
+    const dl = chain(ctx.createDelay(.05)); dl.delayTime.value = .01;
+    const w1 = ctx.createOscillator(), g1 = ctx.createGain(); w1.frequency.value = .55; g1.gain.value = .0022 * P.wow;
+    const w2 = ctx.createOscillator(), g2 = ctx.createGain(); w2.frequency.value = 6.3; g2.gain.value = .00025 * P.wow;
+    w1.connect(g1).connect(dl.delayTime); w2.connect(g2).connect(dl.delayTime);
+    w1.start(); w2.start(); w1.stop(dur); w2.stop(dur);
+  }
+  if (P.hp) { const f = chain(ctx.createBiquadFilter()); f.type = 'highpass'; f.frequency.value = P.hp; f.Q.value = .9; const f2 = chain(ctx.createBiquadFilter()); f2.type = 'highpass'; f2.frequency.value = P.hp; }
+  if (P.peak) { const f = chain(ctx.createBiquadFilter()); f.type = 'peaking'; f.frequency.value = P.peak[0]; f.gain.value = P.peak[1]; f.Q.value = 1.2; }
+  if (P.drive) { const ws = chain(ctx.createWaveShaper()); ws.curve = curve(P.drive); ws.oversample = '2x'; }
+  if (P.crush) { const ws = chain(ctx.createWaveShaper()); ws.curve = crushCurve(P.crush); }
+  if (P.lp) { const f = chain(ctx.createBiquadFilter()); f.type = 'lowpass'; f.frequency.value = P.lp; f.Q.value = .9; const f2 = chain(ctx.createBiquadFilter()); f2.type = 'lowpass'; f2.frequency.value = P.lp; }
+  if (P.comp) { const c = chain(ctx.createDynamicsCompressor()); c.threshold.value = -30; c.ratio.value = 8; }
+  if (P.fade) {
+    const g = chain(ctx.createGain()); g.gain.value = .85;
+    const l = ctx.createOscillator(), lg = ctx.createGain(); l.frequency.value = .18; lg.gain.value = P.fade * .5;
+    l.connect(lg).connect(g.gain); l.start(); l.stop(dur);
+  }
+  const mix = ctx.createGain();
+  node.connect(mix);
+  if (P.verb) {
+    const cv = ctx.createConvolver(); cv.buffer = impulse(ctx, P.verb);
+    const vg = ctx.createGain(); vg.gain.value = Math.min(.7, .25 + P.verb * .15);
+    node.connect(cv).connect(vg).connect(mix);
+  }
+  const addSrc = (buf, gainV, filter) => {
+    const s = ctx.createBufferSource(); s.buffer = buf; s.loop = true;
+    const g = ctx.createGain(); g.gain.value = gainV;
+    let n = s;
+    if (filter) { const f = ctx.createBiquadFilter(); Object.assign(f, {}); f.type = filter[0]; f.frequency.value = filter[1]; n.connect(f); n = f; }
+    n.connect(g).connect(mix); s.start(); s.stop(dur); return g;
+  };
+  if (P.hiss) addSrc(noiseBuffer(ctx), P.hiss, ['highpass', 3000]);
+  if (P.crackle) addSrc(crackleBuffer(ctx), .5, ['highpass', 800]);
+  if (P.hum) { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = 60; g.gain.value = P.hum; o.connect(g).connect(mix); o.start(); o.stop(dur); }
+  if (P.whine) { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = 15734; g.gain.value = P.whine; o.connect(g).connect(mix); o.start(); o.stop(dur); }
+  if (P.squelch) {
+    const g = addSrc(noiseBuffer(ctx), 0, ['bandpass', 2000]);
+    const t = ctx.currentTime, rel = dur - t;
+    g.gain.setValueAtTime(.35, t); g.gain.linearRampToValueAtTime(0, t + .25);
+    g.gain.setValueAtTime(0, t + Math.max(.3, rel - .35)); g.gain.linearRampToValueAtTime(.35, t + rel - .05); g.gain.linearRampToValueAtTime(0, t + rel);
+  }
+  mix.connect(wet).connect(out);
+  return out;
+}
+
+// ---------- entrada ----------
+async function loadFile(file) {
+  $('fileName').textContent = 'Carregando ' + file.name + '…';
+  try {
+    buffer = await MP3.decodeFile(file);
+    baseName = OS.slug(file.name.replace(/\.[^.]+$/, ''));
+    $('fileName').textContent = `🎵 ${file.name} · ${buffer.duration.toFixed(1)} s · ${buffer.sampleRate} Hz`;
+  } catch (e) { $('fileName').textContent = 'Nenhum áudio carregado.'; OS.dialog('Erro', e.message, '❌'); }
+}
+$('openBtn').onclick = async () => { const f = await OS.pickFile('audio/*,video/*'); if (f) loadFile(f); };
+OS.dropZone(document.querySelector('.main'), loadFile, /^(audio|video)\//);
+
+let micRec = null;
+$('micBtn').onclick = async () => {
+  if (micRec) { micRec.stop(); return; }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const chunks = [];
+    micRec = new MediaRecorder(stream);
+    micRec.ondataavailable = (e) => chunks.push(e.data);
+    micRec.onstop = async () => {
+      stream.getTracks().forEach((t) => t.stop());
+      micRec = null; $('micBtn').textContent = '🎤 Gravar';
+      const blob = new Blob(chunks, { type: chunks[0]?.type || 'audio/webm' });
+      loadFile(new File([blob], 'gravacao.webm', { type: blob.type }));
+    };
+    micRec.start();
+    $('micBtn').textContent = '⏹ Parar gravação';
+    $('fileName').textContent = '🔴 Gravando… clique em Parar quando terminar.';
+  } catch { OS.dialog('Microfone', 'Não consegui acessar o microfone. Verifique a permissão do navegador.', '⚠️'); }
+};
+
+// ---------- reprodução + osciloscópio ----------
+let ac, playing, analyser;
+function stop() { if (playing) { try { playing.stop(); } catch {} playing = null; } }
+$('playBtn').onclick = async () => {
+  if (!buffer) return OS.dialog('Sem áudio', 'Carregue ou grave um áudio primeiro.', '⚠️');
+  stop();
+  ac = ac || new AudioContext();
+  await ac.resume();
+  analyser = analyser || Object.assign(ac.createAnalyser(), { fftSize: 2048 });
+  const s = ac.createBufferSource(); s.buffer = buffer;
+  const dur = buffer.duration + .5;
+  const out = build(ac, s, PROFILES[$('prof').value], $('amt').value / 100, ac.currentTime + dur);
+  out.connect(analyser); analyser.connect(ac.destination);
+  s.start(); playing = s;
+  s.onended = () => { if (playing === s) playing = null; };
+};
+$('stopBtn').onclick = stop;
+$('prof').onchange = () => { if (playing) $('playBtn').click(); };
+$('amt').onchange = () => { if (playing) $('playBtn').click(); };
+
+const sc = $('scope'), sx = sc.getContext('2d'), wave = new Uint8Array(2048);
+(function drawScope() {
+  const w = sc.width, h = sc.height;
+  sx.fillStyle = 'rgba(0,20,0,.45)'; sx.fillRect(0, 0, w, h);
+  sx.strokeStyle = 'rgba(0,255,90,.12)'; sx.lineWidth = 1;
+  for (let i = 1; i < 10; i++) { sx.beginPath(); sx.moveTo(i * w / 10, 0); sx.lineTo(i * w / 10, h); sx.stroke(); }
+  for (let i = 1; i < 4; i++) { sx.beginPath(); sx.moveTo(0, i * h / 4); sx.lineTo(w, i * h / 4); sx.stroke(); }
+  sx.strokeStyle = '#3dff6e'; sx.lineWidth = 2.5; sx.shadowColor = '#3dff6e'; sx.shadowBlur = 8;
+  sx.beginPath();
+  if (analyser && playing) { analyser.getByteTimeDomainData(wave); for (let i = 0; i < wave.length; i++) { const x = i / wave.length * w, y = wave[i] / 255 * h; i ? sx.lineTo(x, y) : sx.moveTo(x, y); } }
+  else { sx.moveTo(0, h / 2); sx.lineTo(w, h / 2); }
+  sx.stroke(); sx.shadowBlur = 0;
+  requestAnimationFrame(drawScope);
+})();
+
+// ---------- exportar ----------
+async function renderOffline() {
+  const sr = buffer.sampleRate, len = Math.ceil((buffer.duration + .3) * sr);
+  const oc = new OfflineAudioContext(2, len, sr);
+  const s = oc.createBufferSource(); s.buffer = buffer;
+  build(oc, s, PROFILES[$('prof').value], $('amt').value / 100, len / sr).connect(oc.destination);
+  s.start();
+  return oc.startRendering();
+}
+$('dlBtn').onclick = async () => {
+  if (!buffer) return OS.dialog('Sem áudio', 'Carregue ou grave um áudio primeiro.', '⚠️');
+  const b = $('dlBtn'); b.disabled = true; $('prog').hidden = false; $('prog').value = 0;
+  try {
+    const rendered = await renderOffline();
+    const mp3 = await MP3.encode(rendered, +$('kbps').value, (p) => ($('prog').value = p));
+    OS.download(mp3, `${baseName}-${$('prof').value}.mp3`);
+  } catch (e) { console.error(e); OS.dialog('Erro', 'Falha ao gerar o MP3.', '❌'); }
+  b.disabled = false; $('prog').hidden = true;
+};
+
+// ---------- conversor ----------
+let cFile = null, cBlob = null;
+$('cOpen').onclick = async () => {
+  const f = await OS.pickFile('video/*,audio/*');
+  if (!f) return;
+  cFile = f; cBlob = null;
+  $('cSt').textContent = '> ' + f.name; $('cGo').disabled = false; $('cDl').disabled = $('cUse').disabled = true; $('cProg').value = 0;
+};
+$('cGo').onclick = async () => {
+  $('cGo').disabled = true; $('cSt').textContent = '> Lendo áudio do vídeo…';
+  try {
+    const buf = await MP3.decodeFile(cFile);
+    $('cSt').textContent = '> Codificando MP3…';
+    cBlob = await MP3.encode(buf, +$('cKbps').value, (p) => ($('cProg').value = p));
+    $('cSt').textContent = `> Concluído! ${(cBlob.size / 1e6).toFixed(2)} MB`;
+    $('cDl').disabled = $('cUse').disabled = false;
+  } catch (e) { $('cSt').textContent = '> Erro: ' + e.message; }
+  $('cGo').disabled = false;
+};
+$('cDl').onclick = () => OS.download(cBlob, OS.slug(cFile.name.replace(/\.[^.]+$/, '')) + '.mp3');
+$('cUse').onclick = () => loadFile(new File([cBlob], cFile.name.replace(/\.[^.]+$/, '') + '.mp3', { type: 'audio/mpeg' }));
+</script>
+</body>
+</html>

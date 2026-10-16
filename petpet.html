@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Petpet · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<style>
+  .boxes { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+  .box { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .box > b { font-size: 12px; }
+  #cv { width: 256px; height: 256px; border: 1px solid #888; image-rendering: auto; touch-action: none; }
+  #cv.adjust { cursor: move; outline: 2px dashed #316ac5; outline-offset: 2px; }
+  #outImg { width: 256px; height: 256px; border: 1px solid #888; object-fit: contain; }
+  #drop { border: 2px dashed #888; padding: 14px; text-align: center; cursor: pointer; background: rgba(255,255,255,.6); }
+  #drop.over { border-color: #316ac5; background: #dbe8fb; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="petpet.exe" data-icon="🫳" style="width:min(900px,100%)">
+    <div class="window-body">
+      <div class="toolbar"><a class="btn" href="index.html">🏠 Home</a><button data-open="help">? Ajuda</button></div>
+      <div class="tool">
+        <div class="panel" id="panel">
+          <fieldset>
+            <legend>Upload</legend>
+            <div class="stack">
+              <div id="drop" tabindex="0" role="button">📂 <b>escolher arquivo</b><br>ou solte / cole aqui</div>
+              <div class="row"><input type="text" id="url" placeholder="ou cole o link de uma imagem" style="flex:1"><button id="urlBtn">OK</button></div>
+              <p class="hint">Link pode não funcionar: alguns sites bloqueiam imagens usadas fora deles.</p>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Ajustes</legend>
+            <div class="stack">
+              <div class="field-row"><input type="checkbox" id="adjust"><label for="adjust">Modo ajuste (arraste a imagem na prévia, ou use as setas)</label></div>
+              <div class="field-row"><input type="checkbox" id="flip"><label for="flip">Espelhar</label></div>
+              <label class="field"><span>Tamanho <output data-suffix="%"></output></span><input type="range" id="size" min="30" max="150" value="85"></label>
+              <label class="field"><span>Squish (amassar) <output data-suffix="%"></output></span><input type="range" id="squish" min="0" max="100" value="60"></label>
+              <label class="field"><span>Velocidade <output data-suffix=" fps"></output></span><input type="range" id="fps" min="4" max="30" value="16"></label>
+              <label class="field"><span>Cor da mão</span><select id="skin"><option value="cartoon">Cartoon branca</option><option value="light">Pele clara</option><option value="mid">Pele média</option><option value="dark">Pele escura</option><option value="pink">Rosa</option></select></label>
+              <label class="field"><span>Fundo</span><select id="bg"><option value="clear">Transparente</option><option value="white">Branco</option><option value="black">Preto</option><option value="green">Verde (chroma)</option></select></label>
+              <label class="field"><span>Tamanho do GIF</span><select id="out"><option value="112">112 px (emoji)</option><option value="256" selected>256 px</option><option value="512">512 px</option></select></label>
+              <button id="resetBtn">🔄 Resetar</button>
+            </div>
+          </fieldset>
+        </div>
+        <div class="boxes">
+          <div class="box"><b>prévia</b><canvas id="cv" width="512" height="512" class="chk"></canvas></div>
+          <div class="box"><b>resultado</b><img id="outImg" class="chk" alt="GIF gerado"><div class="btns"><button id="genBtn">✨ Gerar GIF</button><button id="dlBtn" disabled>💾 Baixar</button></div><p class="hint" id="info"></p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="leia-me.txt" data-icon="📝">
+    <div class="window-body">
+      <ul>
+        <li>Suba uma imagem (de preferência sem fundo: use o removedor de fundo antes!).</li>
+        <li><b>Modo ajuste</b>: arraste a imagem pra posicionar. As setas do teclado movem de pixel em pixel.</li>
+        <li>Salve o GIF pra compartilhar. O link da prévia só existe no seu navegador.</li>
+      </ul>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">OK</button></div>
+    </div>
+  </section>
+</main>
+
+<script type="module">
+import { GIFEncoder, quantize, applyPalette } from 'https://cdn.jsdelivr.net/npm/gifenc@1.0.3/dist/gifenc.esm.js';
+
+const $ = (id) => document.getElementById(id);
+const FRAMES = 5;
+const SQ = [0, .55, 1, .6, .15]; // quanto a mão aperta em cada quadro
+const SKINS = { cartoon: ['#ffffff', '#e8e8e8'], light: ['#ffdcc0', '#f2bf9a'], mid: ['#d9a073', '#bd8458'], dark: ['#8d5a3b', '#6e4329'], pink: ['#ffc0d8', '#f29ab9'] };
+let img = sampleImage();
+let off = [0, 0];
+
+function sampleImage() {
+  const c = document.createElement('canvas'); c.width = c.height = 300;
+  const g = c.getContext('2d');
+  g.fillStyle = '#ffb347'; g.beginPath(); g.ellipse(150, 165, 120, 110, 0, 0, 7); g.fill();
+  g.beginPath(); g.moveTo(45, 110); g.lineTo(70, 20); g.lineTo(130, 70); g.fill();
+  g.beginPath(); g.moveTo(255, 110); g.lineTo(230, 20); g.lineTo(170, 70); g.fill();
+  g.fillStyle = '#222'; g.beginPath(); g.arc(105, 150, 14, 0, 7); g.arc(195, 150, 14, 0, 7); g.fill();
+  g.strokeStyle = '#222'; g.lineWidth = 6; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(130, 200); g.quadraticCurveTo(150, 215, 170, 200); g.stroke();
+  return c;
+}
+
+/** Mão de desenho animado vindo do canto superior direito. p = 0 (solta) … 1 (apertando). */
+function drawHand(x, S, p, top, cx) {
+  const [fill, shade] = SKINS[$('skin').value];
+  x.save();
+  x.translate(cx + S * .06, top - S * .36 + p * S * .1);
+  x.rotate(-.18);
+  x.lineWidth = S * .022; x.strokeStyle = '#1a1a1a'; x.lineJoin = 'round'; x.lineCap = 'round';
+  const shape = (fn) => { x.beginPath(); fn(); x.fillStyle = fill; x.fill(); x.stroke(); };
+  // braço/punho saindo pra fora do quadro
+  shape(() => { x.roundRect(S * .05, -S * .35, S * .28, S * .42, S * .1); });
+  // dedos (de trás pra frente)
+  const fingers = [[-.2, .19, .075], [-.1, .25, .078], [.0, .27, .078], [.1, .24, .074]];
+  fingers.forEach(([fx, len, w], i) => {
+    shape(() => { x.ellipse(S * fx, S * (.06 + len * .55), S * w, S * len * .62, -.15 + i * .06, 0, 7); });
+  });
+  // palma por cima
+  shape(() => { x.ellipse(S * -.02, S * .03, S * .25, S * .15, 0, 0, 7); });
+  // dedão
+  shape(() => { x.ellipse(S * .2, S * .1, S * .07, S * .13, -.7, 0, 7); });
+  x.fillStyle = shade; x.globalAlpha = .55;
+  x.beginPath(); x.ellipse(S * -.02, S * .08, S * .18, S * .05, 0, 0, Math.PI); x.fill();
+  x.restore();
+}
+
+function renderFrame(x, S, i) {
+  const p = SQ[i % FRAMES];
+  x.clearRect(0, 0, S, S);
+  const bg = { white: '#fff', black: '#000', green: '#00b140' }[$('bg').value];
+  if (bg) { x.fillStyle = bg; x.fillRect(0, 0, S, S); }
+  const k = +$('size').value / 100, sq = +$('squish').value / 100 * p;
+  const base = S * .78 * k;
+  const ar = img.width / img.height;
+  let w = ar >= 1 ? base : base * ar, h = ar >= 1 ? base / ar : base;
+  w *= 1 + sq * .22; h *= 1 - sq * .28;
+  const cx = S / 2 + off[0] * S, bottom = S * .98 + off[1] * S;
+  x.save();
+  x.translate(cx, bottom - h);
+  if ($('flip').checked) x.scale(-1, 1);
+  x.drawImage(img, -w / 2, 0, w, h);
+  x.restore();
+  drawHand(x, S, p, bottom - h, cx);
+}
+
+// ---------- prévia ----------
+const cv = $('cv'), cx = cv.getContext('2d');
+let frame = 0, last = 0;
+function loop(t) {
+  if (t - last > 1000 / +$('fps').value) { frame = (frame + 1) % FRAMES; last = t; renderFrame(cx, cv.width, frame); }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// ---------- entrada ----------
+function setImage(src) {
+  const i = new Image();
+  i.crossOrigin = 'anonymous';
+  i.onload = () => { img = i; off = [0, 0]; };
+  i.onerror = () => OS.dialog('Ops', 'Não consegui carregar essa imagem. Se for um link, o site pode estar bloqueando: baixe e suba o arquivo.', '⚠️');
+  i.src = src;
+}
+const drop = $('drop');
+drop.onclick = async () => { const f = await OS.pickFile('image/*'); if (f) setImage(URL.createObjectURL(f)); };
+drop.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') drop.click(); };
+OS.dropZone(drop, (f) => setImage(URL.createObjectURL(f)), /^image\//);
+OS.dropZone(cv, (f) => setImage(URL.createObjectURL(f)), /^image\//);
+$('urlBtn').onclick = () => $('url').value.trim() && setImage($('url').value.trim());
+
+// ajuste por arraste e teclado
+$('adjust').onchange = () => cv.classList.toggle('adjust', $('adjust').checked);
+let drag = null;
+cv.addEventListener('pointerdown', (e) => { if (!$('adjust').checked) return; drag = [e.clientX, e.clientY, ...off]; cv.setPointerCapture(e.pointerId); });
+cv.addEventListener('pointermove', (e) => { if (!drag) return; const r = cv.getBoundingClientRect(); off = [drag[2] + (e.clientX - drag[0]) / r.width, drag[3] + (e.clientY - drag[1]) / r.height]; });
+cv.addEventListener('pointerup', () => (drag = null));
+window.addEventListener('keydown', (e) => {
+  if (!$('adjust').checked || e.target.closest('input[type=text]')) return;
+  const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+  if (d) { off = [off[0] + d[0] / 112, off[1] + d[1] / 112]; e.preventDefault(); }
+});
+$('resetBtn').onclick = () => {
+  off = [0, 0];
+  document.querySelectorAll('#panel input[type=range]').forEach((r) => { r.value = r.defaultValue; r.dispatchEvent(new Event('input')); });
+  $('flip').checked = false;
+};
+
+// ---------- GIF ----------
+let gifBlob = null;
+$('genBtn').onclick = () => {
+  const S = +$('out').value;
+  const c = document.createElement('canvas'); c.width = c.height = S;
+  const x = c.getContext('2d', { willReadFrequently: true });
+  const gif = GIFEncoder();
+  const delay = Math.round(1000 / +$('fps').value);
+  const clear = $('bg').value === 'clear';
+  for (let i = 0; i < FRAMES; i++) {
+    renderFrame(x, S, i);
+    const { data } = x.getImageData(0, 0, S, S);
+    if (clear) {
+      const palette = quantize(data, 256, { format: 'rgba4444', oneBitAlpha: true, clearAlpha: true });
+      const index = applyPalette(data, palette, 'rgba4444');
+      const ti = palette.findIndex((p) => p[3] === 0);
+      gif.writeFrame(index, S, S, { palette, delay, transparent: ti >= 0, transparentIndex: Math.max(0, ti), dispose: 2 });
+    } else {
+      const palette = quantize(data, 256);
+      gif.writeFrame(applyPalette(data, palette), S, S, { palette, delay });
+    }
+  }
+  gif.finish();
+  gifBlob = new Blob([gif.bytes()], { type: 'image/gif' });
+  if ($('outImg').src) URL.revokeObjectURL($('outImg').src);
+  $('outImg').src = URL.createObjectURL(gifBlob);
+  $('dlBtn').disabled = false;
+  $('info').textContent = `${S}×${S} · ${FRAMES} quadros · ${(gifBlob.size / 1024).toFixed(0)} KB`;
+};
+$('dlBtn').onclick = () => gifBlob && OS.download(gifBlob, 'petpet.gif');
+$('genBtn').click();
+</script>
+</body>
+</html>

@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Removedor de fundo · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  #modelStatus { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  #modelBar { width: 140px; }
+  #drop { border: 2px dashed #888; padding: 26px 16px; text-align: center; cursor: pointer; background: rgba(255,255,255,.6); }
+  #drop strong { display: block; font-size: 15px; margin-bottom: 4px; }
+  #drop.over { border-color: #316ac5; background: #dbe8fb; }
+  #list { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 55vh; overflow-y: auto; }
+  #list li { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #aaa; padding: 6px 8px; }
+  #list .thumb { width: 56px; height: 56px; flex: none; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #ccc; }
+  #list .thumb img { max-width: 100%; max-height: 100%; }
+  #list .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #list .name small { display: block; color: #666; }
+  #list .status { font-size: 12px; color: #666; white-space: nowrap; }
+  #list .status.ok { color: #138a36; font-weight: bold; }
+  #list .status.err { color: #c00; }
+  #list .acts { display: flex; gap: 4px; }
+  #list li.ready .thumb { cursor: pointer; }
+  .empty { color: #666; text-align: center; padding: 16px; }
+
+  #editor { position: fixed; inset: 0 0 var(--tb-h) 0; z-index: 1000; display: none; flex-direction: column; width: auto; max-width: none; margin: 0; }
+  #editor.open { display: flex; }
+  #editor .window-body { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 6px; }
+  #edBar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding-bottom: 6px; }
+  #edBar .sep { width: 1px; height: 22px; background: #999; margin: 0 4px; }
+  #edBar label { display: flex; align-items: center; gap: 6px; }
+  #edBar .spacer { flex: 1; }
+  #edBar button.on { font-weight: bold; box-shadow: inset 1px 1px 3px rgba(0,0,0,.45); }
+  #edName { color: #555; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #stage { flex: 1; position: relative; overflow: hidden; cursor: none; touch-action: none; border: 1px solid #888; }
+  #stage.panning { cursor: grab; }
+  #view { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  #cursor { position: absolute; pointer-events: none; border: 1.5px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px #000; display: none; }
+  #hint { position: absolute; left: 10px; bottom: 8px; color: #333; background: rgba(255,255,255,.8); padding: 2px 6px; font-size: 11px; pointer-events: none; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app narrow" data-title="removedor_de_fundo.exe" data-icon="✂️">
+    <div class="window-body">
+      <div class="toolbar">
+        <a class="btn" href="index.html">🏠 Home</a>
+        <button data-open="help">? Ajuda</button>
+        <span class="spacer"></span>
+        <div id="modelStatus"><span id="modelText">Carregando IA…</span><progress id="modelBar" max="100" value="0"></progress></div>
+      </div>
+
+      <div id="drop" tabindex="0" role="button">
+        <strong>📂 Arraste imagens aqui</strong>
+        ou clique pra escolher · <kbd>Ctrl</kbd>+<kbd>V</kbd> pra colar
+        <input id="file" type="file" accept="image/*" multiple hidden>
+      </div>
+
+      <div class="toolbar" style="margin:10px 0 0">
+        <span id="count" style="margin-right:auto"></span>
+        <button id="clearBtn" disabled>Limpar lista</button>
+        <button id="zipBtn" disabled>💾 Baixar todas (.zip)</button>
+      </div>
+
+      <ul id="list"></ul>
+      <div class="empty" id="empty">Nenhuma imagem ainda.</div>
+      <div class="status-line">&gt; A IA (RMBG-1.4) roda no seu navegador. Na primeira vez ela é baixada (~45 MB) e fica em cache.</div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="ajuda.txt" data-icon="📝">
+    <div class="window-body">
+      <p><b>Como usar</b></p>
+      <ul>
+        <li>Solte várias imagens de uma vez: elas entram numa fila.</li>
+        <li>Clique na miniatura ou em <b>Retocar</b> pra corrigir o recorte com o pincel.</li>
+        <li><b>Restaurar</b> (<kbd>R</kbd>) traz de volta partes que a IA apagou. <b>Apagar</b> (<kbd>E</kbd>) remove o que sobrou.</li>
+        <li>Roda do mouse dá zoom, <kbd>Espaço</kbd> + arrastar move. <kbd>[</kbd> <kbd>]</kbd> mudam o pincel, <kbd>Ctrl</kbd>+<kbd>Z</kbd> desfaz.</li>
+      </ul>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">Entendi!</button></div>
+    </div>
+  </section>
+</main>
+
+<div id="editor" class="window">
+  <div class="title-bar"><div class="title-bar-text">✂️ retocar recorte</div><div class="title-bar-controls"><button aria-label="Close" id="edX"></button></div></div>
+  <div class="window-body">
+    <div id="edBar">
+      <button id="toolRestore" title="Restaurar (R)">🖌️ Restaurar</button>
+      <button id="toolErase" title="Apagar (E)">🧽 Apagar</button>
+      <div class="sep"></div>
+      <label>Pincel <input id="size" type="range" min="2" max="300" value="40"></label>
+      <div class="sep"></div>
+      <button id="undoBtn" title="Desfazer (Ctrl+Z)">↶ Desfazer</button>
+      <button id="resetBtn" title="Voltar pro recorte da IA">Voltar pro original da IA</button>
+      <button id="fitBtn" title="Ajustar à tela (0)">Ajustar</button>
+      <div class="spacer"></div>
+      <span id="edName"></span>
+      <button id="edDownload">💾 Baixar PNG</button>
+      <button id="edClose">Concluir</button>
+    </div>
+    <div id="stage" class="chk">
+      <canvas id="view"></canvas>
+      <div id="cursor"></div>
+      <div id="hint">Roda do mouse: zoom · Espaço ou botão do meio + arrastar: mover · [ ] tamanho do pincel</div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { AutoModel, AutoProcessor, RawImage, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1/dist/transformers.min.js';
+
+const $ = (id) => document.getElementById(id);
+const MODEL_ID = 'briaai/RMBG-1.4';
+
+// ---------- Modelo ----------
+env.allowLocalModels = false;
+// Aberto via file://, o Cache API pode não existir; aí o cache HTTP do navegador segura o modelo.
+try { await caches.open('imapng-probe'); } catch { env.useBrowserCache = false; }
+
+let model, processor;
+const modelReady = (async () => {
+  const progress = {};
+  const onProgress = (p) => {
+    if (p.status === 'progress' && p.total) {
+      progress[p.file] = [p.loaded, p.total];
+      const [l, t] = Object.values(progress).reduce((a, [x, y]) => [a[0] + x, a[1] + y], [0, 0]);
+      $('modelBar').value = (100 * l / t);
+      $('modelText').textContent = `Baixando IA… ${(l / 1e6).toFixed(0)} / ${(t / 1e6).toFixed(0)} MB`;
+    }
+  };
+  try {
+    [model, processor] = await Promise.all([
+      AutoModel.from_pretrained(MODEL_ID, { config: { model_type: 'custom' }, dtype: 'fp16', device: 'wasm', progress_callback: onProgress }),
+      AutoProcessor.from_pretrained(MODEL_ID),
+    ]);
+    $('modelText').textContent = '✅ IA pronta';
+    $('modelBar').style.display = 'none';
+  } catch (e) {
+    console.error(e);
+    $('modelText').textContent = '❌ Falha ao carregar a IA. Verifique a internet e recarregue.';
+    $('modelBar').style.display = 'none';
+    throw e;
+  }
+})();
+
+// ---------- Fila ----------
+const items = [];
+let uid = 0;
+let running = false;
+
+function addFiles(files) {
+  for (const file of files) {
+    if (!file || !file.type.startsWith('image/')) continue;
+    const it = { id: ++uid, file, name: file.name || `colada-${uid}.png`, status: 'queued' };
+    items.push(it);
+    renderItem(it);
+  }
+  updateToolbar();
+  runQueue();
+}
+
+async function runQueue() {
+  if (running) return;
+  running = true;
+  try { await modelReady; } catch { running = false; return; }
+  let it;
+  while ((it = items.find((x) => x.status === 'queued'))) {
+    it.status = 'working'; renderItem(it);
+    try {
+      await processItem(it);
+      it.status = 'ready';
+    } catch (e) {
+      console.error(e);
+      it.status = 'error';
+      it.error = /decode|load|source/i.test(String(e)) ? 'Formato não suportado' : 'Erro ao processar';
+    }
+    renderItem(it); updateToolbar();
+  }
+  running = false;
+}
+
+async function processItem(it) {
+  const bmp = await createImageBitmap(it.file);
+  const w = bmp.width, h = bmp.height;
+  const src = document.createElement('canvas');
+  src.width = w; src.height = h;
+  const sctx = src.getContext('2d', { willReadFrequently: true });
+  sctx.drawImage(bmp, 0, 0);
+  bmp.close();
+  const srcData = sctx.getImageData(0, 0, w, h);
+
+  const image = new RawImage(srcData.data, w, h, 4).rgb();
+  const { pixel_values } = await processor(image);
+  const out = await model({ input: pixel_values });
+  const tensor = out.output ?? Object.values(out)[0];
+  const maskImg = await RawImage.fromTensor(tensor[0].mul(255).to('uint8')).resize(w, h);
+
+  // Máscara guardada como alfa (preto com transparência), pra compor com destination-in.
+  const mask = document.createElement('canvas');
+  mask.width = w; mask.height = h;
+  const mctx = mask.getContext('2d', { willReadFrequently: true });
+  const md = mctx.createImageData(w, h);
+  const m = maskImg.data, a = srcData.data;
+  for (let i = 0, p = 3; i < m.length; i++, p += 4) md.data[p] = Math.min(m[i], a[p]);
+  mctx.putImageData(md, 0, 0);
+
+  it.src = src;
+  it.mask = mask;
+  it.aiMask = md;
+  await refreshOutput(it);
+}
+
+function composite(it, target) {
+  const ctx = target.getContext('2d');
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.clearRect(0, 0, target.width, target.height);
+  ctx.drawImage(it.src, 0, 0);
+  ctx.globalCompositeOperation = 'destination-in';
+  ctx.drawImage(it.mask, 0, 0);
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+async function refreshOutput(it) {
+  const c = document.createElement('canvas');
+  c.width = it.src.width; c.height = it.src.height;
+  composite(it, c);
+  const blob = await OS.canvasBlob(c);
+  if (it.url) URL.revokeObjectURL(it.url);
+  it.blob = blob;
+  it.url = URL.createObjectURL(blob);
+}
+
+const outName = (name) => name.replace(/\.[^.]+$/, '') + '-sem-fundo.png';
+
+// ---------- Lista ----------
+const STATUS = { queued: 'Na fila', working: 'Recortando…', ready: 'Pronta', error: '' };
+
+function renderItem(it) {
+  let li = document.getElementById('it' + it.id);
+  if (!li) {
+    li = document.createElement('li');
+    li.id = 'it' + it.id;
+    li.innerHTML = `<div class="thumb chk"></div><div class="name"></div><span class="status"></span><div class="acts"></div>`;
+    $('list').appendChild(li);
+  }
+  li.className = it.status;
+  const thumb = li.querySelector('.thumb');
+  thumb.innerHTML = it.url ? `<img src="${it.url}" alt="">` : '';
+  thumb.onclick = it.status === 'ready' ? () => openEditor(it) : null;
+  const name = li.querySelector('.name');
+  name.textContent = it.name;
+  if (it.src) name.insertAdjacentHTML('beforeend', `<small>${it.src.width} × ${it.src.height}</small>`);
+  const st = li.querySelector('.status');
+  st.textContent = it.status === 'error' ? it.error : STATUS[it.status];
+  st.className = 'status' + (it.status === 'ready' ? ' ok' : it.status === 'error' ? ' err' : '');
+
+  const acts = li.querySelector('.acts');
+  acts.innerHTML = '';
+  if (it.status === 'ready') {
+    acts.append(btn('Retocar', () => openEditor(it)), btn('Baixar', () => OS.download(it.blob, outName(it.name))));
+  }
+  if (it.status !== 'working') acts.append(btn('✕', () => removeItem(it), 'Remover'));
+}
+
+function btn(label, onClick, title) {
+  const b = document.createElement('button');
+  b.textContent = label;
+  if (title) b.title = title;
+  b.onclick = onClick;
+  return b;
+}
+
+function removeItem(it) {
+  const i = items.indexOf(it);
+  if (i >= 0) items.splice(i, 1);
+  if (it.url) URL.revokeObjectURL(it.url);
+  document.getElementById('it' + it.id)?.remove();
+  updateToolbar();
+}
+
+function updateToolbar() {
+  const ready = items.filter((x) => x.status === 'ready').length;
+  const pending = items.filter((x) => x.status === 'queued' || x.status === 'working').length;
+  $('empty').style.display = items.length ? 'none' : '';
+  $('count').textContent = items.length ? `${ready} pronta(s)` + (pending ? ` · ${pending} na fila` : '') : '';
+  $('zipBtn').disabled = ready === 0;
+  $('clearBtn').disabled = items.length === 0 || pending > 0;
+}
+
+$('clearBtn').onclick = () => [...items].forEach(removeItem);
+
+$('zipBtn').onclick = async () => {
+  const zip = new JSZip();
+  const used = new Set();
+  for (const it of items.filter((x) => x.status === 'ready')) {
+    let n = outName(it.name), k = 1;
+    while (used.has(n)) n = outName(it.name).replace(/\.png$/, `-${++k}.png`);
+    used.add(n);
+    zip.file(n, it.blob);
+  }
+  $('zipBtn').disabled = true;
+  const blob = await zip.generateAsync({ type: 'blob' });
+  $('zipBtn').disabled = false;
+  OS.download(blob, 'imagens-sem-fundo.zip');
+};
+
+// ---------- Entrada ----------
+const drop = $('drop');
+drop.onclick = () => $('file').click();
+drop.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') $('file').click(); };
+$('file').onchange = (e) => { addFiles(e.target.files); e.target.value = ''; };
+window.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('over'); });
+window.addEventListener('dragleave', (e) => { if (!e.relatedTarget) drop.classList.remove('over'); });
+window.addEventListener('drop', (e) => {
+  e.preventDefault(); drop.classList.remove('over');
+  if (!editing) addFiles(e.dataTransfer.files);
+});
+window.addEventListener('paste', (e) => {
+  if (editing) return;
+  const files = [...e.clipboardData.items].filter((i) => i.kind === 'file').map((i) => i.getAsFile());
+  addFiles(files);
+});
+updateToolbar();
+
+// ---------- Editor ----------
+const stage = $('stage'), view = $('view'), cursorEl = $('cursor');
+let editing = null;
+let tool = 'restore';
+let zoom = 1, panX = 0, panY = 0;
+let undoStack = [];
+let spaceDown = false;
+
+function setTool(t) {
+  tool = t;
+  $('toolRestore').classList.toggle('on', t === 'restore');
+  $('toolErase').classList.toggle('on', t === 'erase');
+}
+$('toolRestore').onclick = () => setTool('restore');
+$('toolErase').onclick = () => setTool('erase');
+
+function openEditor(it) {
+  editing = it;
+  undoStack = [];
+  view.width = it.src.width; view.height = it.src.height;
+  composite(it, view);
+  $('edName').textContent = it.name;
+  $('editor').classList.add('open');
+  setTool(tool);
+  fit();
+}
+
+async function closeEditor() {
+  const it = editing;
+  if (!it) return;
+  editing = null;
+  $('editor').classList.remove('open');
+  cursorEl.style.display = 'none';
+  await refreshOutput(it);
+  renderItem(it);
+}
+$('edClose').onclick = closeEditor;
+$('edX').onclick = closeEditor;
+$('edDownload').onclick = async () => { await refreshOutput(editing); OS.download(editing.blob, outName(editing.name)); };
+
+function applyTransform() {
+  view.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+  updateCursorSize();
+}
+
+function fit() {
+  const r = stage.getBoundingClientRect();
+  zoom = Math.min((r.width - 40) / view.width, (r.height - 40) / view.height, 1);
+  panX = (r.width - view.width * zoom) / 2;
+  panY = (r.height - view.height * zoom) / 2;
+  applyTransform();
+}
+$('fitBtn').onclick = fit;
+
+stage.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const r = stage.getBoundingClientRect();
+  const mx = e.clientX - r.left, my = e.clientY - r.top;
+  const nz = Math.min(32, Math.max(0.05, zoom * Math.exp(-e.deltaY * 0.0015)));
+  panX = mx - (mx - panX) * (nz / zoom);
+  panY = my - (my - panY) * (nz / zoom);
+  zoom = nz;
+  applyTransform();
+}, { passive: false });
+
+const brushSize = () => +$('size').value;
+function updateCursorSize() {
+  const d = brushSize() * zoom;
+  cursorEl.style.width = cursorEl.style.height = d + 'px';
+}
+$('size').oninput = updateCursorSize;
+
+function toImage(e) {
+  const r = stage.getBoundingClientRect();
+  return [(e.clientX - r.left - panX) / zoom, (e.clientY - r.top - panY) / zoom];
+}
+
+let drag = null; // { mode: 'paint'|'pan', last: [x,y] }
+
+function paintSegment(from, to) {
+  const ctx = editing.mask.getContext('2d');
+  ctx.save();
+  ctx.globalCompositeOperation = tool === 'erase' ? 'destination-out' : 'source-over';
+  ctx.strokeStyle = ctx.fillStyle = '#000';
+  ctx.lineWidth = brushSize();
+  ctx.lineCap = ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(from[0], from[1]);
+  ctx.lineTo(to[0] + 0.01, to[1]);
+  ctx.stroke();
+  ctx.restore();
+  composite(editing, view);
+}
+
+stage.addEventListener('pointerdown', (e) => {
+  if (!editing) return;
+  stage.setPointerCapture(e.pointerId);
+  if (e.button === 1 || e.button === 2 || spaceDown) {
+    drag = { mode: 'pan', last: [e.clientX, e.clientY] };
+    stage.classList.add('panning');
+    return;
+  }
+  if (e.button !== 0) return;
+  const m = editing.mask;
+  undoStack.push(m.getContext('2d').getImageData(0, 0, m.width, m.height));
+  if (undoStack.length > 30) undoStack.shift();
+  const p = toImage(e);
+  drag = { mode: 'paint', last: p };
+  paintSegment(p, p);
+});
+
+stage.addEventListener('pointermove', (e) => {
+  const r = stage.getBoundingClientRect();
+  const d = brushSize() * zoom;
+  cursorEl.style.display = spaceDown || drag?.mode === 'pan' ? 'none' : 'block';
+  cursorEl.style.left = e.clientX - r.left - d / 2 + 'px';
+  cursorEl.style.top = e.clientY - r.top - d / 2 + 'px';
+  if (!drag) return;
+  if (drag.mode === 'pan') {
+    panX += e.clientX - drag.last[0];
+    panY += e.clientY - drag.last[1];
+    drag.last = [e.clientX, e.clientY];
+    applyTransform();
+  } else {
+    const p = toImage(e);
+    paintSegment(drag.last, p);
+    drag.last = p;
+  }
+});
+
+const endDrag = () => { drag = null; stage.classList.toggle('panning', spaceDown); };
+stage.addEventListener('pointerup', endDrag);
+stage.addEventListener('pointercancel', endDrag);
+stage.addEventListener('pointerleave', () => { cursorEl.style.display = 'none'; });
+stage.addEventListener('contextmenu', (e) => e.preventDefault());
+
+function undo() {
+  const prev = undoStack.pop();
+  if (!prev) return;
+  editing.mask.getContext('2d').putImageData(prev, 0, 0);
+  composite(editing, view);
+}
+$('undoBtn').onclick = undo;
+
+$('resetBtn').onclick = () => {
+  const m = editing.mask, ctx = m.getContext('2d');
+  undoStack.push(ctx.getImageData(0, 0, m.width, m.height));
+  ctx.putImageData(editing.aiMask, 0, 0);
+  composite(editing, view);
+};
+
+window.addEventListener('keydown', (e) => {
+  if (!editing) return;
+  if (e.code === 'Space') { spaceDown = true; stage.classList.add('panning'); cursorEl.style.display = 'none'; e.preventDefault(); }
+  else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { undo(); e.preventDefault(); }
+  else if (e.key === 'r' || e.key === 'R') setTool('restore');
+  else if (e.key === 'e' || e.key === 'E') setTool('erase');
+  else if (e.key === '[') { $('size').value = brushSize() - 5; updateCursorSize(); }
+  else if (e.key === ']') { $('size').value = brushSize() + 5; updateCursorSize(); }
+  else if (e.key === '0') fit();
+  else if (e.key === 'Escape') closeEditor();
+});
+window.addEventListener('keyup', (e) => {
+  if (e.code === 'Space') { spaceDown = false; if (!drag) stage.classList.remove('panning'); }
+});
+window.addEventListener('resize', () => { if (editing) fit(); });
+</script>
+</body>
+</html>

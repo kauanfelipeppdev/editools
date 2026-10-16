@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contador de números · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:wght@400;700;900&family=Montserrat:wght@400;700;900&family=Orbitron:wght@700;900&family=Poppins:wght@400;700;900&family=Press+Start+2P&family=Roboto+Mono:wght@700&family=VT323&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
+  .presets { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .presets button { height: auto; padding: 6px; text-align: left; line-height: 1.3; }
+  .presets small { display: block; color: #555; font-size: 10px; }
+  .tabs [aria-selected=true] { font-weight: bold; box-shadow: inset 1px 1px 3px rgba(0,0,0,.4); }
+  .tabpanel { border: 1px solid rgba(0,0,0,.25); background: rgba(255,255,255,.45); padding: 8px; }
+  #pv canvas { max-height: 60vh; }
+  progress { width: 100%; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="contador_de_numeros.exe" data-icon="🔢">
+    <div class="window-body">
+      <div class="toolbar"><a class="btn" href="index.html">🏠 Home</a><button data-open="help">? Ajuda</button><span class="spacer"></span><button id="playBtn">▶ Prévia</button></div>
+      <div class="tool wide-panel">
+        <div class="panel" id="panel">
+          <div class="btns grow tabs" role="tablist">
+            <button role="tab" aria-selected="true" data-tab="t1">✏️ Personalizado</button>
+            <button role="tab" aria-selected="false" data-tab="t2">⭐ Modelos prontos</button>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t1">
+            <div class="stack">
+              <div class="two">
+                <label class="field"><span>Número inicial</span><input type="number" id="start" value="0" step="any"></label>
+                <label class="field"><span>Número final</span><input type="number" id="end" value="10000" step="any"></label>
+                <label class="field"><span>Duração (s)</span><input type="number" id="dur" value="3" min="0.5" max="120" step="0.5"></label>
+                <label class="field"><span>Segurar no fim (s)</span><input type="number" id="hold" value="1" min="0" max="30" step="0.5"></label>
+                <label class="field"><span>Prefixo</span><input type="text" id="prefix" value="" placeholder="ex: R$ "></label>
+                <label class="field"><span>Sufixo</span><input type="text" id="suffix" value="" placeholder="ex: %"></label>
+                <label class="field"><span>Separador de milhar</span><select id="delim"><option value=",">Vírgula (10,000)</option><option value=".">Ponto (10.000)</option><option value=" ">Espaço (10 000)</option><option value="">Nenhum</option></select></label>
+                <label class="field"><span>Casas decimais</span><select id="dec"><option>0</option><option>1</option><option>2</option></select></label>
+              </div>
+              <label class="field"><span>Aceleração</span><select id="ease"><option value="out">Desacelera no fim (natural)</option><option value="linear">Constante</option><option value="inout">Suave no início e no fim</option><option value="expo">Explosiva</option></select></label>
+              <fieldset>
+                <legend>Exportar</legend>
+                <div class="stack">
+                  <select id="fmt">
+                    <option value="mp4">MP4 (fundo sólido)</option>
+                    <option value="webm">WEBM com transparência</option>
+                    <option value="png">Sequência PNG (.zip, transparente)</option>
+                  </select>
+                  <div class="field-row"><input type="checkbox" id="transp"><label for="transp">Fundo transparente</label></div>
+                  <p class="hint" id="fmtHint"></p>
+                </div>
+              </fieldset>
+              <details><summary>Avançado</summary>
+                <div class="stack" style="margin-top:6px">
+                  <div class="two">
+                    <label class="field"><span>Resolução</span><select id="res"><option value="1920x1080">1920×1080</option><option value="1080x1920">1080×1920 (vertical)</option><option value="1080x1080">1080×1080</option><option value="3840x2160">3840×2160 (4K)</option></select></label>
+                    <label class="field"><span>FPS</span><select id="fps"><option>24</option><option selected>30</option><option>60</option></select></label>
+                    <label class="field"><span>Fonte</span><select id="font"><option>Arial</option><option>Inter</option><option>Montserrat</option><option>Poppins</option><option>Anton</option><option>Bebas Neue</option><option>Orbitron</option><option>Roboto Mono</option><option>Press Start 2P</option><option>VT323</option><option>Impact</option><option>Georgia</option></select></label>
+                    <label class="field"><span>Peso</span><select id="weight"><option value="400">Normal</option><option value="700">Negrito</option><option value="900" selected>Black</option></select></label>
+                  </div>
+                  <label class="field"><span>Tamanho do texto <output data-suffix="px"></output></span><input type="range" id="size" min="20" max="600" value="150"></label>
+                  <div class="row"><span class="lbl">Cor do texto</span><input type="color" id="color" value="#ffffff"><span class="lbl" style="min-width:0">Fundo</span><input type="color" id="bg" value="#000000"></div>
+                  <div class="row"><button id="bgImgBtn">🖼️ Imagem de fundo</button><button id="bgImgClear">✕</button></div>
+                  <label class="field"><span>Contorno <output data-suffix="px"></output></span><input type="range" id="stroke" min="0" max="30" value="0"></label>
+                  <div class="row"><span class="lbl">Cor do contorno</span><input type="color" id="strokeColor" value="#000000"></div>
+                  <label class="field"><span>Brilho / neon <output data-suffix="px"></output></span><input type="range" id="glow" min="0" max="80" value="0"></label>
+                  <div class="row"><span class="lbl">Cor do brilho</span><input type="color" id="glowColor" value="#00e5ff"></div>
+                  <div class="field-row"><input type="checkbox" id="pop" checked><label for="pop">"Pulo" quando chega no final</label></div>
+                  <div class="field-row"><input type="checkbox" id="mono" checked><label for="mono">Números com largura fixa (não tremem)</label></div>
+                </div>
+              </details>
+            </div>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t2" hidden>
+            <div class="presets" id="presets"></div>
+          </div>
+          <button id="genBtn">🎬 Gerar vídeo</button>
+          <progress id="prog" max="1" value="0" hidden></progress>
+          <div class="status-line" id="st">&gt; o download começa sozinho quando terminar.</div>
+        </div>
+        <div id="pv" class="preview"><canvas id="cv"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="ajuda.txt" data-icon="📝">
+    <div class="window-body">
+      <ul>
+        <li>Defina início, fim e duração. O número para no final e fica parado pelo tempo de "Segurar no fim".</li>
+        <li><b>MP4</b> é o mais compatível. Pra jogar por cima do seu vídeo sem fundo, use <b>WEBM transparente</b> (Premiere, After e CapCut leem) ou a <b>sequência PNG</b>, que funciona em qualquer editor.</li>
+        <li>O vídeo é gerado quadro a quadro, então pode trocar de aba enquanto ele gera.</li>
+      </ul>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">OK</button></div>
+    </div>
+  </section>
+</main>
+
+<script type="module">
+import * as Mp4 from 'https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.3/build/mp4-muxer.mjs';
+import * as Webm from 'https://cdn.jsdelivr.net/npm/webm-muxer@5.0.3/build/webm-muxer.mjs';
+
+const $ = (id) => document.getElementById(id);
+const cv = $('cv'), ctx = cv.getContext('2d');
+let bgImg = null, busy = false;
+
+const PRESETS = [
+  { n: '📺 Inscritos', d: '0 → 100.000', v: { start: 0, end: 100000, dur: 4, prefix: '', suffix: ' inscritos', delim: '.', font: 'Montserrat', weight: '900', size: 140, color: '#ffffff', bg: '#ff0000', glow: 0, stroke: 0 } },
+  { n: '💰 Dinheiro', d: 'R$ 0,00 → R$ 1.500,00', v: { start: 0, end: 1500, dec: '2', dur: 3, prefix: 'R$ ', suffix: '', delim: '.', font: 'Poppins', weight: '900', size: 170, color: '#3dff7a', bg: '#06140a', glow: 18, glowColor: '#22ff66', stroke: 0 } },
+  { n: '📈 Porcentagem', d: '0% → 100%', v: { start: 0, end: 100, dur: 2.5, prefix: '', suffix: '%', delim: '', font: 'Anton', weight: '400', size: 260, color: '#ffde59', bg: '#111111', glow: 0, stroke: 0 } },
+  { n: '👀 Visualizações', d: '0 → 1.000.000', v: { start: 0, end: 1000000, dur: 5, prefix: '', suffix: ' views', delim: '.', font: 'Inter', weight: '900', size: 130, color: '#ffffff', bg: '#000000', glow: 0, stroke: 0, ease: 'expo' } },
+  { n: '🕹️ Placar arcade', d: 'pontuação em pixel', v: { start: 0, end: 99999, dur: 3, prefix: 'SCORE ', suffix: '', delim: '', font: 'Press Start 2P', weight: '400', size: 80, color: '#ffe600', bg: '#000000', glow: 10, glowColor: '#ff8800', stroke: 0 } },
+  { n: '⏳ Contagem regressiva', d: '10 → 0', v: { start: 10, end: 0, dur: 10, prefix: '', suffix: '', delim: '', font: 'Bebas Neue', weight: '400', size: 420, color: '#ffffff', bg: '#1a1a2e', glow: 0, stroke: 0, ease: 'linear', hold: .5 } },
+  { n: '📅 Ano', d: '1990 → 2026', v: { start: 1990, end: 2026, dur: 3, prefix: '', suffix: '', delim: '', font: 'Georgia', weight: '700', size: 260, color: '#f3e5c0', bg: '#2a1d10', glow: 0, stroke: 0 } },
+  { n: '⚡ Neon', d: 'cyberpunk com brilho', v: { start: 0, end: 2077, dur: 3, prefix: '', suffix: '', delim: '', font: 'Orbitron', weight: '900', size: 220, color: '#ffffff', bg: '#0b0221', glow: 40, glowColor: '#ff2bd6', stroke: 0 } },
+];
+const box = $('presets');
+PRESETS.forEach((p) => {
+  const b = document.createElement('button');
+  b.innerHTML = `<b>${p.n}</b><small>${p.d}</small>`;
+  b.onclick = () => {
+    const base = { dec: '0', hold: 1, ease: 'out', glowColor: '#00e5ff', strokeColor: '#000000' };
+    for (const [k, v] of Object.entries({ ...base, ...p.v })) { const el = $(k); if (el) { el.value = v; el.dispatchEvent(new Event('input')); } }
+    showTab('t1'); restart();
+  };
+  box.appendChild(b);
+});
+function showTab(id) {
+  document.querySelectorAll('[role=tab]').forEach((t) => t.setAttribute('aria-selected', t.dataset.tab === id));
+  document.querySelectorAll('[role=tabpanel]').forEach((p) => (p.hidden = p.id !== id));
+}
+document.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => showTab(b.dataset.tab)));
+
+// ---------- número ----------
+const EASE = { linear: (t) => t, out: (t) => 1 - Math.pow(1 - t, 3), inout: (t) => (t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2), expo: (t) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t)) };
+function format(v) {
+  const dec = +$('dec').value, delim = $('delim').value;
+  const decSep = delim === '.' ? ',' : '.';
+  let [int, frac] = Math.abs(v).toFixed(dec).split('.');
+  int = int.replace(/\B(?=(\d{3})+(?!\d))/g, delim);
+  return (v < 0 ? '-' : '') + $('prefix').value + int + (frac ? decSep + frac : '') + $('suffix').value;
+}
+const total = () => +$('dur').value + +$('hold').value;
+
+function drawAt(t, transparent) {
+  const [W, H] = $('res').value.split('x').map(Number);
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  const d = +$('dur').value, a = +$('start').value, b = +$('end').value;
+  const p = Math.min(1, Math.max(0, t / d));
+  const v = a + (b - a) * EASE[$('ease').value](p);
+  ctx.clearRect(0, 0, W, H);
+  if (!transparent) {
+    ctx.fillStyle = $('bg').value; ctx.fillRect(0, 0, W, H);
+    if (bgImg) { const k = Math.max(W / bgImg.width, H / bgImg.height); ctx.drawImage(bgImg, (W - bgImg.width * k) / 2, (H - bgImg.height * k) / 2, bgImg.width * k, bgImg.height * k); }
+  }
+  const scaleK = W / 1920 * (H > W ? 1.0 : 1);
+  let size = +$('size').value * scaleK * (W < H ? 1.4 : 1);
+  // pulo no final
+  if ($('pop').checked && t > d) { const q = Math.min(1, (t - d) / .35); size *= 1 + Math.sin(q * Math.PI) * .12; }
+  const txt = format(v);
+  ctx.font = `${$('weight').value} ${size}px "${$('font').value}"`;
+  if ('fontVariantNumeric' in ctx) ctx.fontVariantNumeric = $('mono').checked ? 'tabular-nums' : 'normal';
+  // não deixa passar da largura
+  let w = ctx.measureText(txt).width;
+  if (w > W * .92) { size *= W * .92 / w; ctx.font = `${$('weight').value} ${size}px "${$('font').value}"`; }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const x = W / 2, y = H / 2 + size * .04;
+  if (+$('glow').value) { ctx.save(); ctx.shadowColor = $('glowColor').value; ctx.shadowBlur = +$('glow').value * scaleK * 2; ctx.fillStyle = $('glowColor').value; ctx.fillText(txt, x, y); ctx.fillText(txt, x, y); ctx.restore(); }
+  if (+$('stroke').value) { ctx.lineJoin = 'round'; ctx.lineWidth = +$('stroke').value * 2 * scaleK; ctx.strokeStyle = $('strokeColor').value; ctx.strokeText(txt, x, y); }
+  ctx.fillStyle = $('color').value; ctx.fillText(txt, x, y);
+}
+
+// ---------- prévia ----------
+let t0 = performance.now(), previewing = true;
+function restart() { t0 = performance.now(); previewing = true; }
+$('playBtn').onclick = restart;
+$('panel').addEventListener('input', (e) => { if (['start', 'end', 'dur', 'ease', 'dec'].includes(e.target.id)) restart(); updHint(); });
+(function loop() {
+  if (previewing && !busy) {
+    const t = (performance.now() - t0) / 1000;
+    drawAt(Math.min(t, total()), $('transp').checked);
+    $('pv').classList.toggle('chk', $('transp').checked);
+    if (t > total() + .8) restart();
+  }
+  requestAnimationFrame(loop);
+})();
+
+$('bgImgBtn').onclick = async () => { const f = await OS.pickFile('image/*'); if (!f) return; const i = new Image(); i.onload = () => (bgImg = i); i.src = URL.createObjectURL(f); };
+$('bgImgClear').onclick = () => (bgImg = null);
+function updHint() {
+  const f = $('fmt').value;
+  if (f === 'mp4' && $('transp').checked) $('fmtHint').textContent = 'MP4 não guarda transparência: o fundo vai sair preto. Use WEBM ou PNG.';
+  else if (f === 'webm') $('fmtHint').textContent = 'WEBM VP9 com canal alfa. Melhor no Chrome/Edge.';
+  else if (f === 'png') $('fmtHint').textContent = 'Uma imagem por quadro, dentro de um .zip. Importe como sequência no editor.';
+  else $('fmtHint').textContent = 'H.264, abre em qualquer lugar.';
+}
+$('fmt').onchange = () => { if ($('fmt').value !== 'mp4') $('transp').checked = true; updHint(); };
+updHint();
+
+// ---------- exportar ----------
+const st = (s) => ($('st').textContent = '> ' + s);
+const even = (n) => n - (n % 2);
+$('genBtn').onclick = async () => {
+  if (busy) return;
+  await document.fonts.load(`${$('weight').value} 100px "${$('font').value}"`).catch(() => {});
+  busy = true; $('genBtn').disabled = true; $('prog').hidden = false;
+  const fps = +$('fps').value, n = Math.ceil(total() * fps), fmt = $('fmt').value, transp = $('transp').checked && fmt !== 'mp4';
+  const name = 'contador-' + OS.slug(format(+$('end').value));
+  try {
+    if (fmt === 'png') {
+      const zip = new JSZip();
+      for (let i = 0; i < n; i++) {
+        drawAt(i / fps, transp);
+        zip.file(`${name}_${String(i).padStart(5, '0')}.png`, await OS.canvasBlob(cv));
+        $('prog').value = i / n; if (i % 5 === 0) st(`quadro ${i + 1} de ${n}`);
+      }
+      st('compactando…');
+      OS.download(await zip.generateAsync({ type: 'blob' }), name + '-png.zip');
+    } else if (window.VideoEncoder && await pickConfig(fmt === 'mp4', transp)) {
+      await encodeWebCodecs(fmt, fps, n, transp, name);
+    } else {
+      st('gravando em tempo real (não troque de aba)…');
+      const mime = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'].find((m) => MediaRecorder.isTypeSupported(m));
+      const stream = cv.captureStream(fps);
+      const mr = new MediaRecorder(stream, { mimeType: fmt === 'mp4' ? OS.videoMime() : mime, videoBitsPerSecond: 16e6 });
+      const chunks = []; mr.ondataavailable = (e) => e.data.size && chunks.push(e.data); mr.start(250);
+      const rec = { stop: () => new Promise((r) => { mr.onstop = () => r({ blob: new Blob(chunks, { type: mr.mimeType }), ext: mr.mimeType.includes('mp4') ? 'mp4' : 'webm' }); mr.stop(); }) };
+      const t1 = performance.now();
+      await new Promise((r) => { const step = () => { const t = (performance.now() - t1) / 1000; drawAt(Math.min(t, total()), transp); $('prog').value = t / total(); t < total() ? requestAnimationFrame(step) : r(); }; step(); });
+      const { blob, ext } = await rec.stop();
+      OS.download(blob, name + '.' + ext);
+    }
+    st('pronto! download iniciado.');
+  } catch (e) { console.error(e); st('erro: ' + (e.message || e)); OS.dialog('Erro', 'Não consegui gerar o vídeo nesse formato. Tente outro formato ou o Chrome/Edge.', '❌'); }
+  busy = false; $('genBtn').disabled = false; $('prog').hidden = true; restart();
+};
+
+async function pickConfig(isMp4, transp) {
+  const [W, H] = $('res').value.split('x').map(Number).map(even), fps = +$('fps').value;
+  for (const codec of isMp4 ? ['avc1.640033', 'avc1.640028', 'avc1.4d0028', 'avc1.42001f'] : ['vp09.00.41.08', 'vp09.00.10.08']) {
+    const c = { codec, width: W, height: H, bitrate: W * H * fps * .15, framerate: fps, ...(transp ? { alpha: 'keep' } : {}) };
+    try { if ((await VideoEncoder.isConfigSupported(c)).supported) return c; } catch {}
+  }
+  return null;
+}
+
+async function encodeWebCodecs(fmt, fps, n, transp, name) {
+  const [W, H] = $('res').value.split('x').map(Number).map(even);
+  const isMp4 = fmt === 'mp4';
+  const target = isMp4 ? new Mp4.ArrayBufferTarget() : new Webm.ArrayBufferTarget();
+  const muxer = isMp4
+    ? new Mp4.Muxer({ target, video: { codec: 'avc', width: W, height: H }, fastStart: 'in-memory' })
+    : new Webm.Muxer({ target, video: { codec: 'V_VP9', width: W, height: H, frameRate: fps, alpha: transp } });
+  const config = await pickConfig(isMp4, transp);
+  let err = null;
+  const enc = new VideoEncoder({ output: (chunk, meta) => muxer.addVideoChunk(chunk, meta), error: (e) => (err = e) });
+  enc.configure(config);
+  for (let i = 0; i < n; i++) {
+    if (err) throw err;
+    drawAt(i / fps, transp);
+    const frame = new VideoFrame(cv, { timestamp: Math.round(i * 1e6 / fps), duration: Math.round(1e6 / fps), ...(transp ? {} : { alpha: 'discard' }) });
+    enc.encode(frame, { keyFrame: i % (fps * 2) === 0 });
+    frame.close();
+    if (enc.encodeQueueSize > 8) await new Promise((r) => setTimeout(r, 5));
+    $('prog').value = i / n; if (i % 5 === 0) st(`codificando quadro ${i + 1} de ${n}`);
+  }
+  await enc.flush();
+  if (err) throw err;
+  muxer.finalize();
+  OS.download(new Blob([target.buffer], { type: isMp4 ? 'video/mp4' : 'video/webm' }), name + (isMp4 ? '.mp4' : '.webm'));
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixelador · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<script src="assets/glfx.js"></script>
+<script src="assets/media-tool.js"></script>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="pixelador.exe" data-icon="👾">
+    <div class="window-body">
+      <div class="toolbar">
+        <a class="btn" href="index.html">🏠 Home</a>
+        <button data-open="help">? Ajuda</button>
+      </div>
+      <div class="tool">
+        <div class="panel">
+          <fieldset>
+            <legend>Arquivo de mídia</legend>
+            <div class="btns grow"><button id="loadBtn">📂 Abrir foto/vídeo</button><button id="demoBtn">🖼️ Exemplo</button></div>
+          </fieldset>
+          <fieldset>
+            <legend>Configurações de efeito</legend>
+            <div class="stack">
+              <label class="field"><span>Intensidade (blocos) <output data-suffix="px"></output></span><input type="range" id="block" min="1" max="80" value="10"></label>
+              <label class="field"><span>Paleta</span>
+                <select id="pal">
+                  <option value="none">Cores originais</option>
+                  <option value="gb">Game Boy (4 verdes)</option>
+                  <option value="nes">Console 8-bit (16 cores)</option>
+                  <option value="cga">CGA (4 cores)</option>
+                  <option value="pico">Fantasy 16</option>
+                  <option value="bw">1-bit (preto e branco)</option>
+                </select>
+              </label>
+              <label class="field"><span>Níveis por cor (sem paleta) <output></output></span><input type="range" id="levels" min="2" max="32" value="32"></label>
+              <div class="field-row"><input type="checkbox" id="dither"><label for="dither">Pontilhado (dithering)</label></div>
+              <div class="field-row"><input type="checkbox" id="grid"><label for="grid">Mostrar grade</label></div>
+              <label class="field"><span>Contraste <output data-suffix="%"></output></span><input type="range" id="contrast" min="50" max="200" value="100"></label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Salvar</legend>
+            <div class="stack">
+              <div class="btns grow"><button id="pauseBtn">⏸️ Pausar</button><button id="pngBtn">💾 Salvar imagem</button></div>
+              <button id="recBtn">▶️ Gravar vídeo</button>
+              <label class="field"><span>Duração (para fotos) <output data-suffix=" s"></output></span><input type="range" id="dur" min="2" max="30" value="5"></label>
+            </div>
+          </fieldset>
+        </div>
+        <div id="pv" class="preview">
+          <canvas id="cv" style="image-rendering: pixelated"></canvas>
+          <div class="placeholder"><span class="big">👾</span><b>Abra uma foto ou vídeo</b>clique, arraste ou cole aqui</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="Dicas de uso - Ajuda" data-icon="📝">
+    <div class="window-body">
+      <p><b>Bem-vindo ao Pixelador!</b></p>
+      <ul>
+        <li><b>Intensidade:</b> o tamanho dos blocos. Quanto maior, mais pixelado.</li>
+        <li><b>Paleta:</b> limita as cores pra dar cara de videogame antigo. Combine com o pontilhado.</li>
+        <li><b>Vídeos:</b> o efeito roda em tempo real e você pode gravar o resultado.</li>
+      </ul>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">Entendi!</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const PALS = {
+  gb: ['#0f380f', '#306230', '#8bac0f', '#9bbc0f'],
+  cga: ['#000000', '#55ffff', '#ff55ff', '#ffffff'],
+  bw: ['#000000', '#ffffff'],
+  nes: ['#000000', '#fcfcfc', '#bcbcbc', '#7c7c7c', '#a4e4fc', '#3cbcfc', '#0078f8', '#0000fc', '#f8b8f8', '#f878f8', '#d800cc', '#940084', '#f8b800', '#e45c10', '#a81000', '#58d854'],
+  pico: ['#000000', '#1d2b53', '#7e2553', '#008751', '#ab5236', '#5f574f', '#c2c3c7', '#fff1e8', '#ff004d', '#ffa300', '#ffec27', '#00e436', '#29adff', '#83769c', '#ff77a8', '#ffccaa'],
+};
+const FRAG = `
+uniform float u_block, u_levels, u_dither, u_grid, u_contrast, u_npal;
+uniform vec3 u_pal[16];
+float bayer2(vec2 a){ a = floor(a); return fract(dot(a, vec2(.5, a.y * .75))); }
+float bayer(vec2 a){ return bayer2(.5 * a) * .25 + bayer2(a); }
+void main(){
+  vec2 px = v_uv * u_res;
+  vec2 cell = floor(px / u_block);
+  vec2 uv = (cell + .5) * u_block / u_res;
+  vec4 s = texture2D(u_tex, uv);
+  vec3 c = clamp((s.rgb - .5) * u_contrast + .5, 0., 1.);
+  float d = u_dither > .5 ? bayer(cell) - .5 : 0.;
+  if (u_npal > 0.) {
+    c = clamp(c + d * .35, 0., 1.);
+    float best = 1e9; vec3 bc = c;
+    for (int i = 0; i < 16; i++) { if (float(i) >= u_npal) break; vec3 e = c - u_pal[i]; float dd = dot(e * vec3(.3,.59,.11), e); if (dd < best) { best = dd; bc = u_pal[i]; } }
+    c = bc;
+  } else if (u_levels < 32.) {
+    float L = u_levels - 1.;
+    c = floor(c * L + .5 + d) / L;
+  }
+  if (u_grid > .5 && u_block >= 4.) { vec2 f = mod(px, u_block); if (f.x < 1. || f.y < 1.) c *= .75; }
+  gl_FragColor = vec4(c, s.a);
+}`;
+const palArr = () => {
+  const p = PALS[$('pal').value];
+  const out = new Array(48).fill(0);
+  (p || []).forEach((h, i) => GLFX.hex2rgb(h).forEach((v, j) => (out[i * 3 + j] = v)));
+  return out;
+};
+const tool = new MediaTool({
+  preview: $('pv'), canvas: $('cv'), frag: FRAG,
+  uniforms: () => ({
+    u_block: +$('block').value, u_levels: +$('levels').value, u_dither: $('dither').checked, u_grid: $('grid').checked,
+    u_contrast: $('contrast').value / 100, u_npal: (PALS[$('pal').value] || []).length, 'u_pal[0]': palArr(),
+  }),
+});
+document.querySelectorAll('.panel input, .panel select').forEach((el) => el.addEventListener('input', () => tool.frame(true)));
+$('loadBtn').onclick = () => tool.pick();
+$('demoBtn').onclick = () => tool.useDemo();
+$('pauseBtn').onclick = () => { $('pauseBtn').textContent = tool.togglePause() ? '▶️ Continuar' : '⏸️ Pausar'; };
+$('pngBtn').onclick = () => tool.savePNG('pixel');
+$('recBtn').onclick = () => tool.toggleRecord($('recBtn'), +$('dur').value, 'pixel');
+</script>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TV de tubo · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<script src="assets/glfx.js"></script>
+<script src="assets/media-tool.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&display=swap">
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="tv_de_tubo.exe" data-icon="📺">
+    <div class="window-body">
+      <div class="toolbar">
+        <a class="btn" href="index.html">🏠 Home</a>
+        <button id="loadBtn">📂 Abrir mídia</button><button id="demoBtn">🖼️ Exemplo</button>
+        <span class="spacer"></span>
+        <button id="chBtn">📡 Trocar canal</button><button id="pwrBtn">⏻ Desligar</button>
+        <button id="soundBtn">🔇 Som</button><button id="pngBtn">📸 PNG</button><button id="recBtn">⏺ Gravar</button>
+      </div>
+      <div class="tool">
+        <div class="panel" id="panel">
+          <fieldset>
+            <legend>Tubo</legend>
+            <div class="stack">
+              <label class="field"><span>Curvatura <output data-suffix="%"></output></span><input type="range" id="curve" min="0" max="100" value="45"></label>
+              <label class="field"><span>Scanlines <output data-suffix="%"></output></span><input type="range" id="scan" min="0" max="100" value="55"></label>
+              <label class="field"><span>Máscara RGB (fósforo) <output data-suffix="%"></output></span><input type="range" id="mask" min="0" max="100" value="40"></label>
+              <label class="field"><span>Brilho do fósforo (glow) <output data-suffix="%"></output></span><input type="range" id="glow" min="0" max="100" value="45"></label>
+              <label class="field"><span>Cintilação <output data-suffix="%"></output></span><input type="range" id="flick" min="0" max="100" value="20"></label>
+              <label class="field"><span>Chuvisco <output data-suffix="%"></output></span><input type="range" id="snow" min="0" max="100" value="12"></label>
+              <label class="field"><span>Barra rolando <output data-suffix="%"></output></span><input type="range" id="roll" min="0" max="100" value="25"></label>
+              <label class="field"><span>Saturação <output data-suffix="%"></output></span><input type="range" id="sat" min="0" max="200" value="115"></label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Aparelho</legend>
+            <div class="stack">
+              <label class="field"><span>Moldura</span><select id="frame"><option value="1">Plástico cinza</option><option value="2">Madeira anos 80</option><option value="3">Preta</option><option value="0">Sem moldura (só a tela)</option></select></label>
+              <div class="row"><span class="lbl">Canal:</span><input type="number" id="ch" min="1" max="99" value="3" style="width:70px"><div class="field-row"><input type="checkbox" id="osd" checked><label for="osd">Mostrar canal</label></div></div>
+              <label class="field"><span>Duração da gravação (fotos) <output data-suffix=" s"></output></span><input type="range" id="dur" min="2" max="30" value="6"></label>
+            </div>
+          </fieldset>
+        </div>
+        <div id="pv" class="preview">
+          <canvas id="cv"></canvas>
+          <div class="placeholder"><span class="big">📺</span><b>Coloque algo pra passar na TV</b>clique, arraste ou cole uma foto ou vídeo</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const FRAG = `
+uniform float u_curve, u_scan, u_mask, u_glow, u_flick, u_snow, u_roll, u_sat, u_frame, u_static, u_power, u_osdOn;
+uniform sampler2D u_osd;
+vec2 warp(vec2 uv, float k){ vec2 d = uv * 2. - 1.; d *= 1. + k * vec2(d.y * d.y, d.x * d.x) * .25; return d * .5 + .5; }
+float rbox(vec2 p, vec2 b, float r){ vec2 q = abs(p) - b + r; return length(max(q, 0.)) + min(max(q.x, q.y), 0.) - r; }
+void main(){
+  float t = u_time;
+  // área da tela dentro do aparelho
+  vec2 uv = v_uv;
+  vec2 inset = u_frame > 0. ? vec2(.085, .1) : vec2(0.);
+  vec2 su = (uv - inset) / (1. - inset * 2.);
+  if (u_frame > 0.) su.y = (uv.y - .07) / (1. - .07 - .2);
+  vec2 w = warp(su, u_curve * 1.2);
+  float inside = step(0., w.x) * step(w.x, 1.) * step(0., w.y) * step(w.y, 1.);
+  // ligar/desligar: colapsa vertical e depois horizontal
+  float pw = u_power;
+  vec2 pc = (w - .5) / vec2(max(.002, smoothstep(0., .35, pw)), max(.004, smoothstep(.3, 1., pw))) + .5;
+  float on = step(0., pc.x) * step(pc.x, 1.) * step(0., pc.y) * step(pc.y, 1.);
+  vec3 col = vec3(0.);
+  if (inside > 0.) {
+    float rollY = fract(w.y + t * .05);
+    vec2 s = pc;
+    s.x += sin(s.y * 40. + t * 3.) * .0008 * u_flick;
+    float rb = smoothstep(.0, .08, abs(rollY - .5) - .4) ;
+    vec3 c = texture2D(u_tex, clamp(s, 0., 1.)).rgb;
+    vec3 gl = vec3(0.); for (int i = 0; i < 8; i++) { float a = float(i) * .785; gl += texture2D(u_tex, clamp(s + vec2(cos(a), sin(a)) * .006, 0., 1.)).rgb; }
+    c += max(gl / 8. - .35, 0.) * u_glow * 1.2;
+    c = mix(lum3(c), c, u_sat);
+    if (u_osdOn > .5) { vec4 o = texture2D(u_osd, w); c = mix(c, o.rgb, o.a); }
+    float sn = hash(floor(w * u_res * .5) + fract(t * 61.));
+    c = mix(c, vec3(sn), clamp(u_snow * .35 + u_static, 0., 1.));
+    c *= 1. - u_roll * .35 * (1. - smoothstep(0., .12, abs(rollY - .2)));
+    float sl = .5 + .5 * cos(w.y * u_res.y * (1. - inset.y * 2.) * 3.14159 / 2.);
+    c *= 1. - u_scan * .5 * (1. - sl);
+    float m = mod(gl_FragCoord.x, 3.);
+    vec3 mk = m < 1. ? vec3(1., .7, .7) : m < 2. ? vec3(.7, 1., .7) : vec3(.7, .7, 1.);
+    c *= mix(vec3(1.), mk * 1.15, u_mask);
+    c *= 1. + (hash(vec2(floor(t * 30.), 3.)) - .5) * .12 * u_flick;
+    vec2 v = w * (1. - w); c *= pow(v.x * v.y * 16., .2);
+    col = c * on + vec3(1.) * (1. - on) * 0.;
+    // pontinho que fica quando desliga
+    col += vec3(1.) * smoothstep(.03, 0., length((w - .5) * vec2(1.6, 1.))) * smoothstep(0., .05, pw) * (1. - smoothstep(.15, .35, pw));
+    col += vec3(.03, .04, .035) * (1. - on);
+  }
+  // reflexo no vidro
+  if (inside > 0.) col += .06 * smoothstep(.5, 0., length(w - vec2(.25, .2)));
+  // moldura
+  if (u_frame > 0. && inside < 1.) {
+    vec3 body = u_frame == 1. ? vec3(.62, .62, .6) : u_frame == 2. ? vec3(.36, .2, .1) : vec3(.07);
+    if (u_frame == 2.) body *= .8 + .35 * noise(vec2(uv.x * 3., uv.y * 90.));
+    float e = rbox((su - .5), vec2(.5, .5), .06);
+    body *= 1. - .5 * smoothstep(.0, .035, -e + .04);
+    body *= .75 + .4 * (1. - uv.y);
+    if (uv.y > .82) { // painel de baixo com botões
+      vec2 b = vec2(fract(uv.x * 14.), (uv.y - .9) * 14.);
+      float k = smoothstep(.22, .18, length(vec2(b.x - .5, b.y))) * step(.62, uv.x);
+      body = mix(body, vec3(.15), k);
+      body = mix(body, vec3(.1), smoothstep(.003, 0., abs(uv.y - .865)) * step(uv.x, .55) * step(.16, uv.x));
+      if (length((uv - vec2(.08, .9)) * vec2(u_res.x / u_res.y, 1.)) < .012) body = u_power > .5 ? vec3(1., .1, .1) : vec3(.3, 0., 0.);
+    }
+    col = body;
+  }
+  gl_FragColor = vec4(col, 1.);
+}`;
+
+let staticAmt = 0, power = 1, powerTarget = 1;
+const osd = document.createElement('canvas');
+function drawOSD(show = true) {
+  osd.width = 640; osd.height = 480;
+  const g = osd.getContext('2d');
+  g.clearRect(0, 0, 640, 480);
+  if (show && $('osd').checked) {
+    g.font = '64px VT323, monospace'; g.fillStyle = '#5dff5d'; g.shadowColor = '#000'; g.shadowOffsetX = 3; g.shadowOffsetY = 3;
+    g.fillText('CH ' + String($('ch').value).padStart(2, '0'), 420, 100);
+  }
+  tool.fx.texture('u_osd', osd);
+}
+const tool = new MediaTool({
+  preview: $('pv'), canvas: $('cv'), frag: FRAG,
+  size: (w, h) => { const f = +$('frame').value; const [a, b] = MediaTool.fit(w, h, 1600); return f ? [Math.round(a * 1.2), Math.round(b * 1.35)] : [a, b]; },
+  onLoad: () => drawOSD(),
+  beforeRender: () => { staticAmt *= .92; power += (powerTarget - power) * .08; if (Math.abs(powerTarget - power) < .002) power = powerTarget; },
+  uniforms: () => ({
+    u_curve: $('curve').value / 100, u_scan: $('scan').value / 100, u_mask: $('mask').value / 100, u_glow: $('glow').value / 100,
+    u_flick: $('flick').value / 100, u_snow: $('snow').value / 100, u_roll: $('roll').value / 100, u_sat: $('sat').value / 100,
+    u_frame: +$('frame').value, u_static: staticAmt, u_power: power, u_osdOn: 1,
+  }),
+});
+let osdTimer;
+$('chBtn').onclick = () => {
+  $('ch').value = (+$('ch').value % 99) + 1; staticAmt = 1;
+  drawOSD(); clearTimeout(osdTimer); osdTimer = setTimeout(() => drawOSD(false), 2500);
+};
+$('ch').oninput = () => { staticAmt = .8; drawOSD(); };
+$('osd').onchange = () => drawOSD();
+$('pwrBtn').onclick = () => { powerTarget = powerTarget ? 0 : 1; $('pwrBtn').textContent = powerTarget ? '⏻ Desligar' : '⏻ Ligar'; if (powerTarget) staticAmt = .7; };
+$('frame').onchange = () => tool.media && tool.setMedia(tool.media);
+$('loadBtn').onclick = () => tool.pick();
+$('demoBtn').onclick = () => tool.useDemo();
+$('soundBtn').onclick = () => { $('soundBtn').textContent = tool.toggleSound() ? '🔊 Som' : '🔇 Som'; };
+$('pngBtn').onclick = () => tool.savePNG('tv');
+$('recBtn').onclick = () => tool.toggleRecord($('recBtn'), +$('dur').value, 'tv');
+document.fonts.ready.then(() => tool.media && drawOSD());
+</script>
+</body>
+</html>

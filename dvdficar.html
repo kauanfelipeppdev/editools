@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DVDficar · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<style>
+  #pv { background: #000; }
+  #corner { position: absolute; top: 8px; right: 10px; color: #fff; font: bold 13px 'Courier New', monospace; text-shadow: 0 0 4px #000; display: none; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="DVDficar_sua_logo.exe" data-icon="📀">
+    <div class="window-body">
+      <div class="toolbar"><a class="btn" href="index.html">🏠 Home</a><button data-open="help">? Ajuda</button></div>
+      <div class="tool">
+        <div class="panel">
+          <fieldset>
+            <legend>Logo</legend>
+            <div class="stack">
+              <button id="upBtn">📂 Carregar sua logo (PNG)</button>
+              <p class="hint">Use PNG com fundo transparente. Também dá pra arrastar ou colar (Ctrl+V).</p>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Tela</legend>
+            <div class="stack">
+              <select id="fmt"><option value="1920x1080">Horizontal (1920×1080)</option><option value="1080x1920">Vertical (1080×1920)</option><option value="1080x1080">Quadrado (1080×1080)</option></select>
+              <label class="field"><span>Velocidade <output></output></span><input type="range" id="speed" min="1" max="20" value="6"></label>
+              <label class="field"><span>Tamanho <output data-suffix="%"></output></span><input type="range" id="size" min="5" max="60" value="22"></label>
+              <div class="row"><span class="lbl">Fundo:</span><input type="color" id="bg" value="#000000"><button id="rndBtn">🎲 Random</button></div>
+              <div class="field-row"><input type="checkbox" id="dyn" checked><label for="dyn">Cor dinâmica (muda a cada batida)</label></div>
+              <div class="field-row"><input type="checkbox" id="trail"><label for="trail">Efeito rastro</label></div>
+              <div class="field-row"><input type="checkbox" id="corners"><label for="corners">Contar batidas no canto 👀</label></div>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Gravar</legend>
+            <div class="stack">
+              <label class="field"><span>Duração <output data-suffix=" s"></output></span><input type="range" id="dur" min="3" max="60" value="10"></label>
+              <button id="recBtn">⏺ Iniciar gravação</button>
+              <div class="status-line" id="st">&gt; pronto.</div>
+            </div>
+          </fieldset>
+        </div>
+        <div id="pv" class="preview"><canvas id="cv"></canvas><div id="corner"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="ajuda.txt" data-icon="📝">
+    <div class="window-body">
+      <ul>
+        <li>Carregue sua logo e ela vai quicar pela tela igual descanso de DVD.</li>
+        <li><b>Cor dinâmica</b> pinta a logo de uma cor nova a cada batida (funciona melhor em logo de uma cor só).</li>
+        <li><b>Rastro</b> deixa aquele borrão de monitor antigo.</li>
+        <li>A gravação acontece em tempo real: deixe a aba aberta até terminar.</li>
+      </ul>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">OK</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const cv = $('cv'), ctx = cv.getContext('2d');
+let logo = defaultLogo();
+let tinted = null, hue = 200;
+let x = 100, y = 100, vx = 1, vy = 1, hits = 0, cornerHits = 0;
+
+function defaultLogo() {
+  const c = document.createElement('canvas'); c.width = 600; c.height = 300;
+  const g = c.getContext('2d');
+  g.fillStyle = '#fff';
+  g.font = 'italic 900 150px Arial Black, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText('LOGO', 300, 115);
+  g.beginPath(); g.ellipse(300, 245, 260, 42, 0, 0, Math.PI * 2); g.fill();
+  g.globalCompositeOperation = 'destination-out';
+  g.font = 'bold 44px Arial, sans-serif'; g.fillText('S U A', 300, 248);
+  return c;
+}
+
+function size() { const [w, h] = $('fmt').value.split('x').map(Number); return { w, h }; }
+function resize() { const s = size(); cv.width = s.w; cv.height = s.h; x = Math.min(x, s.w * .5); y = Math.min(y, s.h * .5); retint(); }
+function logoSize() { const s = size(); const lw = Math.min(s.w, s.h) * (+$('size').value / 100) * 1.6; return [lw, lw * logo.height / logo.width]; }
+
+function retint() {
+  const [lw, lh] = logoSize();
+  const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(lw)); c.height = Math.max(1, Math.round(lh));
+  const g = c.getContext('2d');
+  g.drawImage(logo, 0, 0, c.width, c.height);
+  if ($('dyn').checked) { g.globalCompositeOperation = 'source-atop'; g.fillStyle = `hsl(${hue} 100% 55%)`; g.fillRect(0, 0, c.width, c.height); }
+  tinted = c;
+}
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(50, now - last) / 16.67; last = now;
+  const s = size(), [lw, lh] = [tinted.width, tinted.height];
+  const sp = +$('speed').value * (Math.min(s.w, s.h) / 1080) * 1.6;
+  x += vx * sp * dt; y += vy * sp * dt;
+  let bx = false, by = false;
+  if (x <= 0) { x = 0; vx = 1; bx = true; } else if (x + lw >= s.w) { x = s.w - lw; vx = -1; bx = true; }
+  if (y <= 0) { y = 0; vy = 1; by = true; } else if (y + lh >= s.h) { y = s.h - lh; vy = -1; by = true; }
+  if (bx || by) {
+    hits++;
+    if (bx && by) cornerHits++;
+    hue = (hue + 60 + Math.random() * 180) % 360;
+    retint();
+  }
+  ctx.globalAlpha = $('trail').checked ? .12 : 1;
+  ctx.fillStyle = $('bg').value; ctx.fillRect(0, 0, s.w, s.h);
+  ctx.globalAlpha = 1;
+  ctx.drawImage(tinted, x, y);
+  if ($('corners').checked) {
+    ctx.font = `bold ${s.h * .03}px Courier New, monospace`; ctx.fillStyle = '#fff'; ctx.textAlign = 'right';
+    ctx.fillText(`batidas: ${hits}  cantos: ${cornerHits}`, s.w - s.w * .02, s.h * .05);
+  }
+  requestAnimationFrame(frame);
+}
+
+async function setLogo(file) {
+  try {
+    const m = await OS.loadMedia(file);
+    if (m.video) return OS.dialog('Ops', 'Use uma imagem (PNG de preferência).', '⚠️');
+    logo = m.el; retint();
+  } catch (e) { OS.dialog('Erro', e.message, '❌'); }
+}
+$('upBtn').onclick = async () => { const f = await OS.pickFile('image/*'); if (f) setLogo(f); };
+OS.dropZone($('pv'), setLogo, /^image\//);
+$('fmt').onchange = resize;
+$('size').oninput = retint;
+$('dyn').onchange = retint;
+$('rndBtn').onclick = () => { $('bg').value = '#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0'); };
+
+let rec = null;
+$('recBtn').onclick = async () => {
+  if (rec) return finish();
+  if (!window.MediaRecorder) return OS.dialog('Sem suporte', 'Seu navegador não grava vídeo. Use Chrome ou Edge.', '❌');
+  rec = OS.recordCanvas(cv, { fps: 60, bitrate: 16e6 });
+  $('recBtn').textContent = '⏹ Parar';
+  const total = +$('dur').value, t0 = Date.now();
+  rec.timer = setInterval(() => {
+    const el = (Date.now() - t0) / 1000;
+    $('st').textContent = `> gravando… ${el.toFixed(0)} / ${total} s`;
+    if (el >= total) finish();
+  }, 200);
+};
+async function finish() {
+  const r = rec; rec = null; clearInterval(r.timer);
+  $('recBtn').textContent = '⏺ Iniciar gravação';
+  const { blob, ext } = await r.stop();
+  $('st').textContent = `> salvo! (${(blob.size / 1e6).toFixed(1)} MB)`;
+  OS.download(blob, 'dvdficar.' + ext);
+}
+
+resize();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

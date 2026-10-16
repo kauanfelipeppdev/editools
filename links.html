@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Links · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+<script src="assets/mp3.js"></script>
+<style>
+  .col { display: flex; flex-direction: column; gap: 16px; width: min(340px, 100%); }
+  .linkbtns { display: flex; flex-direction: column; gap: 6px; }
+  .linkbtns a { justify-content: flex-start !important; gap: 8px; padding: 6px 12px !important; font-size: 13px !important; }
+  .avatar { font-size: 46px; text-align: center; }
+  .handle { text-align: center; font-weight: bold; font-size: 15px; margin: 4px 0 10px; }
+  .amp { background: #232323; color: #2bff2b; font: 12px 'Courier New', monospace; padding: 8px; border: 2px inset #555; }
+  .amp .marquee { overflow: hidden; white-space: nowrap; }
+  .amp .marquee span { display: inline-block; padding-left: 100%; animation: mq 12s linear infinite; }
+  @keyframes mq { to { transform: translateX(-100%); } }
+  #viz { width: 100%; height: 60px; display: block; background: #000; margin-top: 6px; }
+  #note { width: 100%; min-height: 130px; font: 13px 'Lucida Console', 'Courier New', monospace; resize: vertical; }
+  .cmd { background: #000; color: #c0c0c0; font: 13px 'Lucida Console', 'Courier New', monospace; padding: 8px; height: 190px; overflow-y: auto; white-space: pre-wrap; }
+  .cmd input { background: transparent; border: 0; color: inherit; font: inherit; outline: none; width: 70%; padding: 0; box-shadow: none; }
+  progress { width: 100%; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <div class="col">
+    <section class="window app" data-title="meus_links.exe" data-icon="🔗" style="width:100%">
+      <div class="window-body">
+        <div class="avatar">🖼️</div>
+        <div class="handle" id="handle"></div>
+        <div class="linkbtns" id="links"></div>
+      </div>
+    </section>
+    <section class="window" id="notes" data-title="lembrete.txt - Bloco de Notas" data-icon="📝">
+      <div class="window-body"><textarea id="note" spellcheck="false"></textarea><p class="hint">Fica salvo só no seu navegador.</p></div>
+    </section>
+  </div>
+
+  <div class="col">
+    <section class="window" id="amp" data-title="winamp_imapng.exe" data-icon="🎵">
+      <div class="window-body">
+        <div class="amp"><div class="marquee"><span id="now">Tocando agora: nada · clique em 📂 pra escolher suas músicas</span></div><canvas id="viz" width="600" height="120"></canvas></div>
+        <div class="btns" style="margin-top:8px">
+          <button id="aOpen" title="Abrir músicas">📂</button><button id="aPrev">⏮</button><button id="aPlay">▶</button><button id="aPause">⏸</button><button id="aStop">⏹</button><button id="aNext">⏭</button>
+        </div>
+        <input type="range" id="vol" min="0" max="100" value="80" aria-label="Volume" style="width:100%;margin-top:6px">
+      </div>
+    </section>
+    <section class="window" id="conv" data-title="conversor_mp4_mp3.exe" data-icon="💿">
+      <div class="window-body">
+        <div class="stack">
+          <button id="cOpen">1. Selecione o vídeo (MP4, WEBM, MOV)</button>
+          <div class="row"><span class="lbl">2. Qualidade:</span><select id="cKbps" style="flex:1"><option value="128">128 kbps (padrão)</option><option value="192">192 kbps (boa)</option><option value="320">320 kbps (alta)</option></select></div>
+          <button id="cGo" disabled>🎵 Converter para MP3</button>
+          <progress id="cProg" max="1" value="0"></progress>
+          <div class="status-line" id="cSt">&gt; Pronto para converter. Aguardando arquivo…</div>
+          <button id="cDl" disabled>💾 Baixar MP3</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="col">
+    <section class="window" id="cmdw" data-title="C:\WINDOWS\system32\cmd.exe" data-icon="⬛">
+      <div class="window-body" style="padding:0"><div class="cmd" id="cmd"></div></div>
+    </section>
+    <section class="window" id="hlp" data-title="ajuda.txt - Bloco de Notas" data-icon="📝">
+      <div class="window-body">
+        <p style="margin-top:0">Bem-vindo aos links! 👾 Arraste as janelas pela barra de título pra organizar a tela.</p>
+        <p class="hint">Pra trocar os links, edite a lista <code>LINKS</code> no começo do script deste arquivo (links.html).</p>
+        <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">OK</button></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+// ✏️ Coloque aqui os seus links (deixe url vazia pra esconder o botão).
+const HANDLE = 'ImAPNG';
+const LINKS = [
+  { icon: '🏠', label: 'Site (ferramentas)', url: 'index.html' },
+  { icon: '✂️', label: 'Removedor de fundo', url: 'removedor.html' },
+  { icon: '▶️', label: 'YouTube', url: '' },
+  { icon: '🎵', label: 'TikTok', url: '' },
+  { icon: '📸', label: 'Instagram', url: '' },
+  { icon: '💬', label: 'Discord', url: '' },
+];
+const $ = (id) => document.getElementById(id);
+$('handle').textContent = HANDLE;
+$('links').innerHTML = LINKS.filter((l) => l.url).map((l) => `<a class="btn" href="${l.url}"${/^https?:/.test(l.url) ? ' target="_blank" rel="noopener"' : ''}><span>${l.icon}</span>${l.label}</a>`).join('');
+
+// bloco de notas
+$('note').value = OS.store.get('note', 'Não esquecer:\n- Beber água\n- Renderizar o vídeo de quinta\n- Fazer backup do projeto');
+$('note').oninput = () => OS.store.set('note', $('note').value);
+
+// player
+const audio = new Audio();
+let list = [], idx = 0, actx, an;
+audio.volume = .8;
+$('vol').oninput = () => (audio.volume = $('vol').value / 100);
+$('aOpen').onclick = () => {
+  const i = Object.assign(document.createElement('input'), { type: 'file', accept: 'audio/*', multiple: true });
+  i.onchange = () => { list = [...i.files]; idx = 0; if (list.length) play(); };
+  i.click();
+};
+function play() {
+  if (!list.length) return $('aOpen').click();
+  if (!actx) { actx = new AudioContext(); const s = actx.createMediaElementSource(audio); an = actx.createAnalyser(); an.fftSize = 128; s.connect(an).connect(actx.destination); }
+  actx.resume();
+  if (audio.dataset.i !== String(idx)) { if (audio.src) URL.revokeObjectURL(audio.src); audio.src = URL.createObjectURL(list[idx]); audio.dataset.i = idx; }
+  audio.play();
+  $('now').textContent = `Tocando agora: ${list[idx].name.replace(/\.[^.]+$/, '')} 🎵 (${idx + 1}/${list.length})`;
+}
+audio.onended = () => { idx = (idx + 1) % list.length; play(); };
+$('aPlay').onclick = play;
+$('aPause').onclick = () => audio.pause();
+$('aStop').onclick = () => { audio.pause(); audio.currentTime = 0; };
+$('aNext').onclick = () => { if (list.length) { idx = (idx + 1) % list.length; play(); } };
+$('aPrev').onclick = () => { if (list.length) { idx = (idx - 1 + list.length) % list.length; play(); } };
+const vz = $('viz'), vx = vz.getContext('2d'), bins = new Uint8Array(64);
+(function draw() {
+  vx.fillStyle = '#000'; vx.fillRect(0, 0, vz.width, vz.height);
+  if (an && !audio.paused) an.getByteFrequencyData(bins); else bins.fill(0);
+  const w = vz.width / 40;
+  for (let i = 0; i < 40; i++) {
+    const h = bins[i] / 255 * vz.height;
+    for (let y = 0; y < h; y += 6) { vx.fillStyle = y > vz.height * .7 ? '#ff3b3b' : y > vz.height * .45 ? '#ffd23b' : '#2bff2b'; vx.fillRect(i * w + 1, vz.height - y - 5, w - 2, 4); }
+  }
+  requestAnimationFrame(draw);
+})();
+
+// conversor
+let cFile = null, cBlob = null;
+$('cOpen').onclick = async () => { const f = await OS.pickFile('video/*,audio/*'); if (!f) return; cFile = f; cBlob = null; $('cSt').textContent = '> ' + f.name; $('cGo').disabled = false; $('cDl').disabled = true; $('cProg').value = 0; };
+$('cGo').onclick = async () => {
+  $('cGo').disabled = true; $('cSt').textContent = '> Lendo áudio do vídeo…';
+  try {
+    const buf = await MP3.decodeFile(cFile);
+    $('cSt').textContent = '> Codificando MP3…';
+    cBlob = await MP3.encode(buf, +$('cKbps').value, (p) => ($('cProg').value = p));
+    $('cSt').textContent = `> Concluído! ${(cBlob.size / 1e6).toFixed(2)} MB`;
+    $('cDl').disabled = false;
+  } catch (e) { $('cSt').textContent = '> Erro: ' + e.message; }
+  $('cGo').disabled = false;
+};
+$('cDl').onclick = () => OS.download(cBlob, OS.slug(cFile.name.replace(/\.[^.]+$/, '')) + '.mp3');
+
+// cmd
+const cmd = $('cmd');
+const print = (t) => { cmd.insertBefore(document.createTextNode(t + '\n'), cmd.lastChild); cmd.scrollTop = cmd.scrollHeight; };
+cmd.textContent = 'Microsoft(R) Windows DOS\n(C) Copyright Microsoft Corp 1990-2001.\n\nDigite HELP pra ver os comandos.\n\n';
+const line = document.createElement('div');
+line.innerHTML = 'C:\\imapng&gt; <input aria-label="Comando" autocomplete="off" spellcheck="false">';
+cmd.appendChild(line);
+const inp = line.querySelector('input');
+cmd.addEventListener('click', () => inp.focus());
+const CMDS = {
+  help: () => 'HELP     esta lista\nLINKS    lista os links\nTOOLS    lista as ferramentas\nOPEN x   abre a ferramenta x\nDATE     data e hora\nPING     testa a conexão\nCOLOR    troca a cor do texto\nCLS      limpa a tela',
+  links: () => LINKS.filter((l) => l.url).map((l) => `${l.label.padEnd(22)} ${l.url}`).join('\n'),
+  tools: () => OS.TOOLS.map((t) => t.name).join('\n'),
+  open: (a) => { const t = OS.TOOLS.find((t) => t.name.startsWith(a) || t.file.startsWith(a)); if (!t) return 'Arquivo não encontrado.'; setTimeout(() => (location.href = t.file), 400); return 'Abrindo ' + t.name + '…'; },
+  date: () => new Date().toLocaleString('pt-BR'),
+  ping: () => `Disparando imapng.local\nResposta de 127.0.0.1: bytes=32 tempo<1ms TTL=128\nResposta de 127.0.0.1: bytes=32 tempo<1ms TTL=128\nResposta de 127.0.0.1: bytes=32 tempo<1ms TTL=128`,
+  color: () => { const c = ['#c0c0c0', '#3f3', '#0ff', '#ff0', '#f6f']; cmd.style.color = c[(c.indexOf(cmd.dataset.c || '#c0c0c0') + 1) % c.length]; cmd.dataset.c = cmd.style.color; return ''; },
+  cls: () => { while (cmd.firstChild !== line) cmd.removeChild(cmd.firstChild); return null; },
+};
+inp.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  const raw = inp.value.trim(); inp.value = '';
+  print('C:\\imapng> ' + raw);
+  if (!raw) return;
+  const [c, ...rest] = raw.split(/\s+/);
+  const fn = CMDS[c.toLowerCase()];
+  const out = fn ? fn(rest.join(' ').toLowerCase()) : `'${c}' não é reconhecido como um comando interno\nou externo, um programa operável ou um arquivo em lotes.`;
+  if (out) print(out);
+  if (out !== null) print('');
+});
+</script>
+</body>
+</html>

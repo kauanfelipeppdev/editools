@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gradientes animados · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="assets/glfx.js"></script>
+<script src="assets/encode.js"></script>
+<style>
+  .cols { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .pals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .pals button { min-width: 0; height: 26px; padding: 0; border: 1px solid #555; }
+  progress { width: 100%; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="gradientes_animados.exe" data-icon="🌈">
+    <div class="window-body">
+      <div class="toolbar"><a class="btn" href="index.html">🏠 Home</a><span class="spacer"></span><button id="rndBtn">🎲 Sortear cores</button><button id="pngBtn">📸 PNG</button></div>
+      <div class="tool">
+        <div class="panel" id="panel">
+          <fieldset>
+            <legend>Estilo</legend>
+            <div class="stack">
+              <select id="mode">
+                <option value="0">Malha (mesh) fluida</option><option value="1">Linear girando</option><option value="2">Radial pulsando</option>
+                <option value="3">Cônico (roda de cor)</option><option value="4">Aurora boreal</option><option value="5">Lava / plasma</option><option value="6">Ondas</option>
+              </select>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Cores</legend>
+            <div class="stack">
+              <div class="cols" id="cols"></div>
+              <div class="row"><button id="addC">+ cor</button><button id="delC">− cor</button></div>
+              <div class="pals" id="pals"></div>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Movimento</legend>
+            <div class="stack">
+              <label class="field"><span>Velocidade (voltas por loop) <output></output></span><input type="range" id="speed" min="1" max="6" value="1"></label>
+              <label class="field"><span>Escala <output data-suffix="%"></output></span><input type="range" id="scale" min="30" max="300" value="100"></label>
+              <label class="field"><span>Suavidade <output data-suffix="%"></output></span><input type="range" id="soft" min="0" max="100" value="60"></label>
+              <label class="field"><span>Granulado (grain) <output data-suffix="%"></output></span><input type="range" id="grain" min="0" max="100" value="12"></label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Exportar</legend>
+            <div class="stack">
+              <div class="row"><span class="lbl">Resolução</span><select id="res" style="flex:1"><option value="1920x1080">1920×1080</option><option value="1080x1920">1080×1920</option><option value="1080x1080">1080×1080</option><option value="3840x2160">4K</option></select></div>
+              <div class="row"><span class="lbl">Duração</span><select id="dur" style="flex:1"><option value="5">5 s</option><option value="10" selected>10 s</option><option value="20">20 s</option><option value="30">30 s</option></select></div>
+              <div class="row"><span class="lbl">Formato</span><select id="fmt" style="flex:1"><option value="mp4">MP4</option><option value="png">Sequência PNG (.zip)</option></select></div>
+              <p class="hint">O vídeo é um loop perfeito: o último quadro emenda com o primeiro.</p>
+              <button id="genBtn">🎬 Gerar vídeo</button>
+              <progress id="prog" max="1" value="0" hidden></progress>
+            </div>
+          </fieldset>
+        </div>
+        <div id="pv" class="preview"><canvas id="cv"></canvas></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const FRAG = `
+uniform float u_mode, u_n, u_scale, u_soft, u_grain, u_ph; uniform vec3 u_c[6];
+vec3 pal(float x){ x = fract(x) * u_n; vec3 c = u_c[0];
+  for (int i = 0; i < 6; i++) { float fi = float(i); if (fi >= u_n) break;
+    if (x >= fi && x < fi + 1.) { vec3 nb = u_c[0]; for (int j = 0; j < 6; j++) if (float(j) == mod(fi + 1., u_n)) nb = u_c[j];
+      float f = x - fi; f = mix(f, smoothstep(0., 1., f), u_soft); c = mix(u_c[i], nb, f); } }
+  return c; }
+void main(){
+  vec2 A = vec2(u_res.x / u_res.y, 1.);
+  vec2 p = (v_uv - .5) * A / u_scale;
+  float ph = u_ph; // 0..2pi, garante loop
+  vec2 cs = vec2(cos(ph), sin(ph));
+  vec3 col;
+  if (u_mode == 0.) {
+    col = vec3(0.); float wsum = 0.;
+    for (int i = 0; i < 6; i++) { float fi = float(i); if (fi >= u_n) break;
+      vec2 c = .45 * vec2(cos(ph + fi * 2.1) * .9 + sin(ph * 2. + fi) * .3, sin(ph + fi * 1.7) * .7 + cos(ph * 2. + fi * .5) * .25) * vec2(A.x, 1.);
+      float d = length(p - c); float w = 1. / pow(d + .05, 2. + u_soft * 2.);
+      col += u_c[i] * w; wsum += w; }
+    col /= wsum;
+  } else if (u_mode == 1.) { float a = ph; col = pal(dot(p, vec2(cos(a), sin(a))) * .8 + .5 + ph / 6.2832);
+  } else if (u_mode == 2.) { col = pal(length(p) * 1.2 - ph / 6.2832);
+  } else if (u_mode == 3.) { col = pal(atan(p.y, p.x) / 6.2832 + ph / 6.2832);
+  } else if (u_mode == 4.) {
+    float n = fbm(vec2(p.x * 2. + cs.x * .6, p.y * 1.2 + cs.y * .6));
+    float band = smoothstep(.15, 0., abs(p.y + .15 * sin(p.x * 3. + ph) - (n - .5) * .6));
+    col = mix(u_c[0] * .25, pal(n + p.x * .3), band * 1.2 + n * .25);
+  } else if (u_mode == 5.) {
+    float v = sin(p.x * 4. + cs.x * 2.) + sin(p.y * 5. + cs.y * 2.) + sin((p.x + p.y) * 3. + ph) + sin(length(p * 6. + cs) - ph);
+    col = pal(v * .125 + .5);
+  } else { col = pal(sin(p.x * 6. + ph) * .12 + p.y * .6 + .5 + sin(p.y * 4. - ph) * .05); }
+  col += (hash(v_uv * u_res + fract(u_time * 7.)) - .5) * u_grain * .18;
+  gl_FragColor = vec4(clamp(col, 0., 1.), 1.);
+}`;
+const PALS = [
+  ['#ff5f6d', '#ffc371', '#845ec2'], ['#00c9ff', '#92fe9d', '#3a1c71'], ['#fc466b', '#3f5efb', '#ff9a8b', '#2b1055'],
+  ['#0f2027', '#2c5364', '#00f5d4', '#9b5de5'], ['#f9d423', '#ff4e50', '#1b1b3a'], ['#a8edea', '#fed6e3', '#c3cfe2', '#ffe29f'],
+  ['#12c2e9', '#c471ed', '#f64f59'], ['#000000', '#1fd1f9', '#b621fe', '#ff2bd6'],
+];
+let colors = [...PALS[2]];
+const cv = $('cv'), fx = GLFX.create(cv, FRAG);
+function renderCols() {
+  $('cols').innerHTML = '';
+  colors.forEach((c, i) => { const inp = Object.assign(document.createElement('input'), { type: 'color', value: c }); inp.oninput = () => (colors[i] = inp.value); $('cols').appendChild(inp); });
+}
+PALS.forEach((p) => { const b = document.createElement('button'); b.style.background = `linear-gradient(90deg, ${p.join(',')})`; b.title = 'Paleta'; b.onclick = () => { colors = [...p]; renderCols(); }; $('pals').appendChild(b); });
+$('addC').onclick = () => { if (colors.length < 6) { colors.push('#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0')); renderCols(); } };
+$('delC').onclick = () => { if (colors.length > 2) { colors.pop(); renderCols(); } };
+$('rndBtn').onclick = () => { const h = Math.random() * 360, n = 3 + Math.floor(Math.random() * 2); colors = Array.from({ length: n }, (_, i) => hsl((h + i * (60 + Math.random() * 60)) % 360, 70 + Math.random() * 30, 40 + Math.random() * 25)); renderCols(); };
+function hsl(h, s, l) { l /= 100; const a = s * Math.min(l, 1 - l) / 100; const f = (n) => { const k = (n + h / 30) % 12; return Math.round(255 * (l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1))).toString(16).padStart(2, '0'); }; return '#' + f(0) + f(8) + f(4); }
+
+function size() { const [w, h] = $('res').value.split('x').map(Number); return [w, h]; }
+function drawAt(t, full) {
+  const [W, H] = size();
+  const k = full ? 1 : Math.min(1, 1280 / Math.max(W, H));
+  const w = Math.round(W * k), h = Math.round(H * k);
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  const arr = new Array(18).fill(0);
+  colors.forEach((c, i) => GLFX.hex2rgb(c).forEach((v, j) => (arr[i * 3 + j] = v)));
+  const dur = +$('dur').value;
+  fx.render({ u_mode: +$('mode').value, u_n: colors.length, 'u_c[0]': arr, u_scale: $('scale').value / 100, u_soft: $('soft').value / 100, u_grain: $('grain').value / 100,
+    u_ph: (t / dur) * Math.PI * 2 * +$('speed').value, u_time: t });
+}
+let busy = false;
+const t0 = performance.now();
+(function loop() { if (!busy) drawAt((performance.now() - t0) / 1000 % +$('dur').value, false); requestAnimationFrame(loop); })();
+$('pngBtn').onclick = async () => { drawAt((performance.now() - t0) / 1000 % +$('dur').value, true); OS.download(await OS.canvasBlob(cv), 'gradiente.png'); };
+$('genBtn').onclick = async () => {
+  busy = true; $('genBtn').disabled = true; $('prog').hidden = false;
+  try { await ENCODE.video({ canvas: cv, draw: (t) => drawAt(t, true), fps: 30, seconds: +$('dur').value, format: $('fmt').value, name: 'gradiente-animado', onProgress: (p) => ($('prog').value = p) }); }
+  catch (e) { console.error(e); OS.dialog('Erro', 'Não consegui gerar o vídeo: ' + e.message, '❌'); }
+  busy = false; $('genBtn').disabled = false; $('prog').hidden = true;
+};
+renderCols();
+</script>
+</body>
+</html>
