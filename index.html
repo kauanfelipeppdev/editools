@@ -10,7 +10,9 @@
 <link rel="stylesheet" href="assets/os.css">
 <style>
   .home { display: grid; grid-template-columns: auto 1fr; gap: 18px; padding: 16px; align-items: start; }
-  .home .icons { grid-template-columns: repeat(2, 88px); }
+  .home .icons { grid-template-columns: repeat(3, 88px); }
+  .dicon .ico .adobe-ico { margin: 0 auto; }
+  .prog.over { background: #fff1b8; border-color: #e2a400; }
   .wins { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
   .progs { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
   .prog { display: flex; gap: 10px; align-items: center; padding: 8px; border: 1px solid rgba(0,0,0,.18); background: rgba(255,255,255,.55); text-decoration: none; color: inherit; }
@@ -52,7 +54,11 @@ Removedor de fundo: tira o fundo de várias imagens de uma vez, com retoque no p
 
 Criador de botões: monte o botão com o estilo que quiser e baixe em PNG transparente.
 
-Menu Iniciar: todas as ferramentas ficam lá também.</pre>
+Solte um arquivo em cima de um ícone pra abrir a ferramenta já com ele.
+
+Tudo que você baixa fica em Meus arquivos, e de lá vai pra outra ferramenta com "Enviar para…".
+
+Menu Iniciar: todas as ferramentas, os programas da Adobe, papel de parede e idioma.</pre>
           <div class="btns end" style="margin-top:8px"><button data-close-self>OK</button></div>
         </div>
       </section>
@@ -61,6 +67,8 @@ Menu Iniciar: todas as ferramentas ficam lá também.</pre>
         <div class="window-body">
           <p style="margin-top:0">Escolha a versão do Windows:</p>
           <div class="theme-pick" id="themePick"></div>
+          <div class="btns" style="margin-top:10px"><button id="wallBtn">🖥️ Papel de parede e proteção de tela…</button></div>
+          <div class="row" style="margin-top:8px"><span class="lbl">🌐 Idioma</span><select id="langPick"><option value="pt">Português</option><option value="en">English</option></select></div>
         </div>
       </section>
     </div>
@@ -70,11 +78,33 @@ Menu Iniciar: todas as ferramentas ficam lá também.</pre>
 <script>
   const icons = document.getElementById('icons');
   const progs = document.getElementById('progs');
-  OS.TOOLS.forEach((t, i) => {
-    icons.insertAdjacentHTML('beforeend', `<a class="dicon" href="${t.file}"><span class="ico">${t.icon}</span>${t.name}</a>`);
-    const isNew = t.file === 'botoes.html';
-    progs.insertAdjacentHTML('beforeend', `<a class="prog${isNew ? ' new' : ''}" href="${t.file}"><span class="ico">${t.icon}</span><span><b>${t.name}${isNew ? '<span class="tag">NOVO</span>' : ''}</b><small>${t.desc}</small></span></a>`);
+  OS.TOOLS.forEach((t) => {
+    icons.insertAdjacentHTML('beforeend', `<a class="dicon" href="${t.file}" data-file="${t.file}"><span class="ico">${t.icon}</span>${t.name}</a>`);
+    progs.insertAdjacentHTML('beforeend', `<a class="prog${t.isNew ? ' new' : ''}" href="${t.file}" data-file="${t.file}"><span class="ico">${t.icon}</span><span><b>${t.name}${t.isNew ? '<span class="tag">NOVO</span>' : ''}</b><small>${t.desc}</small></span></a>`);
   });
+  // atalhos pros programas da Adobe
+  OS.ADOBE.forEach((a) => icons.insertAdjacentHTML('beforeend', `<a class="dicon" href="${a.url}" target="_blank" rel="noopener" title="Abre o site da Adobe"><span class="ico">${OS.adobeIcon(a, 36)}</span>${a.name}</a>`));
+
+  // soltar um arquivo em cima do ícone abre a ferramenta com ele
+  document.querySelectorAll('[data-file]').forEach((el) => {
+    const t = OS.TOOLS.find((x) => x.file === el.dataset.file);
+    el.addEventListener('dragover', (e) => { e.preventDefault(); el.classList.add('over'); });
+    el.addEventListener('dragleave', () => el.classList.remove('over'));
+    el.addEventListener('drop', (e) => {
+      e.preventDefault(); el.classList.remove('over');
+      const f = e.dataTransfer.files[0];
+      if (!f) return;
+      if (t.file === 'arquivos.html') return OS.files.add(f, f.name).then(() => (location.href = 'arquivos.html'));
+      if (!t.accept || !new RegExp(t.accept).test(f.type)) return OS.dialog('Não abre esse arquivo', `${t.name} não abre esse tipo de arquivo. Tente outra ferramenta.`, '⚠️');
+      OS.sendTo(f, f.name, t.file);
+    });
+  });
+  document.addEventListener('dragover', (e) => e.preventDefault());
+  document.addEventListener('drop', (e) => e.preventDefault());
+  document.getElementById('wallBtn').onclick = () => OS.openSettings();
+  const lp = document.getElementById('langPick');
+  lp.value = OS.LANG;
+  lp.onchange = () => OS.setLang(lp.value);
   const pick = document.getElementById('themePick');
   for (const [k, v] of Object.entries(OS.THEMES)) {
     pick.insertAdjacentHTML('beforeend', `<div class="field-row"><input type="radio" name="th" id="th${k}" value="${k}"><label for="th${k}">${v.name}</label></div>`);

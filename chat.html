@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conversa animada · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Nunito:wght@400;700&family=Roboto:wght@400;500;700&display=swap">
+<script src="assets/export.js"></script>
+<style>
+  #pv canvas { max-height: 70vh; }
+  #script { font: 12px 'Consolas', 'Courier New', monospace; min-height: 170px; }
+  .ppl { display: flex; flex-direction: column; gap: 6px; }
+  .pp { display: grid; grid-template-columns: 34px 1fr 42px 30px; gap: 6px; align-items: center; }
+  .pp .av { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 18px; cursor: pointer; overflow: hidden; background: #ddd; border: 1px solid #888; padding: 0; min-width: 0; }
+  .pp .av img { width: 100%; height: 100%; object-fit: cover; }
+  .pp b { font-family: monospace; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="conversa_animada.exe" data-icon="📱">
+    <div class="window-body">
+      <div class="toolbar"><a class="btn" href="index.html">🏠 Home</a><button data-open="help">? Ajuda</button><span class="spacer"></span><button id="playBtn">▶ Repetir prévia</button></div>
+      <div class="tool wide-panel">
+        <div class="panel" id="panel">
+          <div class="btns grow tabs" role="tablist">
+            <button role="tab" aria-selected="true" data-tab="t1">💬 Conversa</button>
+            <button role="tab" aria-selected="false" data-tab="t2">🎨 Visual</button>
+            <button role="tab" aria-selected="false" data-tab="t3">⭐ Modelos</button>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t1">
+            <div class="stack">
+              <span>Pessoas (A é você, fica à direita)</span>
+              <div class="ppl" id="ppl"></div>
+              <label class="field"><span>Roteiro</span><textarea id="script" spellcheck="false"></textarea></label>
+              <p class="hint">Uma mensagem por linha: <b>A: oi</b>. <b>--- Hoje</b> cria um separador. <b>A: [img1]</b> manda a imagem 1. Mensagem só com emoji fica grande.</p>
+              <div class="row"><button id="addImg">🖼️ Adicionar imagem</button><span class="hint" id="imgCount"></span></div>
+              <div class="two">
+                <label class="field"><span>Nome do chat</span><input type="text" id="chatName" value=""></label>
+                <label class="field"><span>Status</span><input type="text" id="status" value="online"></label>
+              </div>
+            </div>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t2" hidden>
+            <div class="stack">
+              <div class="two">
+                <label class="field"><span>Tema</span><select id="theme"><option value="light">Claro</option><option value="dark">Escuro</option><option value="green">Verde</option><option value="purple">Roxo neon</option><option value="retro">Bate-papo 2000</option></select></label>
+                <label class="field"><span>Enquadramento</span><select id="frame"><option value="full">Tela inteira</option><option value="phone">Celular no meio</option><option value="bubbles">Só as mensagens</option></select></label>
+                <label class="field"><span>Fonte</span><select id="font"><option>Inter</option><option>Roboto</option><option>Nunito</option><option>Arial</option><option>Comic Sans MS</option></select></label>
+                <label class="field"><span>Hora inicial</span><input type="time" id="clock" value="21:30"></label>
+              </div>
+              <label class="field"><span>Tamanho do texto <output data-suffix="%"></output></span><input type="range" id="tsize" min="60" max="180" value="100"></label>
+              <label class="field"><span>Velocidade <output data-suffix="%"></output></span><input type="range" id="speed" min="40" max="250" value="100"></label>
+              <div class="field-row"><input type="checkbox" id="typing" checked><label for="typing">Mostrar "digitando…"</label></div>
+              <div class="field-row"><input type="checkbox" id="inputType" checked><label for="inputType">Suas mensagens são digitadas no campo de texto</label></div>
+              <div class="field-row"><input type="checkbox" id="ticks" checked><label for="ticks">Hora e ✓✓ de lida nas mensagens</label></div>
+              <div class="field-row"><input type="checkbox" id="sound" checked><label for="sound">Som de mensagem no vídeo</label></div>
+              <div class="row"><span class="lbl">Cor de fora</span><input type="color" id="outside" value="#20232a"></div>
+            </div>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t3" hidden><div class="presets" id="presets"></div></div>
+          <div id="exp"></div>
+        </div>
+        <div id="pv" class="preview"><canvas id="cv"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="ajuda.txt" data-icon="📝">
+    <div class="window-body">
+      <ul>
+        <li>Escreva uma mensagem por linha começando com a letra da pessoa: <b>A:</b>, <b>B:</b>, <b>C:</b> ou <b>D:</b>. A pessoa A é você (bolhas da direita).</li>
+        <li>Clique na foto de cada pessoa pra trocar por um emoji ou por uma imagem.</li>
+        <li><b>Só as mensagens</b> + WEBM transparente = conversa pronta pra colocar por cima de outro vídeo.</li>
+        <li>Os visuais são genéricos: não copiam nenhum aplicativo de verdade.</li>
+      </ul>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">OK</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const { EASE, clamp } = EXPORT;
+const cv = $('cv'), ctx = cv.getContext('2d');
+const images = [];
+
+const PEOPLE = [
+  { id: 'A', name: 'Você', emoji: '😎', color: '#2f80ff', img: null },
+  { id: 'B', name: 'Ana', emoji: '👩', color: '#e8590c', img: null },
+  { id: 'C', name: 'Leo', emoji: '🧑', color: '#2b8a3e', img: null },
+  { id: 'D', name: 'Bia', emoji: '👧', color: '#ae3ec9', img: null },
+];
+function renderPeople() {
+  $('ppl').innerHTML = PEOPLE.map((p, i) => `<div class="pp"><button class="av" data-i="${i}" title="Trocar foto">${p.img ? `<img src="${p.img.src}" alt="">` : p.emoji}</button><input type="text" data-name="${i}" value="${p.name}" aria-label="Nome ${p.id}"><input type="color" data-color="${i}" value="${p.color}" title="Cor do nome"><b>${p.id}</b></div>`).join('');
+}
+renderPeople();
+$('ppl').addEventListener('input', (e) => {
+  const n = e.target.dataset.name, c = e.target.dataset.color;
+  if (n != null) PEOPLE[n].name = e.target.value;
+  if (c != null) PEOPLE[c].color = e.target.value;
+});
+const EMOJIS = ['😎', '👩', '🧑', '👧', '👨', '🐶', '🐱', '🤖', '👽', '💀', '🦊', '🐸', '👵', '🧔', '🦄', '👑'];
+$('ppl').addEventListener('click', async (e) => {
+  const b = e.target.closest('.av'); if (!b) return;
+  const p = PEOPLE[b.dataset.i];
+  if (e.shiftKey || p.img) { p.img = null; p.emoji = EMOJIS[(EMOJIS.indexOf(p.emoji) + 1) % EMOJIS.length]; return renderPeople(); }
+  const pick = document.createElement('div');
+  pick.className = 'sendmenu startmenu';
+  pick.innerHTML = `<div style="display:grid;grid-template-columns:repeat(8,1fr);padding:6px;gap:2px">${EMOJIS.map((x) => `<button class="sm-item" data-e="${x}" style="justify-content:center;font-size:18px !important;padding:4px !important">${x}</button>`).join('')}</div><button class="sm-item" data-e="img"><span>🖼️</span>Usar uma foto…</button>`;
+  document.body.appendChild(pick);
+  const r = b.getBoundingClientRect();
+  Object.assign(pick.style, { left: r.left + 'px', top: r.bottom + 4 + 'px', bottom: 'auto' });
+  pick.onclick = async (ev) => {
+    const x = ev.target.closest('[data-e]'); if (!x) return;
+    pick.remove();
+    if (x.dataset.e === 'img') { const f = await OS.pickFile('image/*'); if (f) { const im = new Image(); im.onload = renderPeople; im.src = URL.createObjectURL(f); p.img = im; } }
+    else { p.emoji = x.dataset.e; renderPeople(); }
+  };
+  setTimeout(() => document.addEventListener('click', function off(ev) { if (!pick.contains(ev.target)) { pick.remove(); document.removeEventListener('click', off); } }), 0);
+});
+$('addImg').onclick = async () => {
+  const f = await OS.pickFile('image/*'); if (!f) return;
+  const im = new Image();
+  im.onload = () => { images.push(im); $('imgCount').textContent = `${images.length} imagem(ns) · use [img${images.length}]`; $('script').value += `\nA: [img${images.length}]`; restart(); };
+  im.src = URL.createObjectURL(f);
+};
+
+const PRESETS = [
+  { n: '😂 Meme clássico', d: 'pergunta e plot twist', theme: 'light', names: ['Você', 'Mãe'], script: `B: filho onde vc tá??\nA: na casa do Pedro\nB: qual Pedro?\nA: o Pedro mãe\nB: manda foto\nA: 📸\nB: isso é o nosso quintal\nA: 😳\nB: 😐` },
+  { n: '🛍️ Cliente e loja', d: 'atendimento rápido', theme: 'green', names: ['Você', 'Loja'], script: `--- Hoje\nA: oi! ainda tem o tênis branco 42?\nB: Olá! Temos sim 😊\nB: Quer que eu separe pra você?\nA: quero!! chega até sexta?\nB: Chega amanhã 🚚\nA: perfeito, obrigado!\nB: Nós que agradecemos 💚` },
+  { n: '👻 Terror', d: 'mensagem que assusta', theme: 'dark', names: ['Você', 'Desconhecido'], script: `B: oi\nA: quem é?\nB: olha pra trás\nA: kkk engraçadinho\nB: bonita sua blusa azul\nA: …\nA: como você sabe disso\nB: 🙂` },
+  { n: '👯 Grupo de amigos', d: '3 pessoas', theme: 'purple', names: ['Você', 'Ana', 'Leo'], script: `B: quem vai no show sábado?\nC: eu!!!\nA: bora 🔥\nB: vou comprar os ingressos agora\nC: compra pra mim tbm\nA: e pra mim 👀\nB: pix de vocês tá me devendo desde 2023 😂` },
+  { n: '💾 Bate-papo 2000', d: 'janela retrô', theme: 'retro', names: ['xX_Voce_Xx', 'gatinha_2003'], script: `B: oiii td bem?\nA: td e vc?\nB: blz :D\nB: vc viu o clipe novo??\nA: aaaa vi sim!!!\nB: chamou o fulano pro chat?\nA: ele saiu kkkk` },
+];
+EXPORT.presets($('presets'), PRESETS, (p) => {
+  p.names.forEach((n, i) => (PEOPLE[i].name = n));
+  renderPeople();
+  $('script').value = p.script;
+  EXPORT.setValues({ theme: p.theme, chatName: p.names.length > 2 ? 'Rolê de sábado 🎤' : '' });
+  restart(); OS.showTab('t1');
+});
+$('script').value = PRESETS[0].script;
+PEOPLE[1].name = 'Mãe'; PEOPLE[1].emoji = '👩'; renderPeople();
+
+// ---------- temas ----------
+const TH = {
+  light: { bg: '#e9edf2', head: '#ffffff', headInk: '#111', meta: '#8a94a6', me: '#2f80ff', meInk: '#fff', them: '#ffffff', themInk: '#111', input: '#ffffff', sep: '#d5dbe3', tick: '#bfe0ff' },
+  dark: { bg: '#0e0f12', head: '#17181c', headInk: '#fff', meta: '#7c818c', me: '#3a7bff', meInk: '#fff', them: '#26282e', themInk: '#eee', input: '#1f2126', sep: '#26282e', tick: '#a8c8ff' },
+  green: { bg: '#ece5dd', head: '#1f8a70', headInk: '#fff', meta: '#6d7b77', me: '#d4f8c4', meInk: '#111', them: '#ffffff', themInk: '#111', input: '#ffffff', sep: '#d8eee8', tick: '#34b7f1', pattern: true },
+  purple: { bg: ['#1b1033', '#2a1450'], head: 'rgba(255,255,255,.06)', headInk: '#fff', meta: '#a99bd3', me: ['#8b5cf6', '#ec4899'], meInk: '#fff', them: '#2e2547', themInk: '#f1ecff', input: 'rgba(255,255,255,.08)', sep: 'rgba(255,255,255,.1)', tick: '#ffd6f0' },
+  retro: { bg: '#ffffff', head: ['#0a246a', '#a6caf0'], headInk: '#fff', meta: '#555', me: null, meInk: '#000', them: null, themInk: '#000', input: '#ffffff', sep: '#ccc', tick: '#000', retro: true },
+};
+
+// ---------- roteiro → mensagens ----------
+const isEmojiOnly = (s) => /^(\p{Extended_Pictographic}|\p{Emoji_Component}|‍|️|\s)+$/u.test(s) && !/^\d+$/.test(s) && s.trim().length <= 12;
+function parse() {
+  return $('script').value.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => {
+    if (l.startsWith('---')) return { sep: l.replace(/^-+\s*/, '') || OS.T('Hoje') };
+    const m = l.match(/^([A-Da-d])\s*:\s*(.*)$/);
+    if (!m) return { who: 1, text: l };
+    const who = 'ABCD'.indexOf(m[1].toUpperCase());
+    const im = m[2].match(/^\[img(\d+)\]$/i);
+    return { who, text: m[2], img: im ? images[+im[1] - 1] || null : null, big: isEmojiOnly(m[2]) };
+  });
+}
+
+// ---------- layout ----------
+function screenRect(W, H) {
+  const f = $('frame').value;
+  if (f === 'phone' || (f === 'full' && W > H * 1.05)) {
+    const sh = H * .92, sw = Math.min(W * .9, sh * 9 / 19.5);
+    return { x: (W - sw) / 2, y: (H - sh) / 2, w: sw, h: sh, phone: true };
+  }
+  return { x: 0, y: 0, w: W, h: H, phone: false };
+}
+function wrap(text, maxW) {
+  const words = text.split(' '), lines = [];
+  let cur = '';
+  for (const w of words) {
+    const t = cur ? cur + ' ' + w : w;
+    if (ctx.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t;
+    while (ctx.measureText(cur).width > maxW && cur.length > 1) { let i = cur.length; while (i > 1 && ctx.measureText(cur.slice(0, i)).width > maxW) i--; lines.push(cur.slice(0, i)); cur = cur.slice(i); }
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+function build(sr) {
+  const u = sr.w / 1080, fs = 40 * u * $('tsize').value / 100, font = $('font').value, th = TH[$('theme').value];
+  const msgs = parse(), sp = 100 / $('speed').value, bubbles = $('frame').value === 'bubbles';
+  const group = new Set(msgs.filter((m) => !m.sep).map((m) => m.who)).size > 2;
+  let y = 0, t = .6, minute = 0;
+  const [hh, mm] = ($('clock').value || '21:30').split(':').map(Number);
+  const items = [];
+  const maxW = sr.w * (th.retro ? .9 : .72) - fs * 1.6;
+  msgs.forEach((m, i) => {
+    if (m.sep) { items.push({ sep: m.sep, y, h: fs * 2.2, t }); y += fs * 2.6; return; }
+    const me = m.who === 0, prev = msgs[i - 1];
+    const firstOfRun = !prev || prev.sep || prev.who !== m.who;
+    const showName = !me && (group || th.retro) && firstOfRun;
+    ctx.font = `400 ${m.big ? fs * 2.6 : fs}px "${font}"`;
+    let lines = [], bw, bh;
+    if (m.img) { bw = Math.min(maxW, sr.w * .6); bh = bw * m.img.height / m.img.width; bh = Math.min(bh, sr.h * .45); bw = bh * m.img.width / m.img.height; }
+    else {
+      lines = th.retro ? wrap(m.text, maxW) : wrap(m.text, maxW);
+      const lw = Math.max(...lines.map((l) => ctx.measureText(l).width));
+      const metaW = $('ticks').checked && !m.big ? fs * (me ? 3.4 : 2.4) : 0;
+      bw = Math.min(maxW + fs * 1.6, lw + fs * 1.6 + (lines.length === 1 ? metaW : 0));
+      bh = lines.length * fs * 1.3 + fs * (m.big ? .2 : 1) + (lines.length > 1 && metaW ? fs * .9 : 0);
+      if (m.big) bw = lw + fs * .4;
+    }
+    const nameH = showName ? fs * 1.2 : 0;
+    // tempo: digitando antes da mensagem
+    const len = m.img ? 12 : m.text.length;
+    const typeDur = clamp(len * .045, .6, 2.6) * sp, pause = (firstOfRun ? .5 : .25) * sp;
+    const tType = t + pause, tShow = tType + ($('typing').checked || (me && $('inputType').checked) ? typeDur : .1);
+    if (i && i % 3 === 0) minute++;
+    const time = `${String((hh + Math.floor((mm + minute) / 60)) % 24).padStart(2, '0')}:${String((mm + minute) % 60).padStart(2, '0')}`;
+    items.push({ ...m, me, lines, bw, bh, nameH, y, h: nameH + bh, tType, tShow, time, firstOfRun, fs });
+    y += nameH + bh + (msgs[i + 1] && !msgs[i + 1].sep && msgs[i + 1].who === m.who ? fs * .3 : fs * .8);
+    t = tShow;
+  });
+  return { items, u, fs, font, th, total: t + 2 * sp, group, bubbles };
+}
+
+// ---------- desenho ----------
+const fillOf = (c, x, y, w, h) => { if (!Array.isArray(c)) return c; const g = ctx.createLinearGradient(x, y, x + w, y + h); g.addColorStop(0, c[0]); g.addColorStop(1, c[1]); return g; };
+function avatar(p, cx, cy, r) {
+  ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.clip();
+  if (p.img) { const k = Math.max(r * 2 / p.img.width, r * 2 / p.img.height); ctx.drawImage(p.img, cx - p.img.width * k / 2, cy - p.img.height * k / 2, p.img.width * k, p.img.height * k); }
+  else { ctx.fillStyle = p.color + '33'; ctx.fillRect(cx - r, cy - r, r * 2, r * 2); ctx.font = `${r * 1.25}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(p.emoji, cx, cy + r * .08); }
+  ctx.restore();
+}
+
+function drawAt(t, transp) {
+  const { W, H } = ex.settings();
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, W, H);
+  const sr = screenRect(W, H), L = build(sr), { th, u, fs, font, bubbles } = L;
+  if (!transp && sr.phone) { ctx.fillStyle = $('outside').value; ctx.fillRect(0, 0, W, H); }
+  ctx.save();
+  if (sr.phone) {
+    const bz = sr.w * .035;
+    ctx.fillStyle = '#0b0b0d'; ctx.beginPath(); ctx.roundRect(sr.x - bz, sr.y - bz, sr.w + bz * 2, sr.h + bz * 2, sr.w * .13); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(sr.x, sr.y, sr.w, sr.h, sr.w * .1); ctx.clip();
+  } else { ctx.beginPath(); ctx.rect(sr.x, sr.y, sr.w, sr.h); ctx.clip(); }
+  if (!(bubbles && transp) && !bubbles) {
+    ctx.fillStyle = fillOf(th.bg, sr.x, sr.y, 0, sr.h); ctx.fillRect(sr.x, sr.y, sr.w, sr.h);
+    if (th.pattern) { ctx.fillStyle = 'rgba(0,0,0,.035)'; for (let py = 0; py < sr.h; py += 60 * u) for (let px = (py / (60 * u)) % 2 * 30 * u; px < sr.w; px += 60 * u) { ctx.beginPath(); ctx.arc(sr.x + px, sr.y + py, 6 * u, 0, 7); ctx.fill(); } }
+  } else if (bubbles && !transp) { ctx.fillStyle = $('outside').value; ctx.fillRect(sr.x, sr.y, sr.w, sr.h); }
+
+  const headH = bubbles ? 0 : (sr.phone ? 210 : 190) * u, inputH = bubbles ? 0 : 150 * u;
+  const viewTop = sr.y + headH + fs * .8, viewBot = sr.y + sr.h - inputH - fs * .8;
+  // quanto já apareceu → rolagem
+  const typingNow = L.items.find((it) => !it.sep && !it.me && $('typing').checked && t >= it.tType && t < it.tShow);
+  const shown = L.items.filter((it) => t >= (it.sep ? it.t : it.tShow));
+  const bottomAt = (list, extra) => (list.length ? list[list.length - 1].y + list[list.length - 1].h : 0) + extra;
+  const viewH = viewBot - viewTop;
+  const scrollFor = (b) => Math.max(0, b - viewH);
+  // anima a rolagem entre o estado anterior e o atual
+  const typH = fs * 2.4;
+  let target = scrollFor(bottomAt(shown, typingNow ? typH + fs * .8 : 0));
+  const lastEvt = Math.max(0, ...L.items.filter((it) => !it.sep).flatMap((it) => [it.tType, it.tShow]).filter((x) => x <= t));
+  const before = L.items.filter((it) => (it.sep ? it.t : it.tShow) < lastEvt - 1e-6);
+  const typBefore = L.items.find((it) => !it.sep && !it.me && $('typing').checked && lastEvt - 1e-3 >= it.tType && lastEvt - 1e-3 < it.tShow);
+  const prevTarget = scrollFor(bottomAt(before, typBefore ? typH + fs * .8 : 0));
+  const scroll = prevTarget + (target - prevTarget) * EASE.out(clamp((t - lastEvt) / .35));
+  const oy = viewTop - scroll;
+  const sideX = (me, bw) => (me ? sr.x + sr.w - fs * .9 - bw : sr.x + fs * .9 + (th.retro ? 0 : (L.group ? fs * 2.2 : 0)));
+
+  for (const it of shown) {
+    if (it.sep) {
+      const y = oy + it.y;
+      ctx.font = `600 ${fs * .7}px "${font}"`; const w = ctx.measureText(it.sep).width + fs * 1.4;
+      ctx.fillStyle = th.sep; ctx.beginPath(); ctx.roundRect(sr.x + sr.w / 2 - w / 2, y + fs * .3, w, fs * 1.4, fs * .7); ctx.fill();
+      ctx.fillStyle = th.meta; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(it.sep, sr.x + sr.w / 2, y + fs * 1.0);
+      continue;
+    }
+    const p = PEOPLE[it.who] || PEOPLE[1];
+    const age = t - it.tShow, q = EASE.back(clamp(age / .3)), a = clamp(age / .15);
+    let x = sideX(it.me, it.bw), y = oy + it.y;
+    if (y > viewBot + fs * 4 || y + it.h < viewTop - fs * 6) continue;
+    ctx.save(); ctx.globalAlpha = a;
+    const pivotX = it.me ? x + it.bw : x, pivotY = y + it.h;
+    ctx.translate(pivotX, pivotY); ctx.scale(.75 + .25 * q, .75 + .25 * q); ctx.translate(-pivotX, -pivotY + (1 - clamp(age / .25)) * fs * .6);
+    if (it.nameH) {
+      ctx.font = `700 ${fs * .72}px "${font}"`; ctx.fillStyle = p.color; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(th.retro ? `${p.name} ${OS.T('diz:')}` : p.name, x + (th.retro ? 0 : fs * .5), y);
+    }
+    if (L.group && !it.me && !th.retro && (it.firstOfRun)) avatar(p, sr.x + fs * 1.6, y + it.h - fs * .9, fs * .9);
+    const by = y + it.nameH;
+    if (th.retro) {
+      ctx.font = `400 ${fs}px "${font}"`; ctx.fillStyle = it.me ? '#0000aa' : '#000'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      if (it.me && it.firstOfRun) { ctx.font = `700 ${fs * .72}px "${font}"`; ctx.fillStyle = PEOPLE[0].color; ctx.fillText(`${PEOPLE[0].name} ${OS.T('diz:')}`, sr.x + fs * .9, by - fs * 1.2); ctx.font = `400 ${fs}px "${font}"`; ctx.fillStyle = '#0000aa'; }
+      const rx = sr.x + fs * 1.6;
+      if (it.img) ctx.drawImage(it.img, rx, by, it.bw, it.bh);
+      else it.lines.forEach((l, j) => { ctx.font = `400 ${it.big ? fs * 2.6 : fs}px "${font}"`; ctx.fillText(l, rx, by + j * fs * 1.3 + fs * .3); });
+      ctx.restore(); continue;
+    }
+    if (it.big && !it.img) {
+      ctx.font = `400 ${fs * 2.6}px "${font}"`; ctx.textAlign = it.me ? 'right' : 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(it.text, it.me ? x + it.bw : x, by);
+    } else {
+      const r = fs * .85;
+      ctx.fillStyle = fillOf(it.me ? th.me : th.them, x, by, it.bw, it.bh);
+      if (!it.me && th.them === '#ffffff' || th === TH.light && !it.me) { ctx.shadowColor = 'rgba(0,0,0,.08)'; ctx.shadowBlur = fs * .3; ctx.shadowOffsetY = fs * .06; }
+      ctx.beginPath(); ctx.roundRect(x, by, it.bw, it.bh, it.img ? r * .6 : [r, r, it.me ? r * .25 : r, it.me ? r : r * .25]); ctx.fill();
+      ctx.shadowColor = 'transparent';
+      if (it.img) {
+        ctx.save(); ctx.beginPath(); ctx.roundRect(x + fs * .15, by + fs * .15, it.bw - fs * .3, it.bh - fs * .3, r * .5); ctx.clip();
+        ctx.drawImage(it.img, x + fs * .15, by + fs * .15, it.bw - fs * .3, it.bh - fs * .3); ctx.restore();
+      } else {
+        ctx.font = `400 ${fs}px "${font}"`; ctx.fillStyle = it.me ? th.meInk : th.themInk; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        it.lines.forEach((l, j) => ctx.fillText(l, x + fs * .8, by + fs * .5 + j * fs * 1.3));
+      }
+      if ($('ticks').checked) {
+        ctx.font = `400 ${fs * .55}px "${font}"`; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+        ctx.fillStyle = it.img ? '#fff' : it.me ? (th.meInk === '#fff' ? 'rgba(255,255,255,.75)' : th.meta) : th.meta;
+        const read = it.me && L.items.some((o) => !o.sep && !o.me && o.tType <= t && o.tType > it.tShow);
+        ctx.fillText(it.time + (it.me ? '  ' : ''), x + it.bw - fs * (it.me ? 1.2 : .6), by + it.bh - fs * .3);
+        if (it.me) { ctx.fillStyle = read ? th.tick : ctx.fillStyle; ctx.fillText('✓✓', x + it.bw - fs * .45, by + it.bh - fs * .3); }
+      }
+    }
+    ctx.restore();
+  }
+  // "digitando…"
+  if (typingNow) {
+    const p = PEOPLE[typingNow.who];
+    const y = oy + bottomAt(shown, 0) + (shown.length ? fs * .8 : 0), x = sideX(false, 0);
+    const w = fs * 3.6, h = fs * 2.2;
+    if (th.retro) { ctx.font = `italic 400 ${fs * .8}px "${font}"`; ctx.fillStyle = '#777'; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText(`${p.name} ${OS.T('está digitando…')}`, sr.x + fs * .9, y); }
+    else {
+      ctx.fillStyle = fillOf(th.them, x, y, w, h); ctx.beginPath(); ctx.roundRect(x, y, w, h, fs * .9); ctx.fill();
+      for (let i = 0; i < 3; i++) { const b = Math.sin(t * 9 - i * .9) * .5 + .5; ctx.fillStyle = th.meta; ctx.globalAlpha = .45 + b * .55; ctx.beginPath(); ctx.arc(x + w / 2 + (i - 1) * fs * .8, y + h / 2 - b * fs * .25, fs * .26, 0, 7); ctx.fill(); }
+      ctx.globalAlpha = 1;
+      if (L.group) avatar(p, sr.x + fs * 1.6, y + h - fs * .9, fs * .9);
+    }
+  }
+  if (!bubbles) {
+    // cabeçalho
+    const others = [...new Set(L.items.filter((i) => !i.sep && !i.me).map((i) => i.who))];
+    const main = PEOPLE[others[0] ?? 1];
+    const title = $('chatName').value || (L.group ? others.map((o) => PEOPLE[o].name).join(', ') : main.name);
+    const status = typingNow ? (L.group ? `${PEOPLE[typingNow.who].name} ${OS.T('está digitando…')}` : OS.T('digitando…')) : $('status').value;
+    ctx.fillStyle = fillOf(th.head, sr.x, sr.y, sr.w, 0); ctx.fillRect(sr.x, sr.y, sr.w, headH);
+    if (th.head === '#ffffff' || th === TH.light) { ctx.fillStyle = 'rgba(0,0,0,.08)'; ctx.fillRect(sr.x, sr.y + headH - 2 * u, sr.w, 2 * u); }
+    const hy = sr.y + headH - 70 * u;
+    ctx.fillStyle = th.headInk; ctx.font = `400 ${56 * u}px sans-serif`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText('‹', sr.x + 30 * u, hy - 4 * u);
+    if (L.group) { ctx.fillStyle = th.retro ? '#fff' : main.color; ctx.beginPath(); ctx.arc(sr.x + 140 * u, hy, 48 * u, 0, 7); ctx.fill(); ctx.font = `${48 * u}px sans-serif`; ctx.textAlign = 'center'; ctx.fillText('👥', sr.x + 140 * u, hy + 3 * u); }
+    else avatar(main, sr.x + 140 * u, hy, 48 * u);
+    ctx.textAlign = 'left'; ctx.fillStyle = th.headInk;
+    ctx.font = `700 ${44 * u}px "${font}"`; ctx.fillText(title.length > 26 ? title.slice(0, 25) + '…' : title, sr.x + 210 * u, hy - 20 * u);
+    ctx.font = `400 ${32 * u}px "${font}"`; ctx.globalAlpha = .75; ctx.fillText(status, sr.x + 210 * u, hy + 26 * u); ctx.globalAlpha = 1;
+    ctx.font = `${44 * u}px sans-serif`; ctx.textAlign = 'right'; ctx.fillText(th.retro ? '✕' : '⋮', sr.x + sr.w - 40 * u, hy);
+    if (!th.retro) ctx.fillText('📞', sr.x + sr.w - 110 * u, hy);
+    // campo de texto
+    const iy = sr.y + sr.h - inputH;
+    ctx.fillStyle = th.retro ? '#ece9d8' : fillOf(th.bg, sr.x, iy, 0, inputH); ctx.fillRect(sr.x, iy, sr.w, inputH);
+    const typingMe = $('inputType').checked && L.items.find((it) => !it.sep && it.me && t >= it.tType && t < it.tShow);
+    const fx = sr.x + 30 * u, fw = sr.w - 170 * u, fh = 96 * u, fy = iy + (inputH - fh) / 2;
+    ctx.fillStyle = th.input; ctx.beginPath(); ctx.roundRect(fx, fy, fw, fh, th.retro ? 0 : fh / 2); ctx.fill();
+    if (th.retro) { ctx.strokeStyle = '#7f9db9'; ctx.lineWidth = 2 * u; ctx.stroke(); }
+    ctx.font = `400 ${36 * u}px "${font}"`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    if (typingMe) {
+      const full = typingMe.img ? '📷 ' + OS.T('Foto') : typingMe.text;
+      const n = Math.floor(full.length * clamp((t - typingMe.tType) / (typingMe.tShow - typingMe.tType - .15)));
+      let shownTxt = full.slice(0, n);
+      while (ctx.measureText(shownTxt).width > fw - 90 * u && shownTxt.length) shownTxt = shownTxt.slice(1);
+      ctx.fillStyle = th.retro ? '#000' : (th.input === '#ffffff' ? '#111' : '#eee'); ctx.fillText(shownTxt, fx + 40 * u, fy + fh / 2);
+      if (Math.floor(t * 3) % 2 === 0) ctx.fillRect(fx + 44 * u + ctx.measureText(shownTxt).width, fy + fh * .28, 3 * u, fh * .44);
+    } else { ctx.fillStyle = th.meta; ctx.fillText(OS.T('Mensagem'), fx + 40 * u, fy + fh / 2); }
+    const sx = sr.x + sr.w - 75 * u, sy = iy + inputH / 2;
+    ctx.fillStyle = th.retro ? '#c0c0c0' : fillOf(th.me || '#2f80ff', sx - 48 * u, sy - 48 * u, 96 * u, 96 * u);
+    ctx.beginPath(); ctx.arc(sx, sy, 48 * u, 0, 7); ctx.fill();
+    ctx.fillStyle = th.retro ? '#000' : th.meInk; ctx.font = `${40 * u}px sans-serif`; ctx.textAlign = 'center'; ctx.fillText(typingMe ? '➤' : '🎤', sx + 2 * u, sy + 2 * u);
+  }
+  ctx.restore();
+}
+
+// ---------- som das mensagens ----------
+async function pops() {
+  if (!$('sound').checked) return null;
+  const sr = screenRect(...[ex.settings().W, ex.settings().H]), L = build(sr), sr8 = 48000;
+  const oc = new OfflineAudioContext(2, Math.ceil(L.total * sr8), sr8);
+  for (const it of L.items) {
+    if (it.sep) continue;
+    const o = oc.createOscillator(), g = oc.createGain();
+    const at = it.tShow;
+    o.type = 'sine'; o.frequency.setValueAtTime(it.me ? 880 : 660, at); o.frequency.exponentialRampToValueAtTime(it.me ? 1320 : 990, at + .06);
+    g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(.35, at + .01); g.gain.exponentialRampToValueAtTime(.001, at + .18);
+    o.connect(g).connect(oc.destination); o.start(at); o.stop(at + .2);
+  }
+  return oc.startRendering();
+}
+
+let t0 = performance.now(), audioBuf = null;
+const restart = () => (t0 = performance.now());
+$('playBtn').onclick = restart;
+$('panel').addEventListener('input', (e) => { if (['script', 'speed', 'typing', 'inputType'].includes(e.target.id)) restart(); });
+const total = () => { const { W, H } = ex.settings(); return build(screenRect(W, H)).total; };
+const ex = EXPORT.mount($('exp'), {
+  canvas: cv, draw: drawAt, seconds: total, name: () => 'conversa', defaultRes: '1080x1920',
+  prepare: async () => { await EXPORT.loadFont(400, $('font').value); audioBuf = await pops(); },
+  audio: () => audioBuf,
+  onSettings: (s) => $('pv').classList.toggle('chk', s.transp),
+});
+(function loop() {
+  if (!ex.busy) {
+    const t = (performance.now() - t0) / 1000;
+    drawAt(Math.min(t, total()), ex.settings().transp);
+    if (t > total() + 1) restart();
+  }
+  requestAnimationFrame(loop);
+})();
+document.fonts.ready.then(restart);
+</script>
+</body>
+</html>

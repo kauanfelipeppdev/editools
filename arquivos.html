@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meus arquivos · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<style>
+  .files { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; min-height: 200px; padding: 8px; background: #fff; border: 1px solid #999; }
+  .files.over { outline: 3px dashed #39f; outline-offset: -6px; }
+  .file { display: flex; flex-direction: column; gap: 4px; border: 1px solid #ccc; padding: 6px; background: #fafafa; font-size: 11px; min-width: 0; }
+  .file .th { aspect-ratio: 16/10; background: #e4e4e4 center/contain no-repeat; display: grid; place-items: center; font-size: 34px; overflow: hidden; }
+  .file .th.chk { background-color: #ddd; }
+  .file .th img, .file .th video { width: 100%; height: 100%; object-fit: contain; }
+  .file b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
+  .file small { color: #666; }
+  .file .btns button { min-width: 0; padding: 0 6px; flex: 1; }
+  .empty { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #666; text-align: center; padding: 30px; }
+  .empty .big { font-size: 44px; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app narrow" data-title="meus_arquivos.exe" data-icon="📂" style="width:min(1000px,100%)">
+    <div class="window-body">
+      <div class="toolbar"><a class="btn" href="index.html">🏠 Home</a>
+        <select id="filter" aria-label="Filtrar"><option value="">Todos os arquivos</option><option value="image">🖼️ Imagens</option><option value="video">🎬 Vídeos</option><option value="audio">🎵 Áudios</option><option value="other">📦 Outros</option></select>
+        <span class="spacer"></span><button id="addBtn">➕ Guardar um arquivo</button><button id="clearBtn">🗑️ Limpar tudo</button></div>
+      <p style="margin:0 0 8px">Tudo que você baixa nas ferramentas fica guardado aqui, <b>só neste navegador</b>. Use <b>➡️ Enviar</b> pra abrir um arquivo direto em outra ferramenta.</p>
+      <div class="files" id="files"></div>
+      <div class="status-line" id="st"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const urls = [];
+const kind = (t) => (/^image\//.test(t) ? 'image' : /^video\//.test(t) ? 'video' : /^audio\//.test(t) ? 'audio' : 'other');
+const ico = { image: '🖼️', video: '🎬', audio: '🎵', other: '📦' };
+const size = (b) => (b > 1e6 ? (b / 1e6).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1e3)) + ' KB');
+const toolName = (f) => OS.TOOLS.find((t) => t.file === f)?.name || f;
+
+async function render() {
+  urls.splice(0).forEach(URL.revokeObjectURL);
+  const all = await OS.files.list();
+  const f = $('filter').value;
+  const list = all.filter((x) => !f || kind(x.type) === f);
+  const box = $('files');
+  box.innerHTML = '';
+  if (!list.length) box.innerHTML = `<div class="empty"><span class="big">📭</span><b>${all.length ? 'Nada desse tipo por aqui.' : 'Nenhum arquivo ainda.'}</b><span>Exporte algo em qualquer ferramenta, ou arraste um arquivo pra cá.</span></div>`;
+  for (const it of list) {
+    const k = kind(it.type), url = URL.createObjectURL(it.blob);
+    urls.push(url);
+    const el = document.createElement('div');
+    el.className = 'file';
+    el.innerHTML = `<div class="th${k === 'image' ? ' chk' : ''}">${k === 'image' ? `<img src="${url}" alt="">` : k === 'video' ? `<video src="${url}" muted preload="metadata"></video>` : ico[k]}</div>
+      <b></b><small>${size(it.size)} · ${new Date(it.at).toLocaleString(OS.LANG === 'en' ? 'en-US' : 'pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</small><small class="from"></small>
+      ${k === 'audio' ? `<audio src="${url}" controls style="width:100%;height:28px"></audio>` : ''}
+      <div class="btns"><button data-a="dl" title="Baixar de novo">⬇️</button>${OS.targetsFor(it.type).length ? '<button data-a="send" title="Enviar para outra ferramenta">➡️ Enviar</button>' : ''}<button data-a="del" title="Apagar">🗑️</button></div>`;
+    el.querySelector('b').textContent = it.name;
+    el.querySelector('b').title = it.name;
+    el.querySelector('.from').textContent = '↳ ' + toolName(it.from);
+    const v = el.querySelector('video');
+    if (v) { el.onmouseenter = () => v.play().catch(() => {}); el.onmouseleave = () => v.pause(); }
+    el.onclick = async (e) => {
+      const a = e.target.closest('[data-a]')?.dataset.a;
+      if (a === 'dl') OS.download(it.blob, it.name, { keep: false });
+      if (a === 'send') { e.stopPropagation(); OS.sendMenu(e.target.closest('button'), it.blob, it.name); }
+      if (a === 'del') { await OS.files.del(it.id); render(); }
+    };
+    box.appendChild(el);
+  }
+  const total = all.reduce((a, x) => a + x.size, 0);
+  $('st').textContent = `> ${all.length} arquivo(s) · ${size(total)} usados`;
+}
+$('filter').onchange = render;
+$('clearBtn').onclick = () => {
+  const d = document.createElement('div');
+  d.className = 'veil';
+  d.innerHTML = `<div class="window dialog"><div class="title-bar"><div class="title-bar-text">🗑️ Limpar tudo</div></div><div class="window-body"><div class="dlg"><span class="dlg-icon">⚠️</span><p>Apagar todos os arquivos guardados neste navegador? Isso não dá pra desfazer.</p></div><div class="btns end"><button data-y>Apagar tudo</button><button data-n class="default">Cancelar</button></div></div></div>`;
+  document.body.appendChild(d);
+  if (OS.LANG === 'en' && window.I18N) I18N.apply(d);
+  d.querySelector('[data-n]').onclick = () => d.remove();
+  d.querySelector('[data-y]').onclick = async () => { await OS.files.clear(); d.remove(); render(); };
+};
+async function keep(file) { await OS.files.add(file, file.name); render(); }
+$('addBtn').onclick = async () => { const f = await OS.pickFile('*/*'); if (f) keep(f); };
+const box = $('files');
+box.addEventListener('dragover', (e) => { e.preventDefault(); box.classList.add('over'); });
+box.addEventListener('dragleave', () => box.classList.remove('over'));
+box.addEventListener('drop', (e) => { e.preventDefault(); box.classList.remove('over'); [...e.dataTransfer.files].forEach(keep); });
+render();
+</script>
+</body>
+</html>

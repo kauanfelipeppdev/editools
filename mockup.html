@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockups · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Permanent+Marker&family=Poppins:wght@400;700;900&display=swap">
+<script src="assets/export.js"></script>
+<style>
+  #pv canvas { max-height: 66vh; }
+  .dev { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .dev button { height: auto; padding: 5px 2px; font-size: 11px; line-height: 1.25; }
+  .dev button[aria-pressed=true] { font-weight: bold; box-shadow: inset 1px 1px 3px rgba(0,0,0,.45); }
+  .dev button span { display: block; font-size: 18px; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="mockups.exe" data-icon="💻">
+    <div class="window-body">
+      <div class="toolbar"><a class="btn" href="index.html">🏠 Home</a><button data-open="help">? Ajuda</button><span class="spacer"></span><button id="openBtn">📂 Abrir imagem ou vídeo</button><button id="pngBtn">💾 Baixar PNG</button></div>
+      <div class="tool wide-panel">
+        <div class="panel" id="panel">
+          <div class="dev" id="dev"></div>
+          <input type="hidden" id="device" value="phone">
+          <fieldset><legend>Aparelho</legend><div class="stack">
+            <div class="two">
+              <label class="field"><span>Cor</span><select id="tint"><option value="black">Preto</option><option value="silver">Prata</option><option value="gold">Dourado</option><option value="white">Branco</option><option value="blue">Azul</option></select></label>
+              <label class="field"><span>Imagem na tela</span><select id="fit"><option value="cover">Preencher</option><option value="contain">Ajustar inteira</option></select></label>
+            </div>
+            <div class="field-row"><input type="checkbox" id="landscape"><label for="landscape">Deitado (horizontal)</label></div>
+            <label class="field" id="urlRow"><span>Endereço / legenda</span><input type="text" id="url" value="meusite.com.br"></label>
+            <label class="field"><span>Tamanho <output data-suffix="%"></output></span><input type="range" id="scale" min="20" max="120" value="80"></label>
+            <label class="field"><span>Girar <output data-suffix="°"></output></span><input type="range" id="rot" min="-45" max="45" value="0"></label>
+            <div class="two">
+              <label class="field"><span>Mover ↔ <output data-suffix="%"></output></span><input type="range" id="dx" min="-50" max="50" value="0"></label>
+              <label class="field"><span>Mover ↕ <output data-suffix="%"></output></span><input type="range" id="dy" min="-50" max="50" value="0"></label>
+            </div>
+            <div class="field-row"><input type="checkbox" id="shadow" checked><label for="shadow">Sombra</label></div>
+            <div class="field-row"><input type="checkbox" id="glare" checked><label for="glare">Reflexo no vidro</label></div>
+          </div></fieldset>
+          <fieldset><legend>Fundo e texto</legend><div class="stack">
+            <label class="field"><span>Fundo</span><select id="bgMode"><option value="grad">Gradiente</option><option value="solid">Cor sólida</option><option value="blur">Desfoque da própria imagem</option><option value="none">Transparente</option></select></label>
+            <div class="row"><span class="lbl">Cores</span><input type="color" id="bg1" value="#ffb86b"><input type="color" id="bg2" value="#ff5c8a"></div>
+            <div class="two">
+              <label class="field"><span>Título</span><input type="text" id="title" value=""></label>
+              <label class="field"><span>Subtítulo</span><input type="text" id="sub" value=""></label>
+            </div>
+            <div class="row"><span class="lbl">Cor do texto</span><input type="color" id="ink" value="#ffffff"></div>
+            <label class="field"><span>Tamanho da imagem final</span><select id="size"><option value="1920x1080">1920×1080</option><option value="1080x1920">1080×1920 (vertical)</option><option value="1080x1080">1080×1080</option><option value="1080x1350">1080×1350 (feed)</option><option value="1280x720">1280×720</option><option value="3840x2160">3840×2160 (4K)</option></select></label>
+          </div></fieldset>
+          <div id="videoBox" hidden><div id="exp"></div></div>
+        </div>
+        <div id="pv" class="preview"><canvas id="cv"></canvas>
+          <div class="placeholder" id="ph" style="background:rgba(0,0,0,.55)"><span class="big">💻</span><b>Solte uma imagem ou vídeo aqui</b><span>ou clique pra escolher. Também dá pra colar com Ctrl+V.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="ajuda.txt" data-icon="📝">
+    <div class="window-body">
+      <ul>
+        <li>Abra um print ou um vídeo e escolha o aparelho. A imagem preenche a tela do aparelho sozinha.</li>
+        <li><b>Fundo transparente</b> + PNG = mockup pronto pra usar em qualquer arte.</li>
+        <li>Com vídeo, aparece a opção de <b>gerar vídeo</b>: o mockup é montado quadro a quadro, com o áudio original.</li>
+      </ul>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">OK</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const cv = $('cv'), ctx = cv.getContext('2d');
+let media = MediaTool_demo(), audioBuf = null, name = 'mockup';
+
+function MediaTool_demo() {
+  const c = document.createElement('canvas'); c.width = 1170; c.height = 2532;
+  const x = c.getContext('2d');
+  const g = x.createLinearGradient(0, 0, 0, c.height); g.addColorStop(0, '#5b4bff'); g.addColorStop(1, '#ff6fb5');
+  x.fillStyle = g; x.fillRect(0, 0, c.width, c.height);
+  x.fillStyle = 'rgba(255,255,255,.92)';
+  for (let i = 0; i < 5; i++) { x.beginPath(); x.roundRect(70, 420 + i * 400, c.width - 140, 330, 50); x.fill(); }
+  x.fillStyle = '#fff'; x.font = 'bold 110px Arial'; x.textAlign = 'center'; x.fillText('Seu app aqui', c.width / 2, 260);
+  x.fillStyle = '#5b4bff'; for (let i = 0; i < 5; i++) { x.beginPath(); x.arc(220, 585 + i * 400, 90, 0, 7); x.fill(); x.fillRect(360, 530 + i * 400, 560, 40); x.fillRect(360, 600 + i * 400, 380, 30); }
+  return { el: c, w: c.width, h: c.height, video: false };
+}
+
+const DEVICES = { phone: ['📱', 'Celular'], tablet: ['📲', 'Tablet'], laptop: ['💻', 'Notebook'], monitor: ['🖥️', 'Monitor'], browser: ['🌐', 'Navegador'], polaroid: ['📸', 'Polaroid'], tv: ['📺', 'TV antiga'], watch: ['⌚', 'Relógio'] };
+for (const [k, [i, n]] of Object.entries(DEVICES)) $('dev').insertAdjacentHTML('beforeend', `<button data-d="${k}" aria-pressed="false"><span>${i}</span>${n}</button>`);
+function setDevice(k) { $('device').value = k; $('dev').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.d === k)); $('urlRow').hidden = !['browser', 'polaroid'].includes(k); if (k === 'polaroid' && $('url').value === 'meusite.com.br') $('url').value = 'verão 2026 ☀️'; }
+$('dev').onclick = (e) => { const b = e.target.closest('[data-d]'); if (b) setDevice(b.dataset.d); };
+
+const TINT = { black: ['#1a1a1d', '#3a3a3f'], silver: ['#d9dbe0', '#a9adb5'], gold: ['#f1dfc3', '#c9a777'], white: ['#f5f5f5', '#d0d0d0'], blue: ['#2f4a6d', '#1d3148'] };
+
+// ---------- geometria de cada aparelho (screen = área da imagem) ----------
+function geo(dev, W, H, land) {
+  const ratio = { phone: 9 / 19.5, tablet: 3 / 4, laptop: 16 / 10, monitor: 16 / 9, browser: 16 / 10, polaroid: 1, tv: 4 / 3, watch: 4 / 5 }[dev];
+  let r = land && ['phone', 'tablet'].includes(dev) ? 1 / ratio : ratio;
+  const k = $('scale').value / 100;
+  // espaço total que o aparelho ocupa (com moldura)
+  const extraH = { laptop: 1.12, monitor: 1.28, browser: 1.08, polaroid: 1.22, tv: 1.25, watch: 1.5 }[dev] || 1.06;
+  const extraW = { tv: 1.28, polaroid: 1.12, watch: 1.2 }[dev] || 1.06;
+  let sh = H * .82 * k / extraH, sw = sh * r;
+  if (sw * extraW > W * .9 * k) { sw = W * .9 * k / extraW; sh = sw / r; }
+  return { sw, sh, r };
+}
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+
+function drawMedia(x, y, w, h, radius = 0) {
+  ctx.save(); rr(x, y, w, h, radius); ctx.clip();
+  ctx.fillStyle = '#000'; ctx.fillRect(x, y, w, h);
+  const m = media, cover = $('fit').value === 'cover';
+  const k = (cover ? Math.max : Math.min)(w / m.w, h / m.h);
+  ctx.drawImage(m.el, x + (w - m.w * k) / 2, y + (h - m.h * k) / 2, m.w * k, m.h * k);
+  if ($('glare').checked) { const g = ctx.createLinearGradient(x, y, x + w * .7, y + h); g.addColorStop(0, 'rgba(255,255,255,.18)'); g.addColorStop(.45, 'rgba(255,255,255,.04)'); g.addColorStop(.46, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.fillRect(x, y, w, h); }
+  ctx.restore();
+}
+
+function render(transp, size) {
+  const [W, H] = size || $('size').value.split('x').map(Number);
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, W, H);
+  const bg = $('bgMode').value;
+  if (!transp && bg !== 'none') {
+    if (bg === 'grad') { const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, $('bg1').value); g.addColorStop(1, $('bg2').value); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
+    else if (bg === 'solid') { ctx.fillStyle = $('bg1').value; ctx.fillRect(0, 0, W, H); }
+    else { const k = Math.max(W / media.w, H / media.h) * 1.15; ctx.filter = `blur(${Math.round(Math.min(W, H) / 22)}px) brightness(.8)`; ctx.drawImage(media.el, (W - media.w * k) / 2, (H - media.h * k) / 2, media.w * k, media.h * k); ctx.filter = 'none'; }
+  }
+  const title = $('title').value, sub = $('sub').value, u = Math.min(W, H) / 1080;
+  const textH = (title ? 90 : 0) * u + (sub ? 56 : 0) * u;
+  const dev = $('device').value, land = $('landscape').checked, T = TINT[$('tint').value];
+  const { sw, sh } = geo(dev, W, H - textH * 1.2, land);
+  const cx = W / 2 + W * $('dx').value / 100, cy = (H + textH * 1.2) / 2 + H * $('dy').value / 100;
+  if (title || sub) {
+    ctx.fillStyle = $('ink').value; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    let y = H * .05;
+    if (title) { ctx.font = `900 ${72 * u}px Poppins, Inter, sans-serif`; ctx.fillText(title, W / 2, y); y += 90 * u; }
+    if (sub) { ctx.font = `400 ${40 * u}px Inter, sans-serif`; ctx.globalAlpha = .85; ctx.fillText(sub, W / 2, y); ctx.globalAlpha = 1; }
+  }
+  ctx.save();
+  ctx.translate(cx, cy); ctx.rotate($('rot').value * Math.PI / 180);
+  const x = -sw / 2, y = -sh / 2;
+  const shadow = () => { if ($('shadow').checked) { ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = Math.max(sw, sh) * .08; ctx.shadowOffsetY = Math.max(sw, sh) * .03; } };
+  const noShadow = () => { ctx.shadowColor = 'transparent'; };
+  const metal = (x0, y0, w, h) => { const g = ctx.createLinearGradient(x0, y0, x0 + w, y0 + h); g.addColorStop(0, T[0]); g.addColorStop(1, T[1]); return g; };
+  const m = Math.min(sw, sh);
+  switch (dev) {
+    case 'phone': {
+      const b = m * .045, R = m * .16;
+      shadow(); ctx.fillStyle = metal(x - b, y - b, sw + b * 2, sh + b * 2); rr(x - b * 1.25, y - b * 1.25, sw + b * 2.5, sh + b * 2.5, R + b); ctx.fill(); noShadow();
+      ctx.fillStyle = '#050505'; rr(x - b * .7, y - b * .7, sw + b * 1.4, sh + b * 1.4, R + b * .5); ctx.fill();
+      drawMedia(x, y, sw, sh, R);
+      ctx.fillStyle = '#050505';
+      if (land) rr(x + m * .03, -sh * .14, m * .075, sh * .28, m * .04); else rr(-sw * .14, y + m * .03, sw * .28, m * .075, m * .04);
+      ctx.fill();
+      // botões laterais
+      ctx.fillStyle = T[1];
+      if (!land) { rr(x - b * 1.25 - m * .012, y + sh * .2, m * .014, sh * .07, 2); ctx.fill(); rr(x - b * 1.25 - m * .012, y + sh * .3, m * .014, sh * .07, 2); ctx.fill(); rr(x + sw + b * 1.25 - m * .002, y + sh * .25, m * .014, sh * .11, 2); ctx.fill(); }
+      break;
+    }
+    case 'tablet': {
+      const b = m * .05, R = m * .05;
+      shadow(); ctx.fillStyle = metal(x, y, sw, sh); rr(x - b * 1.2, y - b * 1.2, sw + b * 2.4, sh + b * 2.4, R + b); ctx.fill(); noShadow();
+      ctx.fillStyle = '#060606'; rr(x - b * .9, y - b * .9, sw + b * 1.8, sh + b * 1.8, R + b * .6); ctx.fill();
+      drawMedia(x, y, sw, sh, R * .6);
+      ctx.fillStyle = '#222'; ctx.beginPath(); land ? ctx.arc(x - b * .45, 0, m * .008, 0, 7) : ctx.arc(0, y - b * .45, m * .008, 0, 7); ctx.fill();
+      break;
+    }
+    case 'laptop': {
+      const b = sw * .022, base = sh * .06;
+      const top = y - sh * .03;
+      shadow(); ctx.fillStyle = '#0d0d0f'; rr(x - b, top - b, sw + b * 2, sh + b * 2.6, b * 1.4); ctx.fill(); noShadow();
+      ctx.strokeStyle = T[1]; ctx.lineWidth = b * .25; ctx.stroke();
+      drawMedia(x, top, sw, sh, 0);
+      ctx.fillStyle = metal(x - sw * .1, 0, sw * 1.2, base);
+      rr(x - sw * .09, top + sh + b * 1.6, sw * 1.18, base * .55, [b * .3, b * .3, base * .5, base * .5]); ctx.fill();
+      ctx.fillStyle = 'rgba(0,0,0,.25)'; rr(-sw * .09, top + sh + b * 1.6, sw * .18, base * .18, [0, 0, base * .2, base * .2]); ctx.fill();
+      break;
+    }
+    case 'monitor': {
+      const b = sw * .012, top = y - sh * .1;
+      shadow(); ctx.fillStyle = metal(x, top, sw, sh); rr(-sw * .07, top + sh + b, sw * .14, sh * .2, 0); ctx.fill();
+      rr(-sw * .2, top + sh + sh * .19, sw * .4, sh * .035, sh * .02); ctx.fill();
+      ctx.fillStyle = '#0d0d0f'; rr(x - b, top - b, sw + b * 2, sh + b * 3.2, b * 1.5); ctx.fill(); noShadow();
+      drawMedia(x, top, sw, sh, 0);
+      ctx.fillStyle = T[1]; ctx.beginPath(); ctx.arc(0, top + sh + b * 1.6, b * .35, 0, 7); ctx.fill();
+      break;
+    }
+    case 'browser': {
+      const bar = sh * .075, R = m * .025, top = y + bar / 2;
+      shadow(); ctx.fillStyle = $('tint').value === 'black' || $('tint').value === 'blue' ? '#2b2c30' : '#e8eaee'; rr(x, top - bar, sw, sh + bar, R); ctx.fill(); noShadow();
+      const dark = $('tint').value === 'black' || $('tint').value === 'blue';
+      ['#ff5f57', '#febc2e', '#28c840'].forEach((c, i) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x + bar * .55 + i * bar * .38, top - bar / 2, bar * .12, 0, 7); ctx.fill(); });
+      const ux = x + bar * 1.8, uw = sw - bar * 3.6, uh = bar * .58;
+      ctx.fillStyle = dark ? '#1c1d20' : '#fff'; rr(ux, top - bar / 2 - uh / 2, uw, uh, uh / 2); ctx.fill();
+      ctx.fillStyle = dark ? '#c9c9cf' : '#555'; ctx.font = `${uh * .48}px "Segoe UI", Arial, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('🔒 ' + $('url').value, ux + uw / 2, top - bar / 2);
+      drawMedia(x, top, sw, sh, [0, 0, R, R]);
+      break;
+    }
+    case 'polaroid': {
+      const b = sw * .06, bottom = sw * .26;
+      const top = y - bottom / 2 + b / 2;
+      shadow(); ctx.fillStyle = '#fbfaf6'; ctx.fillRect(x - b, top - b, sw + b * 2, sh + b + bottom); noShadow();
+      drawMedia(x, top, sw, sh, 0);
+      ctx.fillStyle = '#2a2a2a'; ctx.font = `${bottom * .32}px "Permanent Marker", cursive`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText($('url').value, 0, top + sh + bottom * .48);
+      break;
+    }
+    case 'tv': {
+      const bw2 = sw * 1.28, bh2 = sh * 1.2, bx = -bw2 / 2 + sw * .1, by = -bh2 / 2;
+      const sx = bx + sw * .06, sy = by + (bh2 - sh) / 2;
+      shadow(); const g = ctx.createLinearGradient(bx, by, bx, by + bh2); g.addColorStop(0, '#7a4a28'); g.addColorStop(1, '#4a2a14'); ctx.fillStyle = g; rr(bx, by, bw2, bh2, m * .06); ctx.fill(); noShadow();
+      ctx.fillStyle = '#1b1b1b'; rr(sx - m * .03, sy - m * .03, sw + m * .06, sh + m * .06, m * .08); ctx.fill();
+      drawMedia(sx, sy, sw, sh, m * .07);
+      const vg = ctx.createRadialGradient(sx + sw / 2, sy + sh / 2, m * .2, sx + sw / 2, sy + sh / 2, m * .75); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.45)');
+      ctx.save(); rr(sx, sy, sw, sh, m * .07); ctx.clip(); ctx.fillStyle = vg; ctx.fillRect(sx, sy, sw, sh);
+      ctx.fillStyle = 'rgba(0,0,0,.12)'; for (let ly = sy; ly < sy + sh; ly += Math.max(2, m / 180)) ctx.fillRect(sx, ly, sw, Math.max(1, m / 400)); ctx.restore();
+      const px = sx + sw + (bx + bw2 - sx - sw) / 2;
+      ctx.fillStyle = '#1a1a1a'; rr(px - m * .07, sy, m * .14, sh, m * .02); ctx.fill();
+      for (let i = 0; i < 2; i++) { ctx.fillStyle = '#c8c0b0'; ctx.beginPath(); ctx.arc(px, sy + sh * (.18 + i * .25), m * .045, 0, 7); ctx.fill(); ctx.fillStyle = '#333'; ctx.fillRect(px - m * .004, sy + sh * (.18 + i * .25) - m * .04, m * .008, m * .04); }
+      ctx.fillStyle = '#111'; for (let i = 0; i < 6; i++) ctx.fillRect(px - m * .05, sy + sh * .7 + i * m * .03, m * .1, m * .012);
+      break;
+    }
+    case 'watch': {
+      const R = m * .26, b = m * .06;
+      ctx.fillStyle = metal(x, y - sh * .5, sw, sh * .5);
+      rr(-sw * .32, y - sh * .48, sw * .64, sh * .55, sw * .1); ctx.fill(); rr(-sw * .32, y + sh * .93, sw * .64, sh * .55, sw * .1); ctx.fill();
+      shadow(); ctx.fillStyle = metal(x, y, sw, sh); rr(x - b, y - b, sw + b * 2, sh + b * 2, R + b); ctx.fill(); noShadow();
+      ctx.fillStyle = '#050505'; rr(x - b * .55, y - b * .55, sw + b * 1.1, sh + b * 1.1, R + b * .5); ctx.fill();
+      drawMedia(x, y, sw, sh, R);
+      ctx.fillStyle = T[1]; rr(x + sw + b * .9, y + sh * .22, m * .05, sh * .16, m * .02); ctx.fill();
+      break;
+    }
+  }
+  ctx.restore();
+}
+
+// ---------- abrir mídia ----------
+async function load(f) {
+  try {
+    const m = await OS.loadMedia(f);
+    if (media?.video) { media.el.pause(); URL.revokeObjectURL(media.url); }
+    media = m; name = OS.slug(f.name.replace(/\.[^.]+$/, ''));
+    $('ph').style.display = 'none';
+    $('videoBox').hidden = !m.video;
+    audioBuf = null;
+    if (m.video) {
+      m.el.loop = true; m.el.play().catch(() => {});
+      f.arrayBuffer().then((b) => new AudioContext().decodeAudioData(b)).then((a) => (audioBuf = a)).catch(() => (audioBuf = null));
+      if (m.w > m.h && $('device').value === 'phone') $('landscape').checked = true;
+    } else if (m.w > m.h * 1.2 && $('device').value === 'phone') setDevice('browser');
+  } catch (e) { OS.dialog('Erro', e.message || 'Não consegui abrir esse arquivo.', '❌'); }
+}
+$('openBtn').onclick = $('ph').onclick = async () => { const f = await OS.pickFile('image/*,video/*'); if (f) load(f); };
+OS.dropZone($('pv'), load);
+
+$('pngBtn').onclick = async () => {
+  const transp = $('bgMode').value === 'none';
+  render(transp);
+  OS.download(await OS.canvasBlob(cv), `${name}-mockup-${$('device').value}.png`);
+};
+
+// vídeo: quadro a quadro, procurando cada instante do vídeo
+const seek = (v, t) => new Promise((r) => { if (Math.abs(v.currentTime - t) < 1e-3) return r(); v.onseeked = () => { v.onseeked = null; r(); }; v.currentTime = t; });
+const ex = EXPORT.mount($('exp'), {
+  canvas: cv, fixedSize: () => $('size').value.split('x').map(Number),
+  seconds: () => Math.min(media.el.duration || 5, 180),
+  name: () => `${name}-mockup`,
+  prepare: () => { media.el.pause(); media.el.loop = false; },
+  draw: async (t, transp, i, exporting) => { if (exporting && media.video) await seek(media.el, Math.min(t, media.el.duration - .01)); render(transp || $('bgMode').value === 'none'); },
+  audio: () => audioBuf,
+  after: () => { media.el.loop = true; media.el.play().catch(() => {}); },
+});
+(function loop() {
+  if (!ex.busy) { render($('bgMode').value === 'none'); $('pv').classList.toggle('chk', $('bgMode').value === 'none'); }
+  requestAnimationFrame(loop);
+})();
+setDevice('phone');
+</script>
+</body>
+</html>

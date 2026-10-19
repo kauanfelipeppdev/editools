@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cronômetro · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Bebas+Neue&family=Bungee&family=Cinzel:wght@700&family=Fredoka:wght@500;700&family=Inter:wght@400;700;900&family=Luckiest+Guy&family=Montserrat:wght@400;700;900&family=Orbitron:wght@700;900&family=Permanent+Marker&family=Poppins:wght@400;700;900&family=Press+Start+2P&family=Roboto+Mono:wght@400;700&family=Special+Elite&family=VT323&display=swap">
+<script src="assets/export.js"></script>
+<style>
+  #pv canvas { max-height: 62vh; }
+  .fx { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  .fx button { height: auto; padding: 5px 2px; font-size: 11px; line-height: 1.25; }
+  .fx button[aria-pressed=true] { font-weight: bold; box-shadow: inset 1px 1px 3px rgba(0,0,0,.45); }
+  .fx button span { display: block; font-size: 17px; }
+  .live { position: fixed; inset: 0; z-index: 4000; background: #000; display: flex; align-items: center; justify-content: center; }
+  .live canvas { max-width: 100vw; max-height: 100vh; }
+  .live .bar { position: absolute; top: 10px; right: 10px; display: flex; gap: 6px; opacity: .25; transition: opacity .2s; }
+  .live:hover .bar { opacity: 1; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="cronometro.exe" data-icon="⏱️">
+    <div class="window-body">
+      <div class="toolbar"><a class="btn" href="index.html">🏠 Home</a><button data-open="help">? Ajuda</button><span class="spacer"></span><button id="liveBtn">📺 Usar ao vivo (tela cheia)</button><button id="playBtn">▶ Repetir prévia</button></div>
+      <div class="tool wide-panel">
+        <div class="panel" id="panel">
+          <div class="btns grow tabs" role="tablist">
+            <button role="tab" aria-selected="true" data-tab="t1">✏️ Personalizar</button>
+            <button role="tab" aria-selected="false" data-tab="t2">⭐ Modelos prontos</button>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t1">
+            <div class="stack">
+              <div class="btns grow"><label class="field-row"><input type="radio" name="mode" id="mDown" checked><span>⏳ Regressiva</span></label><label class="field-row"><input type="radio" name="mode" id="mUp"><span>⏱️ Cronômetro</span></label></div>
+              <div class="fx" id="fx"></div>
+              <input type="hidden" id="style" value="text">
+              <div class="two">
+                <label class="field"><span>Minutos</span><input type="number" id="min" value="0" min="0" max="600"></label>
+                <label class="field"><span>Segundos</span><input type="number" id="sec" value="10" min="0" max="59"></label>
+                <label class="field"><span>Formato</span><select id="fmtT"><option value="auto">Automático</option><option value="ss">SS</option><option value="mmss">MM:SS</option><option value="hhmmss">HH:MM:SS</option><option value="mmsscc">MM:SS.cc</option></select></label>
+                <label class="field"><span>Segurar no fim (s)</span><input type="number" id="hold" value="1.5" min="0" max="30" step="0.5"></label>
+                <label class="field"><span>Texto em cima</span><input type="text" id="label" value=""></label>
+                <label class="field"><span>Texto no fim</span><input type="text" id="endText" value="TEMPO!"></label>
+              </div>
+              <div class="row"><span class="lbl">Alerta nos últimos</span><input type="number" id="warnAt" value="3" min="0" max="600" style="width:60px"><span>s</span><input type="color" id="warn" value="#ff3b3b"></div>
+              <div class="field-row"><input type="checkbox" id="tick" checked><label for="tick">Pulsar a cada segundo</label></div>
+              <details open><summary>Estilo</summary>
+                <div class="stack" style="margin-top:6px">
+                  <div class="two">
+                    <label class="field"><span>Fonte</span><select id="font"></select></label>
+                    <label class="field"><span>Tamanho <output data-suffix="%"></output></span><input type="range" id="size" min="20" max="200" value="100"></label>
+                  </div>
+                  <div class="row"><span class="lbl">Cor</span><input type="color" id="color" value="#ffffff"><span class="lbl" style="min-width:0">Destaque</span><input type="color" id="accent" value="#00d1ff"></div>
+                  <div class="row"><span class="lbl">Caixa</span><input type="color" id="box" value="#1f1f1f"><span class="lbl" style="min-width:0">Fundo</span><input type="color" id="bg" value="#000000"></div>
+                  <label class="field"><span>Brilho <output data-suffix="px"></output></span><input type="range" id="glow" min="0" max="60" value="0"></label>
+                </div>
+              </details>
+            </div>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t2" hidden><div class="presets" id="presets"></div></div>
+          <div id="exp"></div>
+        </div>
+        <div id="pv" class="preview"><canvas id="cv"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="ajuda.txt" data-icon="📝">
+    <div class="window-body">
+      <ul>
+        <li><b>Regressiva</b> conta do tempo escolhido até zero. <b>Cronômetro</b> conta de zero até o tempo escolhido.</li>
+        <li><b>Usar ao vivo</b> abre o cronômetro em tela cheia, contando de verdade: bom pra live, aula ou apresentação (capture a janela no OBS).</li>
+        <li>Pra colocar por cima do vídeo, exporte em WEBM transparente ou sequência PNG.</li>
+      </ul>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">OK</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const { EASE, clamp } = EXPORT;
+const cv = $('cv'), ctx = cv.getContext('2d');
+$('font').innerHTML = EXPORT.fontOptions('Bebas Neue');
+
+const STYLES = { text: ['🔠', 'Texto'], lcd: ['📟', 'Display digital'], flip: ['🗓️', 'Flip'], ring: ['⭕', 'Anel'], pill: ['💊', 'Etiqueta'], led: ['🚥', 'Placar LED'] };
+const fxBox = $('fx');
+for (const [k, [i, n]] of Object.entries(STYLES)) fxBox.insertAdjacentHTML('beforeend', `<button data-fx="${k}" aria-pressed="false"><span>${i}</span>${n}</button>`);
+function setStyle(k) { $('style').value = k; fxBox.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.fx === k)); restart(); }
+fxBox.onclick = (e) => { const b = e.target.closest('[data-fx]'); if (b) setStyle(b.dataset.fx); };
+
+const PRESETS = [
+  { n: '🚀 Lançamento', d: '10 → 0 com alerta', v: { style: 'text', mDown: true, min: 0, sec: 10, font: 'Bebas Neue', color: '#ffffff', accent: '#00d1ff', warnAt: 3, endText: 'AGORA!', label: '', glow: 20, bg: '#000000' } },
+  { n: '📟 Bomba de filme', d: 'display vermelho', v: { style: 'lcd', mDown: true, min: 1, sec: 0, fmtT: 'mmss', color: '#ff2020', accent: '#ff2020', box: '#140000', warnAt: 10, endText: '', glow: 25, bg: '#000000' } },
+  { n: '🗓️ Flip clock', d: 'cartões virando', v: { style: 'flip', mDown: true, min: 5, sec: 0, fmtT: 'mmss', font: 'Inter', color: '#f2f2f2', box: '#1e1e1e', warnAt: 0, endText: '', glow: 0, bg: '#3a3a3a' } },
+  { n: '⭕ Pausa do vídeo', d: 'anel com segundos', v: { style: 'ring', mDown: true, min: 0, sec: 30, fmtT: 'ss', font: 'Montserrat', color: '#ffffff', accent: '#ffcc00', box: '#333333', warnAt: 5, endText: 'VOLTAMOS!', label: 'Já voltamos', glow: 0, bg: '#101018' } },
+  { n: '💊 Live começa em', d: 'etiqueta com texto', v: { style: 'pill', mDown: true, min: 5, sec: 0, fmtT: 'mmss', font: 'Poppins', color: '#ffffff', accent: '#ff3d71', box: '#ff3d71', warnAt: 0, endText: 'AO VIVO', label: 'A live começa em', glow: 0, bg: '#1a1033' } },
+  { n: '🏟️ Placar', d: 'cronômetro de jogo em LED', v: { style: 'led', mUp: true, min: 1, sec: 30, fmtT: 'mmss', color: '#ffb300', accent: '#ffb300', box: '#0b0b0b', warnAt: 0, endText: 'FIM DE JOGO', label: '', glow: 18, bg: '#000000' } },
+  { n: '⏱️ Speedrun', d: 'centésimos de segundo', v: { style: 'text', mUp: true, min: 0, sec: 20, fmtT: 'mmsscc', font: 'Roboto Mono', color: '#7CFF6B', accent: '#7CFF6B', warnAt: 0, endText: '', label: '', glow: 12, tick: false, bg: '#000000' } },
+];
+EXPORT.presets($('presets'), PRESETS, (p) => {
+  EXPORT.setValues({ fmtT: 'auto', hold: 1.5, size: 100, tick: true, box: '#1f1f1f', label: '', warn: '#ff3b3b', ...p.v });
+  setStyle(p.v.style);
+  OS.showTab('t1');
+});
+
+const IDS = ['style', 'min', 'sec', 'fmtT', 'hold', 'label', 'endText', 'warnAt', 'warn', 'tick', 'font', 'size', 'color', 'accent', 'box', 'bg', 'glow', 'mDown'];
+const S = () => EXPORT.values(IDS);
+const dur = (s) => Math.max(1, s.min * 60 + s.sec);
+
+function fmt(v, s, D) {
+  let f = s.fmtT;
+  if (f === 'auto') f = D >= 3600 ? 'hhmmss' : D >= 60 ? 'mmss' : 'ss';
+  const p2 = (n) => String(n).padStart(2, '0');
+  const whole = s.mDown ? Math.ceil(v - 1e-9) : Math.floor(v + 1e-9);
+  if (f === 'ss') return String(whole);
+  if (f === 'mmsscc') { const cs = Math.floor(v * 100 + 1e-6); return `${p2(Math.floor(cs / 6000))}:${p2(Math.floor(cs / 100) % 60)}.${p2(cs % 100)}`; }
+  const h = Math.floor(whole / 3600), m = Math.floor(whole / 60) % 60, sc = whole % 60;
+  return f === 'hhmmss' ? `${p2(h)}:${p2(m)}:${p2(sc)}` : `${p2(Math.floor(whole / 60))}:${p2(sc)}`;
+}
+
+// 7 segmentos: a b c d e f g
+const SEG = { 0: 'abcdef', 1: 'bc', 2: 'abged', 3: 'abgcd', 4: 'fgbc', 5: 'afgcd', 6: 'afgedc', 7: 'abc', 8: 'abcdefg', 9: 'abcdfg', '-': 'g' };
+function seg7(ch, x, y, w, h, on, off) {
+  const t = w * .18, g = t * .18;
+  const P = {
+    a: [x + t / 2 + g, y, w - t - g * 2, t, 'h'], d: [x + t / 2 + g, y + h - t, w - t - g * 2, t, 'h'], g: [x + t / 2 + g, y + h / 2 - t / 2, w - t - g * 2, t, 'h'],
+    f: [x, y + t / 2 + g, t, h / 2 - t / 2 - g * 2, 'v'], b: [x + w - t, y + t / 2 + g, t, h / 2 - t / 2 - g * 2, 'v'],
+    e: [x, y + h / 2 + g, t, h / 2 - t / 2 - g * 2, 'v'], c: [x + w - t, y + h / 2 + g, t, h / 2 - t / 2 - g * 2, 'v'],
+  };
+  for (const [k, [sx, sy, sw, sh, o]] of Object.entries(P)) {
+    ctx.fillStyle = (SEG[ch] || '').includes(k) ? on : off;
+    ctx.beginPath();
+    if (o === 'h') { ctx.moveTo(sx, sy + sh / 2); ctx.lineTo(sx + sh / 2, sy); ctx.lineTo(sx + sw - sh / 2, sy); ctx.lineTo(sx + sw, sy + sh / 2); ctx.lineTo(sx + sw - sh / 2, sy + sh); ctx.lineTo(sx + sh / 2, sy + sh); }
+    else { ctx.moveTo(sx + sw / 2, sy); ctx.lineTo(sx + sw, sy + sw / 2); ctx.lineTo(sx + sw, sy + sh - sw / 2); ctx.lineTo(sx + sw / 2, sy + sh); ctx.lineTo(sx, sy + sh - sw / 2); ctx.lineTo(sx, sy + sw / 2); }
+    ctx.closePath(); ctx.fill();
+  }
+}
+
+function drawAt(t, transp, live) {
+  const s = S(), D = dur(s);
+  const { W, H } = live ? { W: cv.width, H: cv.height } : ex.settings();
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  const k = Math.min(W, H) / 1080 * s.size / 100;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  if (!transp) { ctx.fillStyle = s.bg; ctx.fillRect(0, 0, W, H); }
+  const tt = Math.min(t, D);
+  const v = s.mDown ? D - tt : tt;
+  const ended = t >= D;
+  const remain = D - tt;
+  const warn = s.warnAt > 0 && remain <= s.warnAt && !ended || (ended && s.warnAt > 0);
+  const col = warn ? s.warn : s.color;
+  const frac = s.mDown ? (Math.ceil(v) - v) : (v - Math.floor(v));
+  const pulse = s.tick && !ended ? 1 + .06 * Math.max(0, 1 - frac * 5) : 1;
+  const txt = fmt(v, s, D);
+  const glow = (c) => { if (s.glow) { ctx.shadowColor = c; ctx.shadowBlur = s.glow * k * 2; } };
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const cx = W / 2, cy = H / 2 + (s.label ? 40 * k : 0);
+
+  if (ended && s.endText) {
+    const q = clamp((t - D) / .4);
+    ctx.save(); ctx.translate(cx, H / 2); ctx.scale(EASE.back(q), EASE.back(q));
+    ctx.font = `900 ${260 * k}px "${s.font}"`;
+    let fs = 260 * k; const w = ctx.measureText(s.endText).width; if (w > W * .9) { fs *= W * .9 / w; ctx.font = `900 ${fs}px "${s.font}"`; }
+    glow(col); ctx.fillStyle = Math.floor((t - D) * 4) % 2 && s.warnAt ? s.color : col; ctx.fillText(s.endText, 0, 0);
+    ctx.restore();
+    return;
+  }
+  if (s.label && s.style !== 'pill' && s.style !== 'ring') { ctx.font = `700 ${70 * k}px "${s.font}"`; ctx.fillStyle = s.color; ctx.fillText(s.label, cx, H / 2 - 190 * k); }
+
+  ctx.save();
+  ctx.translate(cx, cy); ctx.scale(pulse, pulse); ctx.translate(-cx, -cy);
+  switch (s.style) {
+    case 'text': {
+      let fs = 340 * k; ctx.font = `900 ${fs}px "${s.font}"`;
+      if ('fontVariantNumeric' in ctx) ctx.fontVariantNumeric = 'tabular-nums';
+      const w = ctx.measureText(txt).width; if (w > W * .92) { fs *= W * .92 / w; ctx.font = `900 ${fs}px "${s.font}"`; }
+      glow(col); ctx.fillStyle = col; ctx.fillText(txt, cx, cy);
+      break;
+    }
+    case 'lcd':
+    case 'led': {
+      const chars = [...txt];
+      let dh = 300 * k, dw = dh * .55, gap = dh * .12;
+      const width = (n) => chars.reduce((a, c) => a + (/\d|-/.test(c) ? dw : dw * .35) + gap, -gap);
+      const tw = width(); if (tw > W * .88) { const f = W * .88 / tw; dh *= f; dw *= f; gap *= f; }
+      const totalW = width(), boxPad = dh * .22;
+      ctx.fillStyle = s.box; ctx.beginPath(); ctx.roundRect(cx - totalW / 2 - boxPad, cy - dh / 2 - boxPad, totalW + boxPad * 2, dh + boxPad * 2, boxPad * .5); ctx.fill();
+      let x = cx - totalW / 2;
+      const off = s.style === 'led' ? 'rgba(255,255,255,.04)' : 'rgba(255,255,255,.06)';
+      for (const c of chars) {
+        if (/\d|-/.test(c)) {
+          glow(col); seg7(c, x, cy - dh / 2, dw, dh, col, off); ctx.shadowBlur = 0;
+          x += dw + gap;
+        } else {
+          ctx.fillStyle = col; const r = dw * .08;
+          if (c === ':') { ctx.beginPath(); ctx.arc(x + dw * .17, cy - dh * .2, r, 0, 7); ctx.arc(x + dw * .17, cy + dh * .2, r, 0, 7); ctx.fill(); }
+          else if (c === '.') { ctx.beginPath(); ctx.arc(x + dw * .17, cy + dh * .42, r, 0, 7); ctx.fill(); }
+          x += dw * .35 + gap;
+        }
+      }
+      if (s.style === 'led') {
+        // grade por cima pra parecer painel de LED
+        ctx.shadowBlur = 0;
+        const step = Math.max(4, dh / 22);
+        ctx.fillStyle = s.box;
+        for (let gx = cx - totalW / 2; gx < cx + totalW / 2; gx += step) ctx.fillRect(gx, cy - dh / 2, step * .28, dh);
+        for (let gy = cy - dh / 2; gy < cy + dh / 2; gy += step) ctx.fillRect(cx - totalW / 2, gy, totalW, step * .28);
+      }
+      break;
+    }
+    case 'flip': {
+      const chars = [...txt];
+      let ch = 320 * k, cw = ch * .68, gap = ch * .08;
+      const width = () => chars.reduce((a, c) => a + (/\d/.test(c) ? cw : cw * .3) + gap, -gap);
+      const tw = width(); if (tw > W * .9) { const f = W * .9 / tw; ch *= f; cw *= f; gap *= f; }
+      let x = cx - width() / 2;
+      const prevTxt = fmt(s.mDown ? Math.min(D, v + 1) : Math.max(0, v - 1), s, D);
+      const flipP = clamp(frac / .35);
+      const card = (digit, half, x0, y0, sy = 1) => {
+        ctx.save();
+        ctx.beginPath(); ctx.rect(x0, half === 'top' ? y0 : y0 + ch / 2, cw, ch / 2); ctx.clip();
+        if (sy !== 1) { const pivot = y0 + ch / 2; ctx.translate(0, pivot); ctx.scale(1, sy); ctx.translate(0, -pivot); }
+        ctx.fillStyle = s.box; ctx.beginPath(); ctx.roundRect(x0, y0, cw, ch, cw * .1); ctx.fill();
+        ctx.fillStyle = col; ctx.font = `700 ${ch * .78}px "${s.font}"`; ctx.fillText(digit, x0 + cw / 2, y0 + ch / 2 + ch * .03);
+        ctx.restore();
+      };
+      chars.forEach((c, i) => {
+        if (!/\d/.test(c)) { ctx.fillStyle = s.box; ctx.font = `700 ${ch * .6}px "${s.font}"`; ctx.fillText(c, x + cw * .15, cy); x += cw * .3 + gap; return; }
+        const y0 = cy - ch / 2, old = prevTxt[i] ?? c;
+        if (old !== c && flipP < 1 && !(s.mDown && v === D)) {
+          card(c, 'top', x, y0); card(old, 'bot', x, y0);
+          if (flipP < .5) card(old, 'top', x, y0, 1 - flipP * 2); else card(c, 'bot', x, y0, (flipP - .5) * 2);
+        } else { card(c, 'top', x, y0); card(c, 'bot', x, y0); }
+        ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(x, cy - ch * .006, cw, ch * .012);
+        x += cw + gap;
+      });
+      break;
+    }
+    case 'ring': {
+      const R = 330 * k, p = s.mDown ? v / D : v / D;
+      ctx.lineWidth = 46 * k; ctx.lineCap = 'round';
+      ctx.strokeStyle = s.box; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke();
+      ctx.strokeStyle = warn ? s.warn : s.accent; glow(ctx.strokeStyle);
+      ctx.beginPath(); ctx.arc(cx, cy, R, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * p); ctx.stroke();
+      ctx.shadowBlur = 0;
+      let fs = 200 * k; ctx.font = `900 ${fs}px "${s.font}"`; const w = ctx.measureText(txt).width; if (w > R * 1.6) { fs *= R * 1.6 / w; ctx.font = `900 ${fs}px "${s.font}"`; }
+      ctx.fillStyle = col; ctx.fillText(txt, cx, cy + (s.label ? 20 * k : 0));
+      if (s.label) { ctx.font = `700 ${48 * k}px "${s.font}"`; ctx.fillText(s.label, cx, cy - 110 * k); }
+      break;
+    }
+    case 'pill': {
+      ctx.font = `900 ${170 * k}px "${s.font}"`;
+      const tw = ctx.measureText(txt).width;
+      ctx.font = `700 ${60 * k}px "${s.font}"`;
+      const lw = s.label ? ctx.measureText(s.label).width : 0;
+      const w = Math.max(tw, lw) + 160 * k, h = (s.label ? 330 : 240) * k;
+      ctx.fillStyle = warn ? s.warn : s.box; ctx.beginPath(); ctx.roundRect(cx - w / 2, cy - h / 2, w, h, h * .22); ctx.fill();
+      ctx.fillStyle = s.color;
+      if (s.label) { ctx.fillText(s.label, cx, cy - h / 2 + 70 * k); }
+      ctx.font = `900 ${170 * k}px "${s.font}"`; ctx.fillText(txt, cx, cy + (s.label ? 40 * k : 0));
+      break;
+    }
+  }
+  ctx.restore();
+}
+
+// ---------- prévia ----------
+let t0 = performance.now();
+const restart = () => (t0 = performance.now());
+$('playBtn').onclick = restart;
+$('panel').addEventListener('input', (e) => { if (['min', 'sec', 'mDown', 'mUp'].includes(e.target.id)) restart(); });
+$('panel').addEventListener('change', (e) => { if (e.target.name === 'mode') restart(); });
+const total = () => dur(S()) + S().hold;
+const ex = EXPORT.mount($('exp'), {
+  canvas: cv, draw: (t, tr) => drawAt(t, tr), seconds: total, name: () => 'cronometro-' + fmt(S().mDown ? dur(S()) : 0, S(), dur(S())).replace(/[:.]/g, '-'), defaultRes: '1920x1080',
+  prepare: () => EXPORT.loadFont(900, S().font, '0123456789:'),
+  onSettings: (s) => $('pv').classList.toggle('chk', s.transp),
+});
+let live = null;
+(function loop() {
+  if (!ex.busy && !live) {
+    const t = (performance.now() - t0) / 1000;
+    drawAt(Math.min(t, total()), ex.settings().transp);
+    if (t > total() + .8) restart();
+  }
+  requestAnimationFrame(loop);
+})();
+
+// ---------- ao vivo ----------
+$('liveBtn').onclick = () => {
+  const box = document.createElement('div');
+  box.className = 'live';
+  box.innerHTML = '<div class="bar"><button data-l="pause">⏸ Pausar</button><button data-l="reset">↺ Zerar</button><button data-l="exit">✕ Sair</button></div>';
+  box.prepend(cv);
+  document.body.appendChild(box);
+  box.requestFullscreen?.().catch(() => {});
+  let elapsed = 0, last = performance.now(), paused = false;
+  const fit = () => { cv.width = innerWidth; cv.height = innerHeight; };
+  fit(); addEventListener('resize', fit);
+  live = { on: true };
+  (function tick() {
+    if (!live) return;
+    const now = performance.now();
+    if (!paused) elapsed += (now - last) / 1000;
+    last = now;
+    drawAt(elapsed, false, true);
+    requestAnimationFrame(tick);
+  })();
+  box.onclick = (e) => {
+    const b = e.target.closest('[data-l]'); if (!b) return;
+    if (b.dataset.l === 'pause') { paused = !paused; b.textContent = paused ? '▶ Continuar' : '⏸ Pausar'; }
+    if (b.dataset.l === 'reset') elapsed = 0;
+    if (b.dataset.l === 'exit') {
+      live = null; removeEventListener('resize', fit);
+      document.fullscreenElement && document.exitFullscreen();
+      $('pv').appendChild(cv); box.remove(); restart();
+    }
+  };
+};
+setStyle('text');
+document.fonts.ready.then(restart);
+</script>
+</body>
+</html>

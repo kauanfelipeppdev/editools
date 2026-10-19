@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gravador de scroll · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<script src="assets/export.js"></script>
+<style>
+  #pv canvas { max-height: 66vh; }
+  .mapbox { display: flex; gap: 10px; align-items: flex-start; }
+  #map { width: 90px; border: 1px solid #888; cursor: crosshair; background: #fff; display: block; max-height: 260px; object-fit: contain; }
+  #stops { flex: 1; display: flex; flex-direction: column; gap: 4px; font-size: 11px; }
+  #stops .stop { display: flex; align-items: center; gap: 4px; }
+  #stops .stop input { width: 48px; }
+  #stops .stop button { min-width: 22px; padding: 0 4px; }
+  .howto { font-size: 11px; line-height: 1.45; margin: 0; padding-left: 16px; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="gravador_de_scroll.exe" data-icon="🖱️">
+    <div class="window-body">
+      <div class="toolbar"><a class="btn" href="index.html">🏠 Home</a><button data-open="help">? Como tirar o print da página inteira</button><span class="spacer"></span><button id="openBtn">📂 Abrir print</button><button id="playBtn">▶ Repetir prévia</button></div>
+      <div class="tool wide-panel">
+        <div class="panel" id="panel">
+          <fieldset><legend>Página</legend><div class="stack">
+            <label class="field"><span>Endereço (aparece na barra do navegador)</span><input type="text" id="url" value="meusite.com.br" placeholder="cole o link da página"></label>
+            <div class="mapbox">
+              <canvas id="map" width="90" height="260" title="Clique pra adicionar uma parada"></canvas>
+              <div id="stops"><span class="hint">Clique no mapa da página pra adicionar paradas.</span></div>
+            </div>
+          </div></fieldset>
+          <fieldset><legend>Rolagem</legend><div class="stack">
+            <label class="field"><span>Velocidade <output data-suffix=" px/s"></output></span><input type="range" id="speed" min="100" max="3000" value="700" step="50"></label>
+            <div class="two">
+              <label class="field"><span>Parado no começo (s)</span><input type="number" id="startHold" value="1" min="0" max="20" step="0.5"></label>
+              <label class="field"><span>Parado no fim (s)</span><input type="number" id="endHold" value="1.5" min="0" max="20" step="0.5"></label>
+            </div>
+            <label class="field"><span>Movimento</span><select id="ease"><option value="inout">Suave (acelera e freia)</option><option value="linear">Constante</option><option value="wheel">Rodinha do mouse (aos trancos)</option></select></label>
+            <div class="field-row"><input type="checkbox" id="backTop"><label for="backTop">Voltar pro topo no final</label></div>
+            <div class="field-row"><input type="checkbox" id="scrollbar" checked><label for="scrollbar">Mostrar barra de rolagem</label></div>
+          </div></fieldset>
+          <fieldset><legend>Moldura</legend><div class="stack">
+            <div class="two">
+              <label class="field"><span>Tipo</span><select id="frame"><option value="browser">Navegador</option><option value="phone">Celular</option><option value="laptop">Notebook</option><option value="none">Sem moldura</option></select></label>
+              <label class="field"><span>Barra</span><select id="dark"><option value="light">Clara</option><option value="dark">Escura</option></select></label>
+            </div>
+            <label class="field"><span>Tamanho na tela <output data-suffix="%"></output></span><input type="range" id="fill" min="40" max="100" value="88"></label>
+            <div class="row"><span class="lbl">Fundo</span><input type="color" id="bg1" value="#6a5cff"><input type="color" id="bg2" value="#ff6ab2"><input type="checkbox" id="grad" checked title="Gradiente"><span>gradiente</span></div>
+            <div class="field-row"><input type="checkbox" id="shadow" checked><label for="shadow">Sombra</label></div>
+          </div></fieldset>
+          <div id="exp"></div>
+        </div>
+        <div id="pv" class="preview"><canvas id="cv"></canvas>
+          <div class="placeholder" id="ph" style="background:rgba(0,0,0,.6)"><span class="big">🖱️</span><b>Solte aqui o print da página inteira</b><span>ou clique pra escolher (PNG, JPG ou WEBP)</span><span class="hint" style="color:#bbb">Ainda não tem o print? Veja "Como tirar o print" no topo.</span><button id="demoBtn">👀 Ver com a página de exemplo</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="como_tirar_o_print.txt" data-icon="📝">
+    <div class="window-body">
+      <p style="margin-top:0"><b>O navegador não deixa um site gravar outro site</b>, então o jeito é tirar um print da página inteira e trazer pra cá:</p>
+      <ul class="howto">
+        <li><b>Chrome / Edge:</b> abra a página, aperte <kbd>F12</kbd>, depois <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>, digite <i>full size</i> e escolha <b>Capture full size screenshot</b>.</li>
+        <li><b>Edge:</b> <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> › Página inteira.</li>
+        <li><b>Firefox:</b> clique com o botão direito na página › <b>Fazer captura de tela</b> › Salvar página inteira.</li>
+        <li><b>Celular:</b> print com rolagem (Android: "Capturar mais"; iPhone no Safari: "Página inteira").</li>
+      </ul>
+      <p>Antes do print, role a página até o fim uma vez pra carregar todas as imagens. Feche avisos de cookies.</p>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">OK</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const { EASE, clamp } = EXPORT;
+const cv = $('cv'), ctx = cv.getContext('2d');
+let page = null, name = 'pagina';
+const stops = []; // { at: 0..1, hold: s }
+
+function demo() {
+  const c = document.createElement('canvas'); c.width = 1440; c.height = 5200;
+  const x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+  x.fillStyle = '#111'; x.fillRect(0, 0, 1440, 80); x.fillStyle = '#fff'; x.font = 'bold 30px Arial'; x.fillText('◆ minhamarca', 60, 52);
+  x.font = '20px Arial'; ['Início', 'Produtos', 'Preços', 'Contato'].forEach((s, i) => x.fillText(s, 860 + i * 140, 50));
+  const sec = ['#6a5cff', '#ffcf5a', '#2bd9a0', '#ff6ab2', '#3fa2ff', '#222'];
+  sec.forEach((col, i) => {
+    const y = 80 + i * 850;
+    x.fillStyle = i % 2 ? '#f5f6fa' : '#fff'; x.fillRect(0, y, 1440, 850);
+    x.fillStyle = col; x.beginPath(); x.roundRect(i % 2 ? 160 : 760, y + 160, 520, 520, 40); x.fill();
+    x.fillStyle = '#111'; x.font = 'bold 64px Arial'; x.fillText(['Seu site aqui', 'Feito pra vender', 'Rápido de verdade', 'Clientes felizes', 'Planos simples', 'Fale com a gente'][i], i % 2 ? 760 : 160, y + 300);
+    x.fillStyle = '#666'; x.font = '26px Arial';
+    for (let j = 0; j < 4; j++) x.fillRect(i % 2 ? 760 : 160, y + 360 + j * 46, 480 - j * 60, 18);
+    x.fillStyle = col; x.beginPath(); x.roundRect(i % 2 ? 760 : 160, y + 580, 240, 70, 35); x.fill();
+  });
+  return c;
+}
+function setPage(img, n) {
+  page = img; name = n || 'pagina';
+  $('ph').style.display = 'none';
+  stops.length = 0; renderStops(); drawMap(); restart();
+}
+async function load(f) {
+  const img = new Image();
+  img.onload = () => setPage(img, OS.slug(f.name.replace(/\.[^.]+$/, '')));
+  img.onerror = () => OS.dialog('Erro', 'Não consegui abrir essa imagem.', '❌');
+  img.src = URL.createObjectURL(f);
+}
+$('openBtn').onclick = $('ph').onclick = async () => { const f = await OS.pickFile('image/*'); if (f) load(f); };
+OS.dropZone($('pv'), load, /^image\//);
+
+// ---------- paradas ----------
+function drawMap() {
+  const m = $('map'), x = m.getContext('2d');
+  if (!page) return;
+  const h = Math.min(260, Math.round(90 * page.height / page.width));
+  m.height = Math.max(40, h);
+  x.drawImage(page, 0, 0, m.width, m.height);
+  stops.forEach((s, i) => { x.fillStyle = '#ff2b55'; x.fillRect(0, s.at * m.height - 1, m.width, 3); x.font = 'bold 10px Arial'; x.fillText(i + 1, 2, s.at * m.height - 3); });
+  if (lastView) { x.strokeStyle = '#2b6bff'; x.lineWidth = 2; x.strokeRect(1, lastView[0] * m.height, m.width - 2, Math.max(4, (lastView[1] - lastView[0]) * m.height)); }
+}
+$('map').onclick = (e) => {
+  if (!page) return;
+  const r = $('map').getBoundingClientRect();
+  stops.push({ at: clamp((e.clientY - r.top) / r.height), hold: 1 });
+  stops.sort((a, b) => a.at - b.at);
+  renderStops(); restart();
+};
+function renderStops() {
+  $('stops').innerHTML = stops.length ? stops.map((s, i) => `<div class="stop"><b>${i + 1}.</b> ${Math.round(s.at * 100)}% · parar <input type="number" min="0" max="20" step="0.5" value="${s.hold}" data-i="${i}">s <button data-del="${i}" title="Remover">✕</button></div>`).join('') : '<span class="hint">Clique no mapa da página pra adicionar paradas.</span>';
+  drawMap();
+}
+$('stops').oninput = (e) => { if (e.target.dataset.i) { stops[e.target.dataset.i].hold = +e.target.value; restart(); } };
+$('stops').onclick = (e) => { if (e.target.dataset.del) { stops.splice(+e.target.dataset.del, 1); renderStops(); restart(); } };
+
+// ---------- moldura ----------
+function layout(W, H) {
+  const f = $('frame').value, k = $('fill').value / 100, u = Math.min(W, H) / 1080;
+  let sw, sh, fr;
+  if (f === 'phone') { sh = H * k; sw = Math.min(W * k, sh * 9 / 19.5); fr = { b: sw * .04, r: sw * .14 }; }
+  else if (f === 'laptop') { sw = W * k * .86; sh = Math.min(H * k * .8, sw * 10 / 16); sw = Math.min(sw, sh * 16 / 10); fr = { b: sw * .02, r: sw * .02 }; }
+  else if (f === 'browser') { sw = W * k; sh = H * k - 70 * u; if (sw / sh > 16 / 9.4) sw = sh * 16 / 9.4; fr = { bar: 70 * u, r: 14 * u }; }
+  else { sw = W * k; sh = H * k; fr = { r: 0 }; }
+  const totalH = sh + (fr.bar || 0) + (f === 'laptop' ? sh * .08 : 0);
+  const x = (W - sw) / 2, y = (H - totalH) / 2 + (fr.bar || 0);
+  return { f, x, y, w: sw, h: sh, fr, u };
+}
+
+// ---------- tempo ----------
+function plan(L) {
+  const scale = L.w / page.width, viewH = L.h / scale, maxY = Math.max(0, page.height - viewH);
+  const sp = +$('speed').value; // px da página por segundo
+  const pts = [0, ...stops.map((s) => s.at * page.height - viewH * .25).map((y) => clamp(y, 0, maxY)), maxY];
+  const segs = [];
+  let t = +$('startHold').value;
+  for (let i = 1; i < pts.length; i++) {
+    const d = Math.abs(pts[i] - pts[i - 1]), dur = Math.max(.3, d / sp);
+    segs.push({ t0: t, t1: t + dur, y0: pts[i - 1], y1: pts[i] });
+    t += dur;
+    if (i < pts.length - 1) t += stops[i - 1].hold;
+  }
+  t += +$('endHold').value;
+  if ($('backTop').checked && maxY > 0) { segs.push({ t0: t, t1: t + .8, y0: maxY, y1: 0, back: true }); t += 1.3; }
+  return { total: t, segs, viewH, maxY, scale };
+}
+function offsetAt(P, t) {
+  let y = 0;
+  for (const s of P.segs) {
+    if (t < s.t0) break;
+    const q = clamp((t - s.t0) / (s.t1 - s.t0));
+    let e;
+    const mode = s.back ? 'inout' : $('ease').value;
+    if (mode === 'wheel') { const steps = Math.max(1, Math.round((s.t1 - s.t0) * 3)), i = Math.floor(q * steps), f = q * steps - i; e = Math.min(1, (i + EASE.out(clamp(f * 2))) / steps); }
+    else e = EASE[mode](q);
+    y = s.y0 + (s.y1 - s.y0) * e;
+  }
+  return y;
+}
+
+let lastView = null;
+function drawAt(t, transp) {
+  const { W, H } = ex.settings();
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, W, H);
+  if (!transp) {
+    if ($('grad').checked) { const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, $('bg1').value); g.addColorStop(1, $('bg2').value); ctx.fillStyle = g; } else ctx.fillStyle = $('bg1').value;
+    ctx.fillRect(0, 0, W, H);
+  }
+  const L = layout(W, H);
+  const dark = $('dark').value === 'dark', u = L.u;
+  ctx.save();
+  if ($('shadow').checked && L.f !== 'none') { ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 50 * u; ctx.shadowOffsetY = 20 * u; }
+  // corpo da moldura
+  if (L.f === 'browser') { ctx.fillStyle = dark ? '#2b2c30' : '#e8eaee'; ctx.beginPath(); ctx.roundRect(L.x, L.y - L.fr.bar, L.w, L.h + L.fr.bar, L.fr.r); ctx.fill(); }
+  else if (L.f === 'phone') { ctx.fillStyle = '#0c0c0e'; ctx.beginPath(); ctx.roundRect(L.x - L.fr.b, L.y - L.fr.b, L.w + L.fr.b * 2, L.h + L.fr.b * 2, L.fr.r); ctx.fill(); }
+  else if (L.f === 'laptop') {
+    ctx.fillStyle = '#1b1c1f'; ctx.beginPath(); ctx.roundRect(L.x - L.fr.b, L.y - L.fr.b, L.w + L.fr.b * 2, L.h + L.fr.b * 2.6, L.fr.b * 1.5); ctx.fill();
+    ctx.fillStyle = '#c9ccd3'; ctx.beginPath(); ctx.roundRect(L.x - L.w * .08, L.y + L.h + L.fr.b * 1.6, L.w * 1.16, L.h * .045, [0, 0, L.h * .03, L.h * .03]); ctx.fill();
+  } else { ctx.fillStyle = '#fff'; ctx.fillRect(L.x, L.y, L.w, L.h); }
+  ctx.restore();
+  // página
+  ctx.save();
+  ctx.beginPath();
+  if (L.f === 'browser') ctx.roundRect(L.x, L.y, L.w, L.h, [0, 0, L.fr.r, L.fr.r]);
+  else if (L.f === 'phone') ctx.roundRect(L.x, L.y, L.w, L.h, L.fr.r * .78);
+  else ctx.rect(L.x, L.y, L.w, L.h);
+  ctx.clip();
+  const src = page;
+  const scale = L.w / src.width, viewH = L.h / scale;
+  const oy = offsetAt(plan(L), t);
+  ctx.fillStyle = '#fff'; ctx.fillRect(L.x, L.y, L.w, L.h);
+  ctx.drawImage(src, 0, oy, src.width, Math.min(viewH, src.height - oy), L.x, L.y, L.w, Math.min(viewH, src.height - oy) * scale);
+  if ($('scrollbar').checked && src.height > viewH) {
+    const th = Math.max(30 * u, L.h * viewH / src.height), ty = L.y + (L.h - th) * (oy / Math.max(1, src.height - viewH));
+    ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.roundRect(L.x + L.w - 12 * u, ty + 3 * u, 7 * u, th - 6 * u, 4 * u); ctx.fill();
+  }
+  if (L.f === 'phone') { ctx.fillStyle = '#0c0c0e'; ctx.beginPath(); ctx.roundRect(L.x + L.w / 2 - L.w * .14, L.y + L.w * .03, L.w * .28, L.w * .075, L.w * .04); ctx.fill(); }
+  ctx.restore();
+  lastView = [oy / src.height, (oy + viewH) / src.height];
+  // barra do navegador
+  if (L.f === 'browser') {
+    const by = L.y - L.fr.bar, bh = L.fr.bar;
+    ['#ff5f57', '#febc2e', '#28c840'].forEach((c, i) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(L.x + 30 * u + i * 26 * u, by + bh / 2, 8 * u, 0, 7); ctx.fill(); });
+    const ux = L.x + 130 * u, uw = L.w - 260 * u, uh = bh * .56;
+    ctx.fillStyle = dark ? '#1c1d20' : '#ffffff'; ctx.beginPath(); ctx.roundRect(ux, by + (bh - uh) / 2, uw, uh, uh / 2); ctx.fill();
+    ctx.fillStyle = dark ? '#c9c9cf' : '#555'; ctx.font = `${uh * .5}px "Segoe UI", Arial, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('🔒 ' + ($('url').value || 'meusite.com.br').replace(/^https?:\/\//, ''), ux + uw / 2, by + bh / 2);
+  }
+}
+// sem print: uma página de exemplo
+page = demo(); name = 'exemplo';
+$('demoBtn').onclick = (e) => { e.stopPropagation(); $('ph').style.display = 'none'; };
+
+let t0 = performance.now(), mapTick = 0;
+const restart = () => (t0 = performance.now());
+$('playBtn').onclick = restart;
+$('panel').addEventListener('input', restart);
+const total = () => { const { W, H } = ex.settings(); return plan(layout(W, H)).total; };
+const ex = EXPORT.mount($('exp'), {
+  canvas: cv, draw: drawAt, seconds: total, name: () => 'scroll-' + name, defaultRes: '1920x1080',
+  onSettings: (s) => $('pv').classList.toggle('chk', s.transp),
+});
+(function loop() {
+  if (!ex.busy) {
+    const t = (performance.now() - t0) / 1000;
+    drawAt(Math.min(t, total()), ex.settings().transp);
+    if (++mapTick % 6 === 0) drawMap();
+    if (t > total() + .8) restart();
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

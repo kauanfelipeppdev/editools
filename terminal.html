@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Terminal · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=IBM+Plex+Mono:wght@400;700&family=Inconsolata:wght@400;700&family=JetBrains+Mono:wght@400;700&family=Roboto+Mono:wght@400;700&family=Source+Code+Pro:wght@400;700&family=Space+Mono:wght@400;700&family=Ubuntu+Mono:wght@400;700&display=swap">
+<script src="assets/export.js"></script>
+<style>
+  #pv { overflow: auto; align-items: center; }
+  #pv canvas { max-height: 70vh; }
+  #code { font: 12px 'Consolas', 'Courier New', monospace; min-height: 190px; white-space: pre; }
+  .bd { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  .bd button { height: 30px; min-width: 0; padding: 0; border-radius: 4px; }
+  .bd button[aria-pressed=true] { outline: 2px solid #000; outline-offset: 1px; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="terminal.exe" data-icon="⌨️">
+    <div class="window-body">
+      <div class="toolbar"><a class="btn" href="index.html">🏠 Home</a><button data-open="help">? Ajuda</button><span class="spacer"></span>
+        <button id="pngBtn">💾 Exportar PNG</button><button id="svgBtn">📐 SVG</button><button id="copyBtn">📋 Copiar imagem</button></div>
+      <div class="tool wide-panel">
+        <div class="panel" id="panel">
+          <div class="btns grow tabs" role="tablist">
+            <button role="tab" aria-selected="true" data-tab="t1">✏️ Conteúdo</button>
+            <button role="tab" aria-selected="false" data-tab="t2">🎨 Visual</button>
+            <button role="tab" aria-selected="false" data-tab="t3">🎬 Animar</button>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t1">
+            <div class="stack">
+              <label class="field"><span>Título da janela</span><input type="text" id="title" value="zsh — ~/projeto"></label>
+              <label class="field"><span>Comandos e saída</span><textarea id="code" spellcheck="false"></textarea></label>
+              <p class="hint">Linha com <b>$</b> no começo = comando. <b>#</b> = comentário. Cores: <code>[green]texto[/]</code> (green, red, yellow, blue, magenta, cyan, dim, bold). Linhas com ✓ ficam verdes e com ✗ ou "error" ficam vermelhas sozinhas.</p>
+              <div class="two">
+                <label class="field"><span>Prompt</span><select id="prompt"><option value="$">$</option><option value="❯">❯</option><option value="&gt;">&gt;</option><option value="#">#</option><option value="%">%</option><option value="~">~</option><option value="λ">λ</option><option value="">nenhum</option></select></label>
+                <label class="field"><span>Antes do prompt</span><input type="text" id="cwd" value="" placeholder="ex: user@pc ~/app"></label>
+              </div>
+              <div class="field-row"><input type="checkbox" id="cursorEnd" checked><label for="cursorEnd">Cursor piscando no fim</label></div>
+              <div class="field-row"><input type="checkbox" id="lineNums"><label for="lineNums">Números de linha</label></div>
+            </div>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t2" hidden>
+            <div class="stack">
+              <div class="two">
+                <label class="field"><span>Tema</span><select id="theme"></select></label>
+                <label class="field"><span>Fonte</span><select id="font"><option>JetBrains Mono</option><option>Fira Code</option><option>Source Code Pro</option><option>IBM Plex Mono</option><option>Roboto Mono</option><option>Space Mono</option><option>Ubuntu Mono</option><option>Inconsolata</option><option>Courier New</option><option>Consolas</option></select></label>
+                <label class="field"><span>Janela</span><select id="chrome"><option value="mac">macOS</option><option value="win">Windows</option><option value="linux">Linux</option><option value="none">Sem barra</option></select></label>
+                <label class="field"><span>Barra</span><select id="barMode"><option value="auto">Igual ao tema</option><option value="light">Clara</option><option value="dark">Escura</option></select></label>
+              </div>
+              <span>Fundo de trás</span>
+              <div class="bd" id="bd"></div>
+              <div class="row"><span class="lbl">Cor sólida</span><input type="color" id="solid" value="#7b5cff"></div>
+              <label class="field"><span>Tamanho da letra <output data-suffix="px"></output></span><input type="range" id="size" min="10" max="28" value="15"></label>
+              <label class="field"><span>Espaço em volta <output data-suffix="px"></output></span><input type="range" id="pad" min="0" max="128" value="48" step="4"></label>
+              <label class="field"><span>Largura mínima <output data-suffix=" col"></output></span><input type="range" id="cols" min="20" max="140" value="56"></label>
+              <label class="field"><span>Cantos <output data-suffix="px"></output></span><input type="range" id="radius" min="0" max="24" value="10"></label>
+              <div class="field-row"><input type="checkbox" id="shadow" checked><label for="shadow">Sombra</label></div>
+              <label class="field"><span>Qualidade do PNG</span><select id="scale"><option value="1">1x</option><option value="2" selected>2x (retina)</option><option value="3">3x</option><option value="4">4x</option></select></label>
+            </div>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t3" hidden>
+            <div class="stack">
+              <p class="hint" style="margin:0">Vira vídeo: os comandos são digitados letra por letra e a saída aparece linha por linha.</p>
+              <label class="field"><span>Velocidade de digitação <output data-suffix=" letras/s"></output></span><input type="range" id="cps" min="5" max="60" value="18"></label>
+              <label class="field"><span>Atraso entre linhas de saída <output data-suffix=" ms"></output></span><input type="range" id="outDelay" min="0" max="800" value="120" step="10"></label>
+              <label class="field"><span>Pausa depois do comando <output data-suffix=" ms"></output></span><input type="range" id="cmdPause" min="0" max="2000" value="450" step="50"></label>
+              <label class="field"><span>Segurar no fim (s)</span><input type="number" id="hold" value="2" min="0" max="30" step="0.5"></label>
+              <div class="btns"><button id="animBtn">▶ Ver animação</button></div>
+              <div id="exp"></div>
+            </div>
+          </div>
+        </div>
+        <div id="pv" class="preview chk"><canvas id="cv"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="ajuda.txt" data-icon="📝">
+    <div class="window-body">
+      <ul>
+        <li>Escreva os comandos com <b>$</b> no começo da linha. O resto vira a saída do terminal.</li>
+        <li><b>PNG</b> sai em alta resolução (escolha 2x ou mais em Visual). <b>SVG</b> fica nítido em qualquer tamanho. <b>Copiar imagem</b> cola direto no Discord, Notion, slides…</li>
+        <li>Na aba <b>Animar</b> o terminal vira vídeo com a digitação acontecendo.</li>
+      </ul>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">OK</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const cv = $('cv'), ctx = cv.getContext('2d');
+
+$('code').value = `$ npm create imapng@latest
+✔ Nome do projeto … meu-site
+✔ Escolha um modelo › [magenta]retrô[/]
+[dim]Instalando dependências…[/]
+✓ Pronto em [bold]1.2s[/]
+
+$ npm run dev
+  [green]➜[/]  Local:   [cyan]http://localhost:3000/[/]
+  [dim]➜  Rede:    use --host pra expor[/]`;
+
+const THEMES = {
+  dracula: ['Dracula', '#282a36', '#f8f8f2', '#6272a4', '#50fa7b', '#ff5555', '#f1fa8c', '#bd93f9', '#ff79c6', '#8be9fd'],
+  onedark: ['One Dark', '#282c34', '#abb2bf', '#5c6370', '#98c379', '#e06c75', '#e5c07b', '#61afef', '#c678dd', '#56b6c2'],
+  nightowl: ['Night Owl', '#011627', '#d6deeb', '#637777', '#addb67', '#ef5350', '#ecc48d', '#82aaff', '#c792ea', '#7fdbca'],
+  ghdark: ['GitHub Escuro', '#0d1117', '#e6edf3', '#8b949e', '#3fb950', '#f85149', '#d29922', '#58a6ff', '#bc8cff', '#39c5cf'],
+  ghlight: ['GitHub Claro', '#ffffff', '#1f2328', '#6e7781', '#1a7f37', '#cf222e', '#9a6700', '#0969da', '#8250df', '#1b7c83'],
+  monokai: ['Monokai', '#272822', '#f8f8f2', '#75715e', '#a6e22e', '#f92672', '#e6db74', '#66d9ef', '#ae81ff', '#a1efe4'],
+  nord: ['Nord', '#2e3440', '#d8dee9', '#616e88', '#a3be8c', '#bf616a', '#ebcb8b', '#81a1c1', '#b48ead', '#88c0d0'],
+  tokyo: ['Tokyo Night', '#1a1b26', '#c0caf5', '#565f89', '#9ece6a', '#f7768e', '#e0af68', '#7aa2f7', '#bb9af7', '#7dcfff'],
+  mocha: ['Catppuccin Mocha', '#1e1e2e', '#cdd6f4', '#6c7086', '#a6e3a1', '#f38ba8', '#f9e2af', '#89b4fa', '#cba6f7', '#94e2d5'],
+  gruvbox: ['Gruvbox', '#282828', '#ebdbb2', '#928374', '#b8bb26', '#fb4934', '#fabd2f', '#83a598', '#d3869b', '#8ec07c'],
+  soldark: ['Solarized Escuro', '#002b36', '#93a1a1', '#586e75', '#859900', '#dc322f', '#b58900', '#268bd2', '#d33682', '#2aa198'],
+  sollight: ['Solarized Claro', '#fdf6e3', '#586e75', '#93a1a1', '#859900', '#dc322f', '#b58900', '#268bd2', '#d33682', '#2aa198'],
+  cmd: ['Prompt do Windows', '#0c0c0c', '#cccccc', '#767676', '#13a10e', '#c50f1f', '#c19c00', '#3b78ff', '#b4009e', '#3a96dd'],
+  matrix: ['Matrix', '#000000', '#33ff66', '#1a8033', '#33ff66', '#ff3333', '#ccff33', '#33ffcc', '#66ff99', '#33ffcc'],
+};
+$('theme').innerHTML = Object.entries(THEMES).map(([k, v]) => `<option value="${k}">${v[0]}</option>`).join('');
+const pal = () => { const t = THEMES[$('theme').value]; return { bg: t[1], fg: t[2], dim: t[3], green: t[4], red: t[5], yellow: t[6], blue: t[7], magenta: t[8], cyan: t[9] }; };
+const isLight = (hex) => { const n = parseInt(hex.slice(1), 16); return ((n >> 16) * .299 + ((n >> 8) & 255) * .587 + (n & 255) * .114) > 150; };
+
+const BACKDROPS = {
+  ember: ['#ff6a00', '#ee0979'], ocean: ['#2193b0', '#6dd5ed'], sunset: ['#f857a6', '#ff5858'], candy: ['#a18cd1', '#fbc2eb'],
+  forest: ['#134e5e', '#71b280'], midnight: ['#232526', '#414345'], aurora: ['#00c9ff', '#92fe9d'], grape: ['#5f2c82', '#49a09d'],
+  solid: null, none: null,
+};
+let backdrop = 'ember';
+const bdBox = $('bd');
+for (const [k, g] of Object.entries(BACKDROPS)) {
+  const b = document.createElement('button');
+  b.dataset.bd = k; b.title = { solid: 'Cor sólida', none: 'Transparente' }[k] || k;
+  b.style.background = g ? `linear-gradient(135deg, ${g[0]}, ${g[1]})` : k === 'solid' ? 'var(--solid, #7b5cff)' : 'repeating-conic-gradient(#ccc 0 25%, #fff 0 50%) 0 0 / 10px 10px';
+  if (k === 'solid') b.textContent = '■';
+  bdBox.appendChild(b);
+}
+const setBd = (k) => { backdrop = k; bdBox.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.bd === k)); render(); };
+bdBox.onclick = (e) => { const b = e.target.closest('[data-bd]'); if (b) setBd(b.dataset.bd); };
+$('solid').oninput = () => { bdBox.style.setProperty('--solid', $('solid').value); if (backdrop === 'solid') render(); else setBd('solid'); };
+
+// ---------- texto → linhas com pedaços coloridos ----------
+const COLORS = ['green', 'red', 'yellow', 'blue', 'magenta', 'cyan', 'dim', 'bold'];
+function parse() {
+  const P = pal(), prompt = $('prompt').value, cwd = $('cwd').value.trim();
+  return $('code').value.replace(/\t/g, '  ').split('\n').map((raw) => {
+    const spans = [];
+    let kind = 'out', body = raw;
+    if (/^\$ ?/.test(raw)) {
+      kind = 'cmd'; body = raw.replace(/^\$ ?/, '');
+      if (cwd) spans.push({ t: cwd + ' ', c: P.blue, b: true, pre: true });
+      if (prompt) spans.push({ t: prompt + ' ', c: P.green, b: true, pre: true });
+    } else if (/^# /.test(raw)) { kind = 'comment'; }
+    let base = kind === 'comment' ? P.dim : P.fg;
+    if (kind === 'out') {
+      if (/^\s*[✓✔√]/.test(body)) base = P.green;
+      else if (/^\s*[✗✖×]|\berror\b|\berro\b|\bfailed\b/i.test(body)) base = P.red;
+      else if (/^\s*(⚠|warn)/i.test(body)) base = P.yellow;
+    }
+    // [cor]texto[/]
+    const re = /\[(\w+)\]([\s\S]*?)\[\/\]/g;
+    let last = 0, m;
+    const pushPlain = (txt) => {
+      // URLs ficam azuis e sublinhadas
+      txt.split(/(https?:\/\/\S+)/).forEach((part, i) => part && spans.push({ t: part, c: i % 2 ? P.cyan : base, u: i % 2 === 1, b: kind === 'cmd' && false }));
+    };
+    while ((m = re.exec(body))) {
+      if (m.index > last) pushPlain(body.slice(last, m.index));
+      const k = m[1].toLowerCase();
+      spans.push({ t: m[2], c: COLORS.includes(k) && k !== 'bold' ? P[k] : base, b: k === 'bold' });
+      last = re.lastIndex;
+    }
+    if (last < body.length) pushPlain(body.slice(last));
+    return { kind, spans };
+  });
+}
+
+// ---------- layout e desenho ----------
+function measure(fs) {
+  ctx.font = `400 ${fs}px "${$('font').value}"`;
+  return ctx.measureText('M').width;
+}
+function geometry(scale = 1) {
+  const fs = +$('size').value * scale, cw = measure(fs), lh = Math.round(fs * 1.55);
+  const lines = parse();
+  const gutter = $('lineNums').checked ? cw * (String(lines.length).length + 2) : 0;
+  const cols = Math.max(+$('cols').value, ...lines.map((l) => l.spans.reduce((a, s) => a + [...s.t].length, 0) + 1));
+  const ip = Math.round(fs * 1.25), bar = $('chrome').value === 'none' ? 0 : Math.round(fs * 2.4);
+  const winW = Math.ceil(gutter + cols * cw + ip * 2), winH = bar + ip * 2 + lines.length * lh;
+  const pad = +$('pad').value * scale;
+  return { fs, cw, lh, lines, gutter, ip, bar, winW, winH, pad, W: winW + pad * 2, H: winH + pad * 2, scale };
+}
+
+/** Desenha no canvas. `reveal(i)` → quantas letras da linha i mostrar (Infinity = tudo, -1 = esconder). */
+function paint(c, g, { ox = 0, oy = 0, k = 1, transp = false, reveal = null, cursorOn = true, fullBg = null } = {}) {
+  const x = c.getContext('2d'), P = pal(), r = +$('radius').value * g.scale;
+  const dark = $('barMode').value === 'dark' || ($('barMode').value === 'auto' && !isLight(P.bg));
+  x.save();
+  x.translate(ox, oy); x.scale(k, k);
+  // fundo de trás
+  const bw = g.W, bh = g.H;
+  if (!transp && backdrop !== 'none') {
+    if (backdrop === 'solid') x.fillStyle = $('solid').value;
+    else { const gr = x.createLinearGradient(0, 0, bw, bh); gr.addColorStop(0, BACKDROPS[backdrop][0]); gr.addColorStop(1, BACKDROPS[backdrop][1]); x.fillStyle = gr; }
+    if (fullBg) { x.save(); x.setTransform(1, 0, 0, 1, 0, 0); if (backdrop !== 'solid') { const gr = x.createLinearGradient(0, 0, fullBg[0], fullBg[1]); gr.addColorStop(0, BACKDROPS[backdrop][0]); gr.addColorStop(1, BACKDROPS[backdrop][1]); x.fillStyle = gr; } x.fillRect(0, 0, fullBg[0], fullBg[1]); x.restore(); }
+    else x.fillRect(0, 0, bw, bh);
+  }
+  const wx = g.pad, wy = g.pad;
+  // janela
+  x.save();
+  if ($('shadow').checked) { x.shadowColor = 'rgba(0,0,0,.45)'; x.shadowBlur = 40 * g.scale; x.shadowOffsetY = 18 * g.scale; }
+  x.fillStyle = P.bg; x.beginPath(); x.roundRect(wx, wy, g.winW, g.winH, r); x.fill();
+  x.restore();
+  x.save(); x.beginPath(); x.roundRect(wx, wy, g.winW, g.winH, r); x.clip();
+  const ch = $('chrome').value;
+  if (g.bar) {
+    x.fillStyle = dark ? (isLight(P.bg) ? '#2b2b2b' : 'rgba(255,255,255,.06)') : '#e9e9ec';
+    if (ch === 'linux') x.fillStyle = dark ? '#303030' : '#ebebeb';
+    x.fillRect(wx, wy, g.winW, g.bar);
+    x.fillStyle = dark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.1)'; x.fillRect(wx, wy + g.bar - g.scale, g.winW, g.scale);
+    const cyb = wy + g.bar / 2, d = g.fs * .52;
+    x.textBaseline = 'middle';
+    x.font = `400 ${g.fs * .85}px -apple-system, "Segoe UI", sans-serif`;
+    x.fillStyle = dark ? 'rgba(255,255,255,.6)' : 'rgba(0,0,0,.55)';
+    if (ch === 'mac') {
+      ['#ff5f57', '#febc2e', '#28c840'].forEach((col, i) => { x.fillStyle = col; x.beginPath(); x.arc(wx + g.fs * 1.2 + i * d * 2.4, cyb, d / 1.4 * 1.0, 0, 7); x.fill(); });
+      x.fillStyle = dark ? 'rgba(255,255,255,.6)' : 'rgba(0,0,0,.55)'; x.textAlign = 'center'; x.fillText($('title').value, wx + g.winW / 2, cyb);
+    } else if (ch === 'win') {
+      x.textAlign = 'left'; x.fillText('▣  ' + $('title').value, wx + g.fs, cyb);
+      const s = g.fs * .55, ex = wx + g.winW - g.fs * 1.4;
+      x.strokeStyle = dark ? 'rgba(255,255,255,.75)' : 'rgba(0,0,0,.7)'; x.lineWidth = 1.2 * g.scale;
+      x.beginPath(); x.moveTo(ex - s / 2, cyb - s / 2); x.lineTo(ex + s / 2, cyb + s / 2); x.moveTo(ex + s / 2, cyb - s / 2); x.lineTo(ex - s / 2, cyb + s / 2); x.stroke();
+      x.strokeRect(ex - g.fs * 3 - s / 2, cyb - s / 2, s, s);
+      x.beginPath(); x.moveTo(ex - g.fs * 6 - s / 2, cyb); x.lineTo(ex - g.fs * 6 + s / 2, cyb); x.stroke();
+    } else if (ch === 'linux') {
+      x.textAlign = 'center'; x.font = `700 ${g.fs * .85}px "Ubuntu", "Segoe UI", sans-serif`; x.fillText($('title').value, wx + g.winW / 2, cyb);
+      for (let i = 0; i < 3; i++) { const bx = wx + g.winW - g.fs * 1.3 - i * g.fs * 1.9; x.fillStyle = dark ? 'rgba(255,255,255,.12)' : 'rgba(0,0,0,.08)'; x.beginPath(); x.arc(bx, cyb, g.fs * .65, 0, 7); x.fill(); }
+    }
+  }
+  // texto
+  const tx0 = wx + g.ip + g.gutter, ty0 = wy + g.bar + g.ip;
+  x.textAlign = 'left'; x.textBaseline = 'middle';
+  let curPos = null;
+  g.lines.forEach((ln, i) => {
+    const show = reveal ? reveal(i) : Infinity;
+    if (show < 0) return;
+    const y = ty0 + i * g.lh + g.lh / 2;
+    if (g.gutter) { x.font = `400 ${g.fs}px "${$('font').value}"`; x.fillStyle = P.dim; x.textAlign = 'right'; x.fillText(String(i + 1), wx + g.ip + g.gutter - g.cw, y); x.textAlign = 'left'; }
+    let col = 0, left = show;
+    for (const sp of ln.spans) {
+      const chars = [...sp.t];
+      const n = sp.pre ? chars.length : Math.min(chars.length, Math.max(0, left));
+      if (!sp.pre) left -= n;
+      if (n <= 0) { if (!sp.pre) continue; }
+      const txt = chars.slice(0, n).join('');
+      x.font = `${sp.b ? 700 : 400} ${g.fs}px "${$('font').value}"`;
+      x.fillStyle = sp.c;
+      const px = tx0 + col * g.cw;
+      // monoespaçado: desenha letra por letra na grade pra alinhar mesmo com fonte fallback
+      [...txt].forEach((chr, j) => x.fillText(chr, px + j * g.cw, y));
+      if (sp.u) { x.fillRect(px, y + g.fs * .55, n * g.cw, Math.max(1, g.scale)); }
+      col += n;
+    }
+    curPos = { x: tx0 + col * g.cw, y };
+  });
+  if (cursorOn && curPos && $('cursorEnd').checked) { x.fillStyle = P.fg; x.globalAlpha = .85; x.fillRect(curPos.x + g.cw * .1, curPos.y - g.lh * .36, g.cw * .9, g.lh * .72); x.globalAlpha = 1; }
+  x.restore();
+  x.restore();
+}
+
+let animT0 = null;
+function render() {
+  if (animT0 !== null || ex?.busy) return;
+  const g = geometry(1);
+  cv.width = g.W; cv.height = g.H;
+  paint(cv, g, { cursorOn: Math.floor(performance.now() / 530) % 2 === 0 });
+}
+$('panel').addEventListener('input', render);
+$('panel').addEventListener('change', render);
+setInterval(() => animT0 === null && !ex?.busy && render(), 530);
+
+// ---------- exportar imagem ----------
+const shotName = () => 'terminal-' + OS.slug($('title').value).slice(0, 30);
+async function hiRes() {
+  await document.fonts.load(`400 20px "${$('font').value}"`).catch(() => {});
+  const g = geometry(+$('scale').value);
+  const c = document.createElement('canvas');
+  c.width = Math.ceil(g.W); c.height = Math.ceil(g.H);
+  paint(c, g, { cursorOn: true });
+  return c;
+}
+$('pngBtn').onclick = async () => OS.download(await OS.canvasBlob(await hiRes()), shotName() + '.png');
+$('copyBtn').onclick = async () => {
+  try {
+    const blob = await OS.canvasBlob(await hiRes());
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+    OS.dialog('Copiado', 'A imagem está na área de transferência. É só colar (Ctrl+V).', '📋');
+  } catch { OS.dialog('Não deu pra copiar', 'Seu navegador bloqueou a cópia de imagem. Use Exportar PNG.', '⚠️'); }
+};
+$('svgBtn').onclick = () => {
+  const g = geometry(1), P = pal(), r = +$('radius').value, font = $('font').value;
+  const dark = $('barMode').value === 'dark' || ($('barMode').value === 'auto' && !isLight(P.bg));
+  const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const wx = g.pad, wy = g.pad, ch = $('chrome').value;
+  let bg = '';
+  if (backdrop === 'solid') bg = `<rect width="${g.W}" height="${g.H}" fill="${$('solid').value}"/>`;
+  else if (BACKDROPS[backdrop]) bg = `<defs><linearGradient id="bd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${BACKDROPS[backdrop][0]}"/><stop offset="1" stop-color="${BACKDROPS[backdrop][1]}"/></linearGradient></defs><rect width="${g.W}" height="${g.H}" fill="url(#bd)"/>`;
+  const fam = `'${font}', ui-monospace, monospace`;
+  let out = `<svg xmlns="http://www.w3.org/2000/svg" width="${g.W}" height="${g.H}" viewBox="0 0 ${g.W} ${g.H}">
+<style>@import url('https://fonts.googleapis.com/css2?family=${font.replace(/ /g, '+')}:wght@400;700&amp;display=swap'); text{font-family:${fam};font-size:${g.fs}px;white-space:pre}</style>
+${bg}
+${$('shadow').checked ? `<filter id="sh" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#000" flood-opacity=".45"/></filter>` : ''}
+<rect x="${wx}" y="${wy}" width="${g.winW}" height="${g.winH}" rx="${r}" fill="${P.bg}"${$('shadow').checked ? ' filter="url(#sh)"' : ''}/>
+<clipPath id="win"><rect x="${wx}" y="${wy}" width="${g.winW}" height="${g.winH}" rx="${r}"/></clipPath><g clip-path="url(#win)">`;
+  if (g.bar) {
+    out += `<rect x="${wx}" y="${wy}" width="${g.winW}" height="${g.bar}" fill="${dark ? (isLight(P.bg) ? '#2b2b2b' : 'rgba(255,255,255,.06)') : '#e9e9ec'}"/>`;
+    const cyb = wy + g.bar / 2, tcol = dark ? 'rgba(255,255,255,.6)' : 'rgba(0,0,0,.55)';
+    if (ch === 'mac') out += ['#ff5f57', '#febc2e', '#28c840'].map((c, i) => `<circle cx="${wx + g.fs * 1.2 + i * g.fs * .52 * 2.4}" cy="${cyb}" r="${g.fs * .52 / 1.4}" fill="${c}"/>`).join('');
+    out += `<text x="${ch === 'win' ? wx + g.fs : wx + g.winW / 2}" y="${cyb}" dominant-baseline="middle" text-anchor="${ch === 'win' ? 'start' : 'middle'}" style="font-family:-apple-system,'Segoe UI',sans-serif;font-size:${g.fs * .85}px" fill="${tcol}">${esc($('title').value)}</text>`;
+  }
+  const tx0 = wx + g.ip + g.gutter, ty0 = wy + g.bar + g.ip;
+  g.lines.forEach((ln, i) => {
+    const y = ty0 + i * g.lh + g.lh / 2;
+    if (g.gutter) out += `<text x="${wx + g.ip + g.gutter - g.cw}" y="${y}" text-anchor="end" dominant-baseline="middle" fill="${P.dim}">${i + 1}</text>`;
+    let col = 0;
+    for (const sp of ln.spans) {
+      out += `<text x="${tx0 + col * g.cw}" y="${y}" dominant-baseline="middle" fill="${sp.c}"${sp.b ? ' font-weight="700"' : ''}${sp.u ? ' text-decoration="underline"' : ''}>${esc(sp.t)}</text>`;
+      col += [...sp.t].length;
+    }
+  });
+  out += '</g></svg>';
+  OS.download(new Blob([out], { type: 'image/svg+xml' }), shotName() + '.svg');
+};
+
+// ---------- animação de digitação ----------
+function animPlan() {
+  const lines = parse(), cps = +$('cps').value, outD = +$('outDelay').value / 1000, pause = +$('cmdPause').value / 1000;
+  let t = .5;
+  const plan = lines.map((ln) => {
+    const len = ln.spans.filter((s) => !s.pre).reduce((a, s) => a + [...s.t].length, 0);
+    const start = t;
+    if (ln.kind === 'cmd') { t += len / cps + pause; return { start, len, typing: true, end: start + len / cps }; }
+    t += outD;
+    return { start, len, typing: false, end: start };
+  });
+  return { plan, total: t + +$('hold').value };
+}
+function drawAnim(t, transp) {
+  const { W, H } = ex.settings();
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  const g = geometry(1), { plan } = animPlan();
+  const k = Math.min(W * .9 / g.W, H * .9 / g.H);
+  // escala maior pra ficar nítido
+  const g2 = geometry(k), ox = (W - g2.W) / 2, oy = (H - g2.H) / 2;
+  const x = cv.getContext('2d');
+  x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, W, H);
+  let typingLine = -1;
+  const reveal = (i) => {
+    const p = plan[i];
+    if (t < p.start) return -1;
+    if (p.typing) { const n = Math.floor((t - p.start) * +$('cps').value); if (n < p.len) typingLine = i; return Math.min(p.len, n); }
+    return Infinity;
+  };
+  paint(cv, { ...g2, pad: g2.pad }, { ox, oy, transp, reveal, cursorOn: typingLine >= 0 || Math.floor(t * 1.9) % 2 === 0, fullBg: [W, H] });
+}
+$('animBtn').onclick = () => {
+  if (animT0 !== null) { animT0 = null; $('animBtn').textContent = '▶ Ver animação'; return render(); }
+  animT0 = performance.now(); $('animBtn').textContent = '⏹ Parar';
+  (function loop() {
+    if (animT0 === null) return;
+    const t = (performance.now() - animT0) / 1000, tot = animPlan().total;
+    if (!ex.busy) drawAnim(Math.min(t, tot), ex.settings().transp);
+    if (t > tot + .6) animT0 = performance.now();
+    requestAnimationFrame(loop);
+  })();
+};
+const ex = EXPORT.mount($('exp'), {
+  canvas: cv, draw: drawAnim, seconds: () => animPlan().total, name: () => shotName() + '-animado', defaultRes: '1920x1080',
+  prepare: () => document.fonts.load(`400 20px "${$('font').value}"`).catch(() => {}),
+  after: () => (animT0 === null ? render() : null),
+});
+setBd('ember');
+document.fonts.ready.then(render);
+document.addEventListener('tabchange', (e) => { if (e.detail !== 't3' && animT0 !== null) $('animBtn').click(); });
+</script>
+</body>
+</html>

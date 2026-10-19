@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Audiograma · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Montserrat:wght@400;700;900&family=Poppins:wght@400;700;900&family=Bebas+Neue&family=Press+Start+2P&display=swap">
+<script src="assets/export.js"></script>
+<style>
+  #pv canvas { max-height: 66vh; }
+  .fx { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  .fx button { height: auto; padding: 5px 2px; font-size: 11px; line-height: 1.25; }
+  .fx button[aria-pressed=true] { font-weight: bold; box-shadow: inset 1px 1px 3px rgba(0,0,0,.45); }
+  .fx button span { display: block; font-size: 17px; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="audiograma.exe" data-icon="🎧">
+    <div class="window-body">
+      <div class="toolbar"><a class="btn" href="index.html">🏠 Home</a><button data-open="help">? Ajuda</button><span class="spacer"></span><button id="openBtn">📂 Abrir áudio</button><button id="playBtn" disabled>▶ Tocar</button></div>
+      <div class="tool wide-panel">
+        <div class="panel" id="panel">
+          <div class="status-line" id="file" style="margin-top:0">&gt; nenhum áudio carregado</div>
+          <fieldset><legend>Trecho</legend><div class="stack">
+            <div class="two">
+              <label class="field"><span>Começa em (s)</span><input type="number" id="from" value="0" min="0" step="0.5"></label>
+              <label class="field"><span>Duração (s)</span><input type="number" id="len" value="30" min="1" step="0.5"></label>
+            </div>
+            <p class="hint" id="lenHint">Reels e Shorts: até 60 s funciona bem.</p>
+          </div></fieldset>
+          <div class="fx" id="fx"></div>
+          <input type="hidden" id="style" value="bars">
+          <fieldset><legend>Textos e capa</legend><div class="stack">
+            <label class="field"><span>Título</span><input type="text" id="title" value="Episódio 42"></label>
+            <label class="field"><span>Subtítulo</span><input type="text" id="sub" value="Meu Podcast"></label>
+            <div class="row"><button id="coverBtn">🖼️ Capa</button><button id="coverClr" title="Tirar capa">✕</button><div class="field-row"><input type="checkbox" id="bgBlur" checked><label for="bgBlur">Capa desfocada no fundo</label></div></div>
+            <div class="two">
+              <label class="field"><span>Fonte</span><select id="font"><option>Montserrat</option><option>Inter</option><option>Poppins</option><option>Bebas Neue</option><option>Press Start 2P</option></select></label>
+              <label class="field"><span>Barra de tempo</span><select id="progress"><option value="bar">Barra + tempo</option><option value="none">Nenhuma</option></select></label>
+            </div>
+          </div></fieldset>
+          <fieldset><legend>Cores</legend><div class="stack">
+            <div class="row"><span class="lbl">Fundo</span><input type="color" id="bg1" value="#1e1b4b"><input type="color" id="bg2" value="#701a75"></div>
+            <div class="row"><span class="lbl">Onda</span><input type="color" id="wave" value="#ffffff"><input type="color" id="wave2" value="#f472b6"><input type="checkbox" id="waveGrad" checked title="Gradiente"></div>
+            <div class="row"><span class="lbl">Texto</span><input type="color" id="ink" value="#ffffff"></div>
+            <label class="field"><span>Sensibilidade <output data-suffix="%"></output></span><input type="range" id="gain" min="30" max="300" value="120"></label>
+            <label class="field"><span>Quantidade de barras <output></output></span><input type="range" id="bands" min="16" max="128" value="48" step="4"></label>
+          </div></fieldset>
+          <div id="exp"></div>
+        </div>
+        <div id="pv" class="preview"><canvas id="cv"></canvas>
+          <div class="placeholder" id="ph" style="background:rgba(0,0,0,.55)"><span class="big">🎧</span><b>Solte um áudio aqui</b><span>MP3, WAV, M4A, OGG… ou um vídeo (usa o som dele)</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="ajuda.txt" data-icon="📝">
+    <div class="window-body">
+      <ul>
+        <li>Abra o áudio, escolha o trecho e o estilo da onda. O vídeo sai com o som junto.</li>
+        <li>A capa aparece no meio no estilo <b>Circular</b> e em cima nos outros.</li>
+        <li>O vídeo é feito quadro a quadro e a onda é calculada do próprio arquivo, então sai igual à prévia.</li>
+      </ul>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">OK</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const { clamp } = EXPORT;
+const cv = $('cv'), ctx = cv.getContext('2d');
+let buf = null, mono = null, cover = null, name = 'audiograma', peaks = null;
+
+const STYLES = { bars: ['📊', 'Barras'], mirror: ['🪞', 'Espelhado'], line: ['〰️', 'Onda'], circle: ['⭕', 'Circular'], dots: ['⚫', 'Pontos'], timeline: ['🎚️', 'Linha do tempo'] };
+for (const [k, [i, n]] of Object.entries(STYLES)) $('fx').insertAdjacentHTML('beforeend', `<button data-fx="${k}" aria-pressed="false"><span>${i}</span>${n}</button>`);
+const setStyle = (k) => { $('style').value = k; $('fx').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.fx === k)); };
+$('fx').onclick = (e) => { const b = e.target.closest('[data-fx]'); if (b) setStyle(b.dataset.fx); };
+setStyle('bars');
+
+// ---------- FFT (radix-2) ----------
+const N = 2048, hann = new Float32Array(N).map((_, i) => .5 - .5 * Math.cos(2 * Math.PI * i / (N - 1)));
+const re = new Float32Array(N), im = new Float32Array(N), rev = new Uint32Array(N);
+for (let i = 0, b = Math.log2(N); i < N; i++) { let r = 0; for (let j = 0; j < b; j++) r |= ((i >> j) & 1) << (b - 1 - j); rev[i] = r; }
+function fft() {
+  for (let i = 0; i < N; i++) { const j = rev[i]; if (j > i) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]]; } }
+  for (let size = 2; size <= N; size <<= 1) {
+    const half = size >> 1, step = -2 * Math.PI / size;
+    for (let i = 0; i < N; i += size) for (let j = 0; j < half; j++) {
+      const a = step * j, c = Math.cos(a), s = Math.sin(a), k = i + j, l = k + half;
+      const tr = re[l] * c - im[l] * s, ti = re[l] * s + im[l] * c;
+      re[l] = re[k] - tr; im[l] = im[k] - ti; re[k] += tr; im[k] += ti;
+    }
+  }
+}
+/** Bandas (0..1) no instante t, com escala logarítmica de frequência. */
+function spectrum(t, bands) {
+  const out = new Float32Array(bands);
+  if (!mono) return out;
+  const sr = buf.sampleRate;
+  for (const lag of [0, .016, .033]) {
+    const c = Math.floor((t - lag) * sr) - N / 2;
+    for (let i = 0; i < N; i++) { const v = mono[c + i] || 0; re[i] = v * hann[i]; im[i] = 0; }
+    fft();
+    const fMin = 40, fMax = Math.min(14000, sr / 2);
+    for (let b = 0; b < bands; b++) {
+      const f0 = fMin * Math.pow(fMax / fMin, b / bands), f1 = fMin * Math.pow(fMax / fMin, (b + 1) / bands);
+      const i0 = Math.max(1, Math.floor(f0 / sr * N)), i1 = Math.max(i0 + 1, Math.ceil(f1 / sr * N));
+      let m = 0; for (let i = i0; i < i1; i++) m = Math.max(m, Math.hypot(re[i], im[i]));
+      const db = 20 * Math.log10(m / (N / 4) + 1e-9);
+      out[b] += clamp((db + 62) / 58) / 3;
+    }
+  }
+  const g = $('gain').value / 100;
+  return out.map((v) => clamp(Math.pow(v, 1.4) * g));
+}
+function wave(t, n) {
+  const sr = buf ? buf.sampleRate : 44100, out = new Float32Array(n), c = Math.floor(t * sr), span = Math.floor(sr * .04);
+  if (!mono) return out;
+  for (let i = 0; i < n; i++) out[i] = mono[c + Math.floor(i / n * span)] || 0;
+  return out;
+}
+
+// ---------- carregar ----------
+async function load(f) {
+  $('file').textContent = '> lendo ' + f.name + '…';
+  try {
+    const ab = await f.arrayBuffer();
+    const ac = new AudioContext();
+    buf = await ac.decodeAudioData(ab); ac.close();
+  } catch { $('file').textContent = '> erro'; return OS.dialog('Erro', 'Não consegui ler o áudio desse arquivo. Tente MP3, WAV, M4A, MP4 ou WEBM.', '❌'); }
+  mono = new Float32Array(buf.length);
+  for (let c = 0; c < buf.numberOfChannels; c++) { const d = buf.getChannelData(c); for (let i = 0; i < d.length; i++) mono[i] += d[i] / buf.numberOfChannels; }
+  name = OS.slug(f.name.replace(/\.[^.]+$/, ''));
+  $('from').value = 0; $('len').value = Math.min(60, Math.floor(buf.duration * 10) / 10);
+  $('from').max = Math.floor(buf.duration); $('len').max = buf.duration;
+  if ($('title').value === 'Episódio 42') $('title').value = f.name.replace(/\.[^.]+$/, '');
+  $('file').textContent = `> ${f.name} · ${fmtT(buf.duration)}`;
+  $('ph').style.display = 'none'; $('playBtn').disabled = false;
+  computePeaks(); stop();
+}
+function computePeaks() {
+  const from = +$('from').value, len = +$('len').value, sr = buf.sampleRate, n = 200;
+  peaks = new Float32Array(n);
+  const a = Math.floor(from * sr), span = Math.floor(len * sr / n);
+  for (let i = 0; i < n; i++) { let m = 0; for (let j = 0; j < span; j += 16) m = Math.max(m, Math.abs(mono[a + i * span + j] || 0)); peaks[i] = m; }
+  const mx = Math.max(...peaks, .01); peaks = peaks.map((v) => v / mx);
+}
+$('from').oninput = $('len').oninput = () => { if (buf) { computePeaks(); stop(); } };
+$('openBtn').onclick = $('ph').onclick = async () => { const f = await OS.pickFile('audio/*,video/*'); if (f) load(f); };
+OS.dropZone($('pv'), load, /^(audio|video)\//);
+$('coverBtn').onclick = async () => { const f = await OS.pickFile('image/*'); if (!f) return; const i = new Image(); i.onload = () => (cover = i); i.src = URL.createObjectURL(f); };
+$('coverClr').onclick = () => (cover = null);
+const fmtT = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+// ---------- desenho ----------
+function drawAt(t, transp) {
+  const { W, H } = ex.settings();
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, W, H);
+  const u = Math.min(W, H) / 1080, abs = +$('from').value + t, len = +$('len').value, font = $('font').value, st = $('style').value;
+  if (!transp) {
+    const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, $('bg1').value); g.addColorStop(1, $('bg2').value);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    if (cover && $('bgBlur').checked) { const k = Math.max(W / cover.width, H / cover.height) * 1.2; ctx.globalAlpha = .45; ctx.filter = `blur(${40 * u}px)`; ctx.drawImage(cover, (W - cover.width * k) / 2, (H - cover.height * k) / 2, cover.width * k, cover.height * k); ctx.filter = 'none'; ctx.globalAlpha = 1; }
+  }
+  const nb = +$('bands').value, sp = spectrum(abs, nb), vert = H > W * 1.2;
+  const col = (x0, y0, x1, y1) => { if (!$('waveGrad').checked) return $('wave').value; const g = ctx.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, $('wave').value); g.addColorStop(1, $('wave2').value); return g; };
+  // capa e textos
+  const cs = (st === 'circle' ? 360 : vert ? 520 : 330) * u;
+  const cx = W / 2, cy = st === 'circle' ? H * (vert ? .4 : .45) : vert ? H * .3 : H * .34;
+  if (cover && st !== 'circle') { ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 40 * u; ctx.beginPath(); ctx.roundRect(cx - cs / 2, cy - cs / 2, cs, cs, 24 * u); ctx.clip(); ctx.drawImage(cover, cx - cs / 2, cy - cs / 2, cs, cs); ctx.restore(); }
+  ctx.fillStyle = $('ink').value; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const ty = st === 'circle' ? cy + cs * .5 + 220 * u : cover ? cy + cs / 2 + 90 * u : cy;
+  const fitText = (s, w, size, weight) => { let fs = size; ctx.font = `${weight} ${fs}px "${font}"`; const m = ctx.measureText(s).width; if (m > w) { fs *= w / m; ctx.font = `${weight} ${fs}px "${font}"`; } };
+  if ($('title').value) { fitText($('title').value, W * .86, 76 * u, 900); ctx.fillText($('title').value, cx, ty); }
+  if ($('sub').value) { fitText($('sub').value, W * .8, 42 * u, 400); ctx.globalAlpha = .8; ctx.fillText($('sub').value, cx, ty + 70 * u); ctx.globalAlpha = 1; }
+  // onda
+  const wy = st === 'circle' ? cy : vert ? H * .66 : H * .72, ww = W * .82, wx = (W - ww) / 2, wh = (vert ? 300 : 220) * u;
+  ctx.save();
+  switch (st) {
+    case 'bars': case 'mirror': {
+      const gap = ww / nb, bw = gap * .62;
+      ctx.fillStyle = col(wx, wy - wh, wx + ww, wy + wh);
+      for (let i = 0; i < nb; i++) {
+        const v = st === 'mirror' ? sp[Math.abs(Math.floor(nb / 2) - i) * 2 % nb] : sp[i];
+        const h = Math.max(6 * u, v * wh);
+        const x = wx + i * gap + (gap - bw) / 2;
+        ctx.beginPath();
+        if (st === 'mirror') ctx.roundRect(x, wy - h / 2, bw, h, bw / 2); else ctx.roundRect(x, wy + wh / 2 - h, bw, h, [bw / 2, bw / 2, 2 * u, 2 * u]);
+        ctx.fill();
+      }
+      break;
+    }
+    case 'dots': {
+      const gap = ww / nb;
+      ctx.fillStyle = col(wx, wy - wh, wx + ww, wy + wh);
+      for (let i = 0; i < nb; i++) { const n = Math.round(sp[i] * 10); for (let j = 0; j < Math.max(1, n); j++) { ctx.beginPath(); ctx.arc(wx + i * gap + gap / 2, wy + wh / 2 - j * gap * .9, gap * .3, 0, 7); ctx.fill(); } }
+      break;
+    }
+    case 'line': {
+      const n = 400, w = wave(abs, n), g = $('gain').value / 100;
+      ctx.strokeStyle = col(wx, 0, wx + ww, 0); ctx.lineWidth = 6 * u; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.shadowColor = $('wave2').value; ctx.shadowBlur = 20 * u;
+      ctx.beginPath();
+      for (let i = 0; i < n; i++) { const env = Math.sin(i / (n - 1) * Math.PI); const y = wy + w[i] * wh * 1.4 * g * env; i ? ctx.lineTo(wx + i / (n - 1) * ww, y) : ctx.moveTo(wx, y); }
+      ctx.stroke();
+      break;
+    }
+    case 'circle': {
+      const R = cs / 2 + 26 * u, n = Math.max(nb, 64), vals = spectrum(abs, n / 2);
+      ctx.strokeStyle = col(cx - R, cy - R, cx + R, cy + R); ctx.lineCap = 'round'; ctx.lineWidth = Math.max(3 * u, (2 * Math.PI * R / n) * .55);
+      for (let i = 0; i < n; i++) {
+        const v = vals[i < n / 2 ? i : n - 1 - i], a = i / n * Math.PI * 2 - Math.PI / 2, l = 8 * u + v * 180 * u;
+        ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R); ctx.lineTo(cx + Math.cos(a) * (R + l), cy + Math.sin(a) * (R + l)); ctx.stroke();
+      }
+      const bass = (vals[0] + vals[1] + vals[2]) / 3, s = 1 + bass * .05;
+      ctx.save(); ctx.translate(cx, cy); ctx.scale(s, s);
+      ctx.beginPath(); ctx.arc(0, 0, cs / 2, 0, 7); ctx.clip();
+      if (cover) ctx.drawImage(cover, -cs / 2, -cs / 2, cs, cs); else { ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(-cs / 2, -cs / 2, cs, cs); ctx.font = `${cs * .4}px sans-serif`; ctx.fillStyle = '#fff'; ctx.fillText('🎙️', 0, cs * .03); }
+      ctx.restore();
+      break;
+    }
+    case 'timeline': {
+      if (!peaks) break;
+      const n = peaks.length, gap = ww / n, p = clamp(t / len);
+      for (let i = 0; i < n; i++) {
+        const h = Math.max(4 * u, peaks[i] * wh * (i / n < p ? 1 + sp[Math.floor(i / n * nb)] * .25 : 1));
+        ctx.fillStyle = i / n < p ? col(wx, 0, wx + ww, 0) : 'rgba(255,255,255,.28)';
+        ctx.beginPath(); ctx.roundRect(wx + i * gap, wy - h / 2, gap * .6, h, gap * .3); ctx.fill();
+      }
+      ctx.fillStyle = $('ink').value; ctx.fillRect(wx + ww * p - 2 * u, wy - wh * .7, 4 * u, wh * 1.4);
+      break;
+    }
+  }
+  ctx.restore();
+  if ($('progress').value === 'bar' && st !== 'timeline') {
+    const py = H - (vert ? 180 : 90) * u, p = clamp(t / len);
+    ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.beginPath(); ctx.roundRect(wx, py, ww, 8 * u, 4 * u); ctx.fill();
+    ctx.fillStyle = $('ink').value; ctx.beginPath(); ctx.roundRect(wx, py, ww * p, 8 * u, 4 * u); ctx.fill();
+    ctx.beginPath(); ctx.arc(wx + ww * p, py + 4 * u, 12 * u, 0, 7); ctx.fill();
+    ctx.font = `600 ${28 * u}px "${font}"`; ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillText(fmtT(t), wx, py + 22 * u);
+    ctx.textAlign = 'right'; ctx.fillText(fmtT(len), wx + ww, py + 22 * u);
+  }
+}
+
+// ---------- tocar ----------
+let ac = null, srcNode = null, startedAt = 0, pausedAt = 0;
+function play() {
+  if (!buf) return;
+  ac = ac || new AudioContext();
+  srcNode = ac.createBufferSource(); srcNode.buffer = buf; srcNode.connect(ac.destination);
+  srcNode.start(0, +$('from').value + pausedAt, +$('len').value - pausedAt);
+  startedAt = ac.currentTime - pausedAt;
+  srcNode.onended = () => { if (srcNode) { stop(); } };
+  $('playBtn').textContent = '⏸ Pausar';
+}
+function pause() { if (!srcNode) return; pausedAt = ac.currentTime - startedAt; const s = srcNode; srcNode = null; s.stop(); $('playBtn').textContent = '▶ Tocar'; }
+function stop() { if (srcNode) { const s = srcNode; srcNode = null; s.stop(); } pausedAt = 0; $('playBtn').textContent = '▶ Tocar'; }
+$('playBtn').onclick = () => (srcNode ? pause() : play());
+const now = () => (srcNode ? ac.currentTime - startedAt : pausedAt);
+
+const ex = EXPORT.mount($('exp'), {
+  canvas: cv, transparent: false, draw: drawAt, seconds: () => +$('len').value, name: () => name + '-audiograma', defaultRes: '1080x1080',
+  formats: ['mp4', 'webm'],
+  prepare: async () => { if (!buf) throw Object.assign(new Error('sem áudio'), { userMsg: 'Abra um áudio primeiro.' }); pause(); await EXPORT.loadFont(900, $('font').value); },
+  audio: () => EXPORT.sliceAudio(buf, +$('from').value, +$('len').value),
+});
+(function loop() {
+  if (!ex.busy) drawAt(Math.min(now(), +$('len').value), false);
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

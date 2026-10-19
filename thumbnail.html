@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thumbnail · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Bebas+Neue&family=Bungee&family=Inter:wght@400;700;900&family=Luckiest+Guy&family=Montserrat:wght@400;700;900&family=Permanent+Marker&family=Poppins:wght@400;700;900&family=Roboto:wght@400;500&display=swap">
+<script src="assets/export.js"></script>
+<style>
+  #pv { flex-direction: column; gap: 6px; background: #2a2a2a; padding: 10px; }
+  #cv { width: 100%; height: auto; max-height: none !important; touch-action: none; cursor: default; box-shadow: 0 4px 18px rgba(0,0,0,.5); }
+  .addbar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  .addbar button { height: auto; padding: 5px 2px; font-size: 11px; }
+  .addbar button span { display: block; font-size: 17px; }
+  .layers { display: flex; flex-direction: column; gap: 2px; max-height: 170px; overflow: auto; background: #fff; border: 1px solid #999; padding: 2px; }
+  .layer { display: flex; align-items: center; gap: 6px; padding: 3px 6px; font-size: 11px; cursor: pointer; border: 1px solid transparent; }
+  .layer.on { background: #316ac5; color: #fff; }
+  .layer span:first-child { width: 18px; text-align: center; }
+  .layer .nm { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .pvbar { display: flex; gap: 10px; flex-wrap: wrap; color: #ddd; font-size: 11px; align-items: center; width: 100%; }
+  .pvbar label { color: #ddd; }
+  /* feed de mentirinha */
+  .feed { width: 100%; padding: 16px; border-radius: 4px; font-family: Roboto, Arial, sans-serif; }
+  .feed.dark { background: #0f0f0f; color: #f1f1f1; } .feed.light { background: #fff; color: #0f0f0f; }
+  .feed h4 { margin: 0 0 10px; font: 500 12px Roboto, Arial; opacity: .7; text-transform: uppercase; letter-spacing: .06em; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 12px; margin-bottom: 22px; }
+  .card .th { position: relative; aspect-ratio: 16/9; border-radius: 10px; overflow: hidden; background: #333; }
+  .card .th img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card .dur { position: absolute; right: 6px; bottom: 6px; background: rgba(0,0,0,.8); color: #fff; font: 500 11px Roboto, Arial; padding: 1px 4px; border-radius: 4px; }
+  .card .meta { display: flex; gap: 10px; margin-top: 10px; }
+  .card .av { width: 34px; height: 34px; border-radius: 50%; flex: none; background: linear-gradient(135deg, #ff8a00, #e52e71); }
+  .card b { display: block; font: 500 14px/1.35 Roboto, Arial; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card small { display: block; font: 400 12px Roboto, Arial; opacity: .65; margin-top: 3px; }
+  .card.fake .th { background: repeating-linear-gradient(135deg, #8883 0 10px, #8882 10px 20px); }
+  .sidecol { display: flex; flex-direction: column; gap: 10px; max-width: 420px; }
+  .sidecol .card { display: flex; gap: 8px; } .sidecol .th { width: 168px; flex: none; border-radius: 8px; } .sidecol .meta { margin: 0; } .sidecol .av { display: none; }
+  .sidecol b { font-size: 13px; }
+  .mob { max-width: 380px; } .mob .th { border-radius: 0; }
+  .rows { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="thumbnail.exe" data-icon="🖼️">
+    <div class="window-body">
+      <div class="toolbar"><a class="btn" href="index.html">🏠 Home</a><button data-open="help">? Ajuda</button><span class="spacer"></span>
+        <select id="outSize" aria-label="Tamanho"><option value="1280x720">1280×720</option><option value="1920x1080">1920×1080</option></select>
+        <button id="pngBtn">💾 Baixar PNG</button><button id="jpgBtn">💾 JPG (até 2 MB)</button></div>
+      <div class="tool wide-panel">
+        <div class="panel" id="panel">
+          <div class="btns grow tabs" role="tablist">
+            <button role="tab" aria-selected="true" data-tab="t1">🧱 Camadas</button>
+            <button role="tab" aria-selected="false" data-tab="t2">⭐ Modelos</button>
+            <button role="tab" aria-selected="false" data-tab="t3">👀 Ver no feed</button>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t1">
+            <div class="stack">
+              <div class="addbar">
+                <button data-add="image"><span>🖼️</span>Imagem</button><button data-add="text"><span>🔤</span>Texto</button><button data-add="emoji"><span>😱</span>Emoji</button>
+                <button data-add="arrow"><span>➡️</span>Seta</button><button data-add="circle"><span>⭕</span>Círculo</button><button data-add="box"><span>▭</span>Caixa</button>
+              </div>
+              <div class="layers" id="layers"></div>
+              <div class="btns grow"><button id="upBtn" title="Trazer pra frente">⬆️</button><button id="downBtn" title="Mandar pra trás">⬇️</button><button id="dupBtn" title="Duplicar">⧉</button><button id="delBtn" title="Apagar">🗑️</button></div>
+              <fieldset><legend id="propTitle">Propriedades</legend><div class="stack" id="props"></div></fieldset>
+            </div>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t2" hidden><div class="presets" id="presets"></div><p class="hint" style="margin-top:8px">Os modelos trocam as camadas. As imagens viram espaços cinza: clique e use "Trocar imagem".</p></div>
+          <div class="tabpanel" role="tabpanel" id="t3" hidden>
+            <div class="stack">
+              <label class="field"><span>Título do vídeo</span><input type="text" id="vTitle" value="Testei TODAS as ferramentas e olha no que deu"></label>
+              <div class="two">
+                <label class="field"><span>Canal</span><input type="text" id="vChannel" value="Meu Canal"></label>
+                <label class="field"><span>Duração</span><input type="text" id="vDur" value="12:34"></label>
+              </div>
+              <div class="field-row"><input type="checkbox" id="feedDark" checked><label for="feedDark">Tema escuro</label></div>
+              <p class="hint">Confira se dá pra ler o texto na miniatura pequena e se nada importante fica embaixo do tempo do vídeo (canto inferior direito).</p>
+            </div>
+          </div>
+        </div>
+        <div id="pv" class="preview">
+          <canvas id="cv" width="1280" height="720"></canvas>
+          <div class="pvbar" id="pvbar"><label><input type="checkbox" id="guide" checked> Mostrar área do tempo do vídeo</label><label><input type="checkbox" id="thirds"> Grade de terços</label><span style="flex:1"></span><span>Arraste pra mover · alça no canto = tamanho · Delete apaga</span></div>
+          <div id="feed" class="feed dark" hidden></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="ajuda.txt" data-icon="📝">
+    <div class="window-body">
+      <ul>
+        <li>Adicione imagens, textos, emojis, setas e círculos. Clique numa camada pra editar e arraste direto na thumbnail.</li>
+        <li>Recortou alguém no <b>Removedor de fundo</b>? Use "Enviar para… › thumbnail" e a pessoa já entra como camada. Ligue o <b>contorno branco</b> pra ficar com cara de figurinha.</li>
+        <li>A aba <b>Ver no feed</b> mostra a thumbnail do tamanho que as pessoas veem, ao lado de outras.</li>
+        <li>O YouTube aceita até 2 MB: o botão <b>JPG</b> ajusta a qualidade sozinho pra caber.</li>
+      </ul>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">OK</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const cv = $('cv'), ctx = cv.getContext('2d');
+const W = 1280, H = 720;
+const FONTS = ['Anton', 'Bebas Neue', 'Bangers', 'Bungee', 'Luckiest Guy', 'Montserrat', 'Poppins', 'Inter', 'Permanent Marker', 'Impact', 'Arial'];
+let layers = [], sel = null, uid = 0;
+const bg = { img: null, color1: '#1d4ed8', color2: '#9333ea', grad: true, blur: 0, dark: 0 };
+
+// ---------- camadas ----------
+const DEF = {
+  image: () => ({ type: 'image', img: null, w: 420, h: 420, rot: 0, outline: 0, outlineColor: '#ffffff', shadow: 30, flip: false }),
+  text: () => ({ type: 'text', text: 'TEXTO AQUI', font: 'Anton', size: 120, color: '#ffffff', stroke: 10, strokeColor: '#000000', shadow: 20, boxOn: false, boxColor: '#ff0033', rot: -3, upper: true, lineH: 1 }),
+  emoji: () => ({ type: 'emoji', text: '😱', size: 200, rot: 0, shadow: 20 }),
+  arrow: () => ({ type: 'arrow', w: 300, h: 120, rot: 20, color: '#ff2b2b', thick: 28, outline: true }),
+  circle: () => ({ type: 'circle', w: 260, h: 260, rot: 0, color: '#ff2b2b', thick: 14, outline: true }),
+  box: () => ({ type: 'box', w: 420, h: 140, rot: 0, color: '#ffde00', radius: 18, stroke: 0, strokeColor: '#000000' }),
+};
+const ICON = { image: '🖼️', text: '🔤', emoji: '😀', arrow: '➡️', circle: '⭕', box: '▭' };
+function add(type, extra = {}) {
+  const l = { id: ++uid, x: W / 2, y: H / 2, ...DEF[type](), ...extra };
+  layers.push(l); select(l); return l;
+}
+function select(l) { sel = l; renderLayers(); renderProps(); }
+
+function textLines(l) { const t = l.upper ? l.text.toUpperCase() : l.text; return t.split('\n'); }
+function bounds(l) {
+  if (l.type === 'text') {
+    ctx.font = `${l.size}px "${l.font}"`;
+    const lines = textLines(l), w = Math.max(...lines.map((s) => ctx.measureText(s).width)) + (l.boxOn ? l.size * .5 : 0) + l.stroke;
+    return { w: Math.max(20, w), h: lines.length * l.size * l.lineH + (l.boxOn ? l.size * .3 : 0) + l.stroke };
+  }
+  if (l.type === 'emoji') return { w: l.size * 1.1, h: l.size * 1.1 };
+  return { w: l.w, h: l.h };
+}
+
+let imgCache = new WeakMap();
+/** Imagem com contorno (estilo figurinha), feito uma vez e guardado. */
+function outlined(img, px, color) {
+  const key = px + color, c0 = imgCache.get(img);
+  if (c0 && c0.key === key) return c0.c;
+  const pad = px + 2, c = document.createElement('canvas');
+  c.width = img.width + pad * 2; c.height = img.height + pad * 2;
+  const x = c.getContext('2d');
+  for (let a = 0; a < 32; a++) { const t = a / 32 * Math.PI * 2; x.drawImage(img, pad + Math.cos(t) * px, pad + Math.sin(t) * px); }
+  x.globalCompositeOperation = 'source-in'; x.fillStyle = color; x.fillRect(0, 0, c.width, c.height);
+  x.globalCompositeOperation = 'source-over'; x.drawImage(img, pad, pad);
+  imgCache.set(img, { key, c, pad });
+  return c;
+}
+
+function drawLayer(l) {
+  const b = bounds(l);
+  ctx.save();
+  ctx.translate(l.x, l.y); ctx.rotate(l.rot * Math.PI / 180);
+  const sh = (n) => { if (n) { ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = n; ctx.shadowOffsetY = n * .25; } };
+  switch (l.type) {
+    case 'image': {
+      if (!l.img) { ctx.fillStyle = 'rgba(160,160,160,.55)'; ctx.fillRect(-l.w / 2, -l.h / 2, l.w, l.h); ctx.strokeStyle = '#fff'; ctx.setLineDash([12, 8]); ctx.lineWidth = 3; ctx.strokeRect(-l.w / 2, -l.h / 2, l.w, l.h); ctx.setLineDash([]); ctx.fillStyle = '#fff'; ctx.font = '600 26px Inter'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('📷 ' + OS.T('trocar imagem'), 0, 0); break; }
+      if (l.flip) ctx.scale(-1, 1);
+      sh(l.shadow);
+      if (l.outline) { const o = outlined(l.img, Math.round(l.outline * l.img.width / l.w), l.outlineColor), k = l.w / l.img.width; ctx.drawImage(o, -o.width * k / 2, -o.height * k / 2, o.width * k, o.height * k); }
+      else ctx.drawImage(l.img, -l.w / 2, -l.h / 2, l.w, l.h);
+      break;
+    }
+    case 'text': {
+      ctx.font = `${l.size}px "${l.font}"`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+      const lines = textLines(l), lh = l.size * l.lineH, y0 = -(lines.length - 1) * lh / 2;
+      if (l.boxOn) { sh(l.shadow); ctx.fillStyle = l.boxColor; ctx.beginPath(); ctx.roundRect(-b.w / 2, -b.h / 2, b.w, b.h, l.size * .12); ctx.fill(); ctx.shadowColor = 'transparent'; }
+      lines.forEach((s, i) => {
+        const y = y0 + i * lh + l.size * .04;
+        if (!l.boxOn) sh(l.shadow);
+        if (l.stroke) { ctx.lineWidth = l.stroke * 2; ctx.strokeStyle = l.strokeColor; ctx.strokeText(s, 0, y); ctx.shadowColor = 'transparent'; }
+        ctx.fillStyle = l.color; ctx.fillText(s, 0, y); ctx.shadowColor = 'transparent';
+      });
+      break;
+    }
+    case 'emoji': sh(l.shadow); ctx.font = `${l.size}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(l.text, 0, l.size * .05); break;
+    case 'arrow': {
+      const w = l.w, h = l.h, t = l.thick, head = Math.min(h, t * 3.2);
+      const path = () => { ctx.beginPath(); ctx.moveTo(-w / 2, 0); ctx.quadraticCurveTo(0, -h / 2, w / 2 - head * .8, 0); };
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      const tip = () => { ctx.beginPath(); ctx.moveTo(w / 2, 0); ctx.lineTo(w / 2 - head, -head * .7); ctx.lineTo(w / 2 - head, head * .7); ctx.closePath(); };
+      if (l.outline) { ctx.strokeStyle = '#fff'; ctx.lineWidth = t + 14; path(); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.lineWidth = 14; tip(); ctx.stroke(); ctx.fill(); }
+      sh(12); ctx.strokeStyle = l.color; ctx.lineWidth = t; path(); ctx.stroke(); ctx.fillStyle = l.color; tip(); ctx.fill();
+      break;
+    }
+    case 'circle':
+      if (l.outline) { ctx.strokeStyle = '#fff'; ctx.lineWidth = l.thick + 12; ctx.beginPath(); ctx.ellipse(0, 0, l.w / 2, l.h / 2, 0, 0, 7); ctx.stroke(); }
+      sh(10); ctx.strokeStyle = l.color; ctx.lineWidth = l.thick; ctx.beginPath(); ctx.ellipse(0, 0, l.w / 2, l.h / 2, 0, 0, 7); ctx.stroke();
+      break;
+    case 'box':
+      sh(16); ctx.fillStyle = l.color; ctx.beginPath(); ctx.roundRect(-l.w / 2, -l.h / 2, l.w, l.h, l.radius); ctx.fill();
+      if (l.stroke) { ctx.shadowColor = 'transparent'; ctx.lineWidth = l.stroke; ctx.strokeStyle = l.strokeColor; ctx.stroke(); }
+      break;
+  }
+  ctx.restore();
+  return b;
+}
+
+function draw(forExport) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  // fundo
+  if (bg.grad) { const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, bg.color1); g.addColorStop(1, bg.color2); ctx.fillStyle = g; } else ctx.fillStyle = bg.color1;
+  ctx.fillRect(0, 0, W, H);
+  if (bg.img) {
+    const k = Math.max(W / bg.img.width, H / bg.img.height) * (bg.blur ? 1.08 : 1);
+    if (bg.blur) ctx.filter = `blur(${bg.blur}px)`;
+    ctx.drawImage(bg.img, (W - bg.img.width * k) / 2, (H - bg.img.height * k) / 2, bg.img.width * k, bg.img.height * k);
+    ctx.filter = 'none';
+  }
+  if (bg.dark) { ctx.fillStyle = `rgba(0,0,0,${bg.dark / 100})`; ctx.fillRect(0, 0, W, H); }
+  for (const l of layers) drawLayer(l);
+  if (forExport) return;
+  if ($('thirds').checked) { ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 1; for (let i = 1; i < 3; i++) { ctx.beginPath(); ctx.moveTo(W * i / 3, 0); ctx.lineTo(W * i / 3, H); ctx.moveTo(0, H * i / 3); ctx.lineTo(W, H * i / 3); ctx.stroke(); } }
+  if ($('guide').checked) {
+    ctx.fillStyle = 'rgba(0,0,0,.75)'; ctx.beginPath(); ctx.roundRect(W - 128, H - 58, 112, 42, 8); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = '500 26px Roboto, Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText($('vDur').value || '12:34', W - 72, H - 36);
+  }
+  if (sel) {
+    const b = bounds(sel);
+    ctx.save(); ctx.translate(sel.x, sel.y); ctx.rotate(sel.rot * Math.PI / 180);
+    ctx.strokeStyle = '#39f'; ctx.lineWidth = 2; ctx.setLineDash([8, 6]); ctx.strokeRect(-b.w / 2, -b.h / 2, b.w, b.h); ctx.setLineDash([]);
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = '#39f'; ctx.fillRect(b.w / 2 - 9, b.h / 2 - 9, 18, 18); ctx.strokeRect(b.w / 2 - 9, b.h / 2 - 9, 18, 18);
+    ctx.restore();
+  }
+}
+
+// ---------- arrastar no canvas ----------
+const toLocal = (e) => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height]; };
+function local(l, x, y) { const a = -l.rot * Math.PI / 180, dx = x - l.x, dy = y - l.y; return [dx * Math.cos(a) - dy * Math.sin(a), dx * Math.sin(a) + dy * Math.cos(a)]; }
+let drag = null;
+cv.addEventListener('pointerdown', (e) => {
+  const [x, y] = toLocal(e);
+  if (sel) { const b = bounds(sel), [lx, ly] = local(sel, x, y); if (Math.abs(lx - b.w / 2) < 22 && Math.abs(ly - b.h / 2) < 22) { drag = { mode: 'scale', l: sel, d0: Math.hypot(lx, ly), snap: { ...sel } }; cv.setPointerCapture(e.pointerId); return; } }
+  const hit = [...layers].reverse().find((l) => { const b = bounds(l), [lx, ly] = local(l, x, y); return Math.abs(lx) <= b.w / 2 && Math.abs(ly) <= b.h / 2; });
+  select(hit || null);
+  if (hit) { drag = { mode: 'move', l: hit, ox: x - hit.x, oy: y - hit.y }; cv.setPointerCapture(e.pointerId); }
+});
+cv.addEventListener('pointermove', (e) => {
+  const [x, y] = toLocal(e);
+  if (!drag) { if (sel) { const b = bounds(sel), [lx, ly] = local(sel, x, y); cv.style.cursor = Math.abs(lx - b.w / 2) < 22 && Math.abs(ly - b.h / 2) < 22 ? 'nwse-resize' : 'default'; } return; }
+  const l = drag.l;
+  if (drag.mode === 'move') { l.x = x - drag.ox; l.y = y - drag.oy; }
+  else {
+    const [lx, ly] = local(l, x, y), k = Math.max(.05, Math.hypot(lx, ly) / drag.d0), s = drag.snap;
+    if (l.type === 'text' || l.type === 'emoji') l.size = Math.max(10, s.size * k);
+    else { l.w = Math.max(10, s.w * k); l.h = Math.max(10, s.h * k); }
+    if (l.type === 'circle' || l.type === 'arrow') l.thick = Math.max(2, s.thick * Math.sqrt(k));
+  }
+});
+const endDrag = () => { if (drag) { drag = null; renderProps(); } };
+cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+document.addEventListener('keydown', (e) => {
+  if (!sel || e.target.closest('input, textarea, select')) return;
+  if (e.key === 'Delete' || e.key === 'Backspace') { $('delBtn').click(); e.preventDefault(); }
+  const m = e.shiftKey ? 10 : 2;
+  if (e.key === 'ArrowLeft') sel.x -= m; if (e.key === 'ArrowRight') sel.x += m; if (e.key === 'ArrowUp') sel.y -= m; if (e.key === 'ArrowDown') sel.y += m;
+});
+
+// ---------- lista e propriedades ----------
+function label(l) { return l.type === 'text' ? l.text.split('\n')[0] : l.type === 'emoji' ? l.text : { image: 'Imagem', arrow: 'Seta', circle: 'Círculo', box: 'Caixa' }[l.type]; }
+function renderLayers() {
+  $('layers').innerHTML = [...layers].reverse().map((l) => `<div class="layer${l === sel ? ' on' : ''}" data-id="${l.id}"><span>${ICON[l.type]}</span><span class="nm"></span></div>`).join('') + `<div class="layer${sel === null ? ' on' : ''}" data-id="bg"><span>🎨</span><span class="nm">Fundo</span></div>`;
+  [...layers].reverse().forEach((l, i) => ($('layers').children[i].querySelector('.nm').textContent = label(l)));
+}
+$('layers').onclick = (e) => { const d = e.target.closest('[data-id]'); if (!d) return; select(d.dataset.id === 'bg' ? null : layers.find((l) => l.id == d.dataset.id)); };
+$('upBtn').onclick = () => { if (!sel) return; const i = layers.indexOf(sel); if (i < layers.length - 1) { layers.splice(i, 1); layers.splice(i + 1, 0, sel); renderLayers(); } };
+$('downBtn').onclick = () => { if (!sel) return; const i = layers.indexOf(sel); if (i > 0) { layers.splice(i, 1); layers.splice(i - 1, 0, sel); renderLayers(); } };
+$('dupBtn').onclick = () => { if (!sel) return; const c = { ...sel, id: ++uid, x: sel.x + 30, y: sel.y + 30 }; layers.push(c); select(c); };
+$('delBtn').onclick = () => { if (!sel) return; layers.splice(layers.indexOf(sel), 1); select(null); };
+
+const F = {
+  range: (k, lab, min, max, step = 1) => `<label class="field"><span>${lab} <output></output></span><input type="range" data-k="${k}" min="${min}" max="${max}" step="${step}"></label>`,
+  color: (k, lab) => `<div class="row"><span class="lbl">${lab}</span><input type="color" data-k="${k}"></div>`,
+  check: (k, lab) => `<div class="field-row"><input type="checkbox" data-k="${k}" id="p_${k}"><label for="p_${k}">${lab}</label></div>`,
+  text: (k, lab, area) => `<label class="field"><span>${lab}</span>${area ? `<textarea data-k="${k}" rows="2"></textarea>` : `<input type="text" data-k="${k}">`}</label>`,
+  select: (k, lab, opts) => `<label class="field"><span>${lab}</span><select data-k="${k}">${opts.map((o) => `<option>${o}</option>`).join('')}</select></label>`,
+};
+function renderProps() {
+  const p = $('props'), l = sel;
+  $('propTitle').textContent = l ? 'Propriedades · ' + label(l) : 'Fundo';
+  let h = '';
+  if (!l) {
+    h = `<div class="btns"><button id="bgImgBtn">🖼️ Imagem de fundo</button><button id="bgImgClr">✕</button></div>` + F.color('color1', 'Cor 1') + F.color('color2', 'Cor 2') + F.check('grad', 'Gradiente') + F.range('blur', 'Desfoque da imagem', 0, 30) + F.range('dark', 'Escurecer', 0, 80);
+  } else {
+    if (l.type === 'image') h = `<div class="btns"><button id="swapImg">🖼️ Trocar imagem</button><button id="fitBg">🎨 Usar como fundo</button></div>` + F.range('w', 'Largura', 40, 1600) + F.range('outline', 'Contorno (figurinha)', 0, 30) + F.color('outlineColor', 'Cor do contorno') + F.range('shadow', 'Sombra', 0, 80) + F.check('flip', 'Espelhar');
+    if (l.type === 'text') h = F.text('text', 'Texto', true) + F.select('font', 'Fonte', FONTS) + F.range('size', 'Tamanho', 20, 400) + F.color('color', 'Cor') + F.range('stroke', 'Contorno', 0, 40) + F.color('strokeColor', 'Cor do contorno') + F.range('shadow', 'Sombra', 0, 80) + F.check('boxOn', 'Caixa atrás do texto') + F.color('boxColor', 'Cor da caixa') + F.check('upper', 'Tudo maiúsculo') + F.range('lineH', 'Espaço entre linhas', .7, 1.6, .05);
+    if (l.type === 'emoji') h = F.text('text', 'Emoji') + F.range('size', 'Tamanho', 40, 600) + F.range('shadow', 'Sombra', 0, 80);
+    if (l.type === 'arrow' || l.type === 'circle') h = F.range('w', 'Largura', 40, 1200) + F.range('h', l.type === 'arrow' ? 'Curva' : 'Altura', 10, 900) + F.range('thick', 'Espessura', 2, 80) + F.color('color', 'Cor') + F.check('outline', 'Borda branca');
+    if (l.type === 'box') h = F.range('w', 'Largura', 20, 1280) + F.range('h', 'Altura', 20, 720) + F.range('radius', 'Cantos', 0, 120) + F.color('color', 'Cor') + F.range('stroke', 'Borda', 0, 30) + F.color('strokeColor', 'Cor da borda');
+    h += F.range('rot', 'Girar', -180, 180);
+  }
+  p.innerHTML = h;
+  const obj = l || bg;
+  p.querySelectorAll('[data-k]').forEach((el) => {
+    const k = el.dataset.k;
+    if (el.type === 'checkbox') el.checked = !!obj[k]; else el.value = obj[k];
+    const out = el.parentElement.querySelector('output');
+    const upd = () => { if (out) out.textContent = Math.round(el.value * 100) / 100; };
+    upd();
+    el.addEventListener('input', () => {
+      let v = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value;
+      if (k === 'w' && obj.type === 'image' && obj.img) obj.h = v * obj.img.height / obj.img.width;
+      obj[k] = v; upd();
+      if (k === 'text') renderLayers();
+      if (k === 'font') document.fonts.load(`40px "${v}"`).catch(() => {});
+    });
+  });
+  const b = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+  b('bgImgBtn', async () => { const f = await OS.pickFile('image/*'); if (f) bg.img = await loadImg(f); });
+  b('bgImgClr', () => (bg.img = null));
+  b('swapImg', async () => { const f = await OS.pickFile('image/*'); if (f) setLayerImg(sel, await loadImg(f)); });
+  b('fitBg', () => { if (sel?.img) { bg.img = sel.img; $('delBtn').click(); } });
+}
+const loadImg = (f) => new Promise((r, j) => { const i = new Image(); i.onload = () => r(i); i.onerror = j; i.src = URL.createObjectURL(f); });
+function setLayerImg(l, img) {
+  const box = Math.max(l.w, l.h);
+  const k = box / Math.max(img.width, img.height);
+  l.img = img; l.w = img.width * k; l.h = img.height * k;
+  renderProps();
+}
+document.querySelectorAll('[data-add]').forEach((b) => (b.onclick = async () => {
+  const t = b.dataset.add;
+  if (t === 'image') { const f = await OS.pickFile('image/*'); if (!f) return; const l = add('image'); setLayerImg(l, await loadImg(f)); return; }
+  add(t);
+}));
+const hasAlpha = (img) => { const c = document.createElement('canvas'); c.width = 32; c.height = 32; const x = c.getContext('2d'); x.drawImage(img, 0, 0, 32, 32); const d = x.getImageData(0, 0, 32, 32).data; for (let i = 3; i < d.length; i += 4) if (d[i] < 250) return true; return false; };
+async function receive(f) {
+  const img = await loadImg(f);
+  if (hasAlpha(img)) { const l = add('image', { x: W * .72, y: H * .55, w: 520, h: 520, outline: 8 }); setLayerImg(l, img); }
+  else { bg.img = img; select(null); }
+}
+OS.dropZone($('pv'), receive, /^image\//);
+
+// ---------- modelos ----------
+const PRESETS = [
+  { n: '😱 Reação', d: 'pessoa à direita, texto grande', make() {
+    Object.assign(bg, { img: null, color1: '#ff3d00', color2: '#ffb300', grad: true, blur: 0, dark: 0 });
+    add('image', { x: 930, y: 420, w: 560, h: 600, outline: 10 });
+    add('text', { text: 'NÃO\nACREDITO', x: 380, y: 330, size: 170, font: 'Anton', color: '#ffffff', stroke: 14, rot: -4 });
+    add('emoji', { text: '😱', x: 640, y: 560, size: 150, rot: 12 });
+  } },
+  { n: '🆚 Antes x Depois', d: 'tela dividida', make() {
+    Object.assign(bg, { img: null, color1: '#111111', color2: '#111111', grad: false, blur: 0, dark: 0 });
+    add('image', { x: 320, y: 360, w: 620, h: 700 }); add('image', { x: 960, y: 360, w: 620, h: 700 });
+    add('box', { x: 640, y: 360, w: 14, h: 720, color: '#ffffff', radius: 0 });
+    add('text', { text: 'ANTES', x: 320, y: 620, size: 90, font: 'Bebas Neue', boxOn: true, boxColor: '#e11d48', stroke: 0, rot: 0 });
+    add('text', { text: 'DEPOIS', x: 960, y: 620, size: 90, font: 'Bebas Neue', boxOn: true, boxColor: '#16a34a', stroke: 0, rot: 0 });
+    add('arrow', { x: 640, y: 200, w: 220, h: 90, rot: 0, color: '#ffde00' });
+  } },
+  { n: '🔟 Top lista', d: 'número gigante', make() {
+    Object.assign(bg, { img: null, color1: '#0f172a', color2: '#7c3aed', grad: true, blur: 0, dark: 0 });
+    add('text', { text: 'TOP 10', x: 330, y: 300, size: 230, font: 'Bungee', color: '#ffde00', stroke: 12, rot: -6 });
+    add('text', { text: 'COISAS QUE\nNINGUÉM TE CONTA', x: 360, y: 530, size: 64, font: 'Montserrat', color: '#ffffff', stroke: 0, boxOn: true, boxColor: '#000000', rot: -2 });
+    add('image', { x: 960, y: 380, w: 520, h: 560, outline: 8 });
+  } },
+  { n: '🎓 Tutorial', d: 'print + círculo + seta', make() {
+    Object.assign(bg, { img: null, color1: '#e5e7eb', color2: '#cbd5e1', grad: true, blur: 4, dark: 0 });
+    add('image', { x: 470, y: 380, w: 820, h: 520 });
+    add('circle', { x: 560, y: 360, w: 230, h: 180, color: '#ff2b2b' });
+    add('arrow', { x: 860, y: 220, w: 280, h: 140, rot: 150, color: '#ff2b2b' });
+    add('text', { text: 'FÁCIL!', x: 1060, y: 520, size: 150, font: 'Luckiest Guy', color: '#ffde00', stroke: 12, rot: 6 });
+  } },
+  { n: '🎙️ Podcast', d: 'dois convidados e título', make() {
+    Object.assign(bg, { img: null, color1: '#0b0b0b', color2: '#3b0764', grad: true, blur: 0, dark: 0 });
+    add('image', { x: 330, y: 430, w: 520, h: 580, outline: 0, shadow: 40 }); add('image', { x: 950, y: 430, w: 520, h: 580, outline: 0, shadow: 40 });
+    add('text', { text: '"ISSO MUDOU TUDO"', x: 640, y: 110, size: 96, font: 'Anton', color: '#ffffff', stroke: 0, boxOn: true, boxColor: '#dc2626', rot: 0 });
+  } },
+  { n: '🌄 Vlog', d: 'foto de fundo e texto embaixo', make() {
+    Object.assign(bg, { img: null, color1: '#0ea5e9', color2: '#22c55e', grad: true, blur: 0, dark: 15 });
+    add('text', { text: 'UM DIA EM\nLISBOA', x: 400, y: 520, size: 120, font: 'Bebas Neue', color: '#ffffff', stroke: 0, shadow: 40, rot: 0, lineH: .9 });
+    add('emoji', { text: '✈️', x: 760, y: 420, size: 140, rot: -10 });
+  } },
+];
+EXPORT.presets($('presets'), PRESETS, (p) => { layers = []; sel = null; p.make(); select(null); OS.showTab('t1'); });
+
+// ---------- feed ----------
+let feedUrl = null;
+async function renderFeed() {
+  draw(true);
+  const blob = await OS.canvasBlob(cv, 'image/jpeg', .9);
+  if (feedUrl) URL.revokeObjectURL(feedUrl);
+  feedUrl = URL.createObjectURL(blob);
+  const t = $('vTitle').value, c = $('vChannel').value, d = $('vDur').value;
+  const esc = (s) => s.replace(/[&<>"]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
+  const mine = `<div class="card"><div class="th"><img src="${feedUrl}" alt=""><span class="dur">${esc(d)}</span></div><div class="meta"><span class="av"></span><div><b>${esc(t)}</b><small>${esc(c)} · 1,2 mi de visualizações · há 2 dias</small></div></div></div>`;
+  const fake = (i) => `<div class="card fake"><div class="th"><span class="dur">${['8:12', '15:03', '22:47', '4:59', '10:10'][i % 5]}</span></div><div class="meta"><span class="av" style="filter:hue-rotate(${i * 70}deg)"></span><div><b>${['Outro vídeo qualquer', 'Vídeo do concorrente com título longo', 'Mais um vídeo', 'Vídeo recomendado', 'Tutorial de alguma coisa'][i % 5]}</b><small>Outro canal · 340 mil visualizações</small></div></div></div>`;
+  $('feed').className = 'feed ' + ($('feedDark').checked ? 'dark' : 'light');
+  $('feed').innerHTML = `<h4>Página inicial</h4><div class="grid3">${fake(0)}${mine}${fake(1)}</div>
+    <div class="rows"><div><h4>Ao lado do vídeo</h4><div class="sidecol">${fake(2)}${mine}${fake(3)}</div></div>
+    <div><h4>No celular</h4><div class="mob">${mine}</div></div></div>`;
+}
+document.addEventListener('tabchange', (e) => {
+  const feed = e.detail === 't3';
+  $('feed').hidden = !feed; $('cv').hidden = feed; $('pvbar').hidden = feed;
+  if (feed) renderFeed();
+});
+['vTitle', 'vChannel', 'vDur', 'feedDark'].forEach((id) => $(id).addEventListener('input', () => !$('feed').hidden && renderFeed()));
+
+// ---------- exportar ----------
+async function exportCanvas() {
+  const [ow, oh] = $('outSize').value.split('x').map(Number);
+  draw(true);
+  if (ow === W) return cv;
+  const c = document.createElement('canvas'); c.width = ow; c.height = oh;
+  const x = c.getContext('2d'); x.imageSmoothingQuality = 'high'; x.drawImage(cv, 0, 0, ow, oh);
+  return c;
+}
+$('pngBtn').onclick = async () => { const c = await exportCanvas(); OS.download(await OS.canvasBlob(c), 'thumbnail.png'); };
+$('jpgBtn').onclick = async () => {
+  const c = await exportCanvas();
+  let q = .95, blob;
+  do { blob = await OS.canvasBlob(c, 'image/jpeg', q); q -= .07; } while (blob.size > 2e6 && q > .3);
+  OS.download(blob, 'thumbnail.jpg');
+};
+
+(function loop() { if ($('feed').hidden) draw(false); requestAnimationFrame(loop); })();
+PRESETS[0].make(); select(null);
+document.fonts.ready.then(() => {});
+</script>
+</body>
+</html>

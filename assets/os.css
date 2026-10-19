@@ -36,7 +36,8 @@ body.os {
   background-color: var(--desk);
   background-image: var(--desk-img);
   background-attachment: fixed;
-  background-size: cover;
+  background-size: var(--desk-size, cover);
+  background-position: center;
   min-height: 100vh;
   padding-bottom: calc(var(--tb-h) + 12px);
   overflow-x: hidden;
@@ -189,6 +190,50 @@ html[data-theme='7'] .startmenu { background: rgba(240, 246, 252, .96); border-r
 html[data-theme='7'] .sm-head { background: linear-gradient(#2a5d97, #173b66); border-radius: 5px 5px 0 0; }
 html[data-theme='7'] .sm-item:hover { background: linear-gradient(#dcebfc, #c1dcfc) !important; color: #000; }
 
+/* ---------- Peças comuns das ferramentas novas ---------- */
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
+.presets { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.presets button { height: auto; padding: 6px; text-align: left; line-height: 1.3; }
+.presets small { display: block; color: #555; font-size: 10px; }
+.tabs [aria-selected=true] { font-weight: bold; box-shadow: inset 1px 1px 3px rgba(0,0,0,.4); }
+.tabpanel { border: 1px solid rgba(0,0,0,.25); background: rgba(255,255,255,.45); padding: 8px; }
+.adobe-ico { display: block; filter: drop-shadow(1px 2px 2px rgba(0,0,0,.4)); }
+.sm-item .adobe-ico { display: inline-block; filter: none; vertical-align: middle; }
+
+/* aviso de download + Enviar para */
+.toast { position: fixed; right: 12px; bottom: calc(var(--tb-h) + 12px); width: min(330px, calc(100vw - 24px)); z-index: 1800; animation: toastIn .25s ease-out; }
+@keyframes toastIn { from { transform: translateY(16px); opacity: 0; } }
+.toast-row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; }
+.toast-ico { font-size: 20px; }
+.toast-txt { flex: 1; min-width: 0; }
+.toast-txt b { display: block; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.toast-txt small { font-size: 11px; color: var(--muted); }
+.toast-x { min-width: 24px !important; padding: 0 !important; height: 22px; }
+.sendmenu { position: fixed !important; width: 260px; max-height: 60vh; z-index: 2100; padding: 4px 0; }
+
+/* propriedades de vídeo */
+.os-settings { position: fixed !important; z-index: 1700; top: 40px; left: 50%; margin-left: max(-190px, -50vw + 8px); width: min(380px, calc(100vw - 16px)); }
+.set-monitor { margin: 0 auto 4px; width: 170px; height: 120px; background: #c8c8c8; border: 2px solid #777; border-radius: 6px 6px 2px 2px; padding: 10px; position: relative; }
+.set-monitor::after { content: ''; position: absolute; left: 60px; right: 60px; bottom: -12px; height: 10px; background: #999; border-radius: 0 0 4px 4px; }
+.set-screen { width: 100%; height: 100%; background-color: var(--desk); background-image: var(--desk-img); background-size: var(--desk-size, cover); background-position: center; border: 1px solid #333; }
+.saver { position: fixed; inset: 0; z-index: 5000; background: #000; cursor: none; }
+
+/* Disquinho */
+.helper { position: fixed; right: 14px; bottom: calc(var(--tb-h) + 10px); z-index: 1600; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; pointer-events: none; }
+.helper > * { pointer-events: auto; }
+.helper[hidden] { display: none; }
+.helper-char { background: none !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; min-width: 0 !important; min-height: 0 !important; cursor: pointer; animation: dqFloat 3s ease-in-out infinite; }
+.helper-char svg { filter: drop-shadow(2px 3px 3px rgba(0,0,0,.45)); }
+.helper-char .dq-eyes { animation: dqBlink 4s infinite; transform-origin: 32px 42px; }
+@keyframes dqFloat { 50% { transform: translateY(-5px); } }
+@keyframes dqBlink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+.helper-bubble { background: #ffffe1; color: #000; border: 1px solid #000; border-radius: 10px; padding: 10px 12px 8px; width: min(260px, calc(100vw - 30px)); font: 12px/1.45 Tahoma, 'Segoe UI', sans-serif; box-shadow: 2px 3px 6px rgba(0,0,0,.35); position: relative; margin-right: 18px; }
+.helper-bubble::after { content: ''; position: absolute; right: 14px; bottom: -9px; border: 9px solid transparent; border-bottom: 0; border-top-color: #000; }
+.helper-bubble p { margin: 0 0 8px; }
+.taskbar .tray-lang { font: bold 10px Tahoma, sans-serif !important; min-width: 0 !important; min-height: 0 !important; height: 18px; padding: 0 5px !important; line-height: 16px; cursor: pointer; }
+.taskbar .tray-files { cursor: pointer; font-size: 14px; }
+.dicon.over { background: rgba(255, 200, 0, .45); border-color: #fff; }
+
 /* ---------- Responsivo ---------- */
 @media (max-width: 900px) {
   .tool, .tool.wide-panel { grid-template-columns: 1fr; }
@@ -200,5 +245,6 @@ html[data-theme='7'] .sm-item:hover { background: linear-gradient(#dcebfc, #c1dc
   .window { translate: none !important; }
   .taskbar .task { display: none; }
   .icons { grid-template-columns: repeat(auto-fill, 76px); }
+  .helper-bubble { width: min(230px, calc(100vw - 30px)); }
 }
 @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }

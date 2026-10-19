@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Barra de progresso · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Bebas+Neue&family=Bungee&family=Cinzel:wght@700&family=Fredoka:wght@500;700&family=Inter:wght@400;700;900&family=Luckiest+Guy&family=Montserrat:wght@400;700;900&family=Orbitron:wght@700;900&family=Permanent+Marker&family=Poppins:wght@400;700;900&family=Press+Start+2P&family=Roboto+Mono:wght@400;700&family=Special+Elite&family=VT323&display=swap">
+<script src="assets/export.js"></script>
+<style>
+  #pv canvas { max-height: 62vh; }
+  .fx { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  .fx button { height: auto; padding: 5px 2px; font-size: 11px; line-height: 1.25; }
+  .fx button[aria-pressed=true] { font-weight: bold; box-shadow: inset 1px 1px 3px rgba(0,0,0,.45); }
+  .fx button span { display: block; font-size: 17px; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="barra_de_progresso.exe" data-icon="⏳">
+    <div class="window-body">
+      <div class="toolbar"><a class="btn" href="index.html">🏠 Home</a><button data-open="help">? Ajuda</button><span class="spacer"></span><button id="playBtn">▶ Repetir prévia</button></div>
+      <div class="tool wide-panel">
+        <div class="panel" id="panel">
+          <div class="btns grow tabs" role="tablist">
+            <button role="tab" aria-selected="true" data-tab="t1">✏️ Personalizar</button>
+            <button role="tab" aria-selected="false" data-tab="t2">⭐ Modelos prontos</button>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t1">
+            <div class="stack">
+              <div class="fx" id="fx"></div>
+              <input type="hidden" id="style" value="bar">
+              <div class="two">
+                <label class="field"><span>De (%)</span><input type="number" id="from" value="0" min="0" max="100"></label>
+                <label class="field"><span>Até (%)</span><input type="number" id="to" value="100" min="0" max="100"></label>
+                <label class="field"><span>Duração (s)</span><input type="number" id="dur" value="4" min="0.5" max="120" step="0.5"></label>
+                <label class="field"><span>Segurar no fim (s)</span><input type="number" id="hold" value="1" min="0" max="30" step="0.5"></label>
+              </div>
+              <label class="field"><span>Ritmo</span><select id="ease"><option value="linear">Constante</option><option value="inout" selected>Suave</option><option value="out">Rápido no começo</option><option value="in">Lento no começo</option></select></label>
+              <label class="field"><span>Travadinhas <output></output></span><input type="range" id="hitch" min="0" max="6" value="0"></label>
+              <div class="two">
+                <label class="field"><span>Texto</span><input type="text" id="label" value="Carregando…"></label>
+                <label class="field"><span>Texto no fim</span><input type="text" id="doneLabel" value="Concluído!"></label>
+              </div>
+              <div class="field-row"><input type="checkbox" id="showPct" checked><label for="showPct">Mostrar porcentagem</label></div>
+              <details open><summary>Estilo</summary>
+                <div class="stack" style="margin-top:6px">
+                  <div class="row"><span class="lbl">Preenchimento</span><input type="color" id="fill" value="#2bd96b"><input type="color" id="fill2" value="#14a3ff" title="Segunda cor"><input type="checkbox" id="useGrad" title="Usar gradiente"></div>
+                  <div class="row"><span class="lbl">Trilho</span><input type="color" id="track" value="#2a2a2a"><span class="lbl" style="min-width:0">Texto</span><input type="color" id="ink" value="#ffffff"></div>
+                  <label class="field"><span>Largura <output data-suffix="%"></output></span><input type="range" id="width" min="10" max="100" value="60"></label>
+                  <label class="field"><span>Espessura <output data-suffix="px"></output></span><input type="range" id="thick" min="4" max="160" value="44"></label>
+                  <label class="field"><span>Arredondamento <output data-suffix="%"></output></span><input type="range" id="round" min="0" max="100" value="100"></label>
+                  <div class="two">
+                    <label class="field"><span>Fonte</span><select id="font"></select></label>
+                    <label class="field"><span>Posição</span><select id="pos"><option value="c">Centro</option><option value="t">Em cima</option><option value="b">Embaixo</option></select></label>
+                  </div>
+                  <div class="row"><span class="lbl">Fundo</span><input type="color" id="bg" value="#111111"></div>
+                </div>
+              </details>
+            </div>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t2" hidden><div class="presets" id="presets"></div></div>
+          <div id="exp"></div>
+        </div>
+        <div id="pv" class="preview"><canvas id="cv"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="ajuda.txt" data-icon="📝">
+    <div class="window-body">
+      <ul>
+        <li>Escolha o estilo, de quanto até quanto a barra vai e a duração.</li>
+        <li><b>Travadinhas</b> fazem a barra parar e acelerar algumas vezes, igual carregamento de verdade.</li>
+        <li>Exporte com fundo transparente (WEBM ou PNG) pra usar como overlay.</li>
+      </ul>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">OK</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const { EASE, clamp, rnd } = EXPORT;
+const cv = $('cv'), ctx = cv.getContext('2d');
+$('font').innerHTML = EXPORT.fontOptions('Inter');
+
+const STYLES = {
+  bar: ['▬', 'Barra'], stripes: ['🚧', 'Listrada'], blocks: ['🟩', 'Blocos retrô'],
+  win: ['🪟', 'Janela de cópia'], ring: ['⭕', 'Anel'], dots: ['⏺️', 'Pontinhos'],
+  battery: ['🔋', 'Bateria'], line: ['➖', 'Linha fina'], pixel: ['👾', 'Pixel 8-bit'],
+};
+const fxBox = $('fx');
+for (const [k, [i, n]] of Object.entries(STYLES)) fxBox.insertAdjacentHTML('beforeend', `<button data-fx="${k}" aria-pressed="false"><span>${i}</span>${n}</button>`);
+function setStyle(k) { $('style').value = k; fxBox.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.fx === k)); restart(); }
+fxBox.onclick = (e) => { const b = e.target.closest('[data-fx]'); if (b) setStyle(b.dataset.fx); };
+
+const PRESETS = [
+  { n: '🎮 Carregando jogo', d: 'blocos verdes retrô', v: { style: 'blocks', fill: '#3cd73c', track: '#101010', ink: '#ffffff', font: 'Press Start 2P', label: 'LOADING...', doneLabel: 'PRESS START', thick: 50, width: 60, bg: '#000000', hitch: 3 } },
+  { n: '🪟 Copiando arquivos', d: 'janela de sistema antiga', v: { style: 'win', fill: '#0a246a', track: '#ffffff', ink: '#000000', font: 'Arial', label: 'Copiando arquivos…', doneLabel: 'Cópia concluída', width: 50, thick: 30, bg: '#008080', hitch: 4 } },
+  { n: '📱 Download', d: 'barra arredondada azul', v: { style: 'bar', fill: '#1e90ff', fill2: '#7b5cff', useGrad: true, track: '#e8ecf3', ink: '#1b1f2a', font: 'Poppins', label: 'Baixando…', doneLabel: 'Pronto!', thick: 36, width: 60, round: 100, bg: '#ffffff', hitch: 1 } },
+  { n: '⭕ Anel', d: 'círculo com porcentagem', v: { style: 'ring', fill: '#ff3d71', fill2: '#ffaa00', useGrad: true, track: '#2b2b3a', ink: '#ffffff', font: 'Montserrat', label: '', doneLabel: '', thick: 40, width: 40, bg: '#151520', hitch: 0 } },
+  { n: '🔋 Bateria', d: 'carregando a bateria', v: { style: 'battery', fill: '#35e05d', track: '#1d1d1d', ink: '#ffffff', font: 'Orbitron', label: 'Carregando', doneLabel: 'Carga completa', thick: 120, width: 40, bg: '#0d0d0d', hitch: 0 } },
+  { n: '🚧 Em construção', d: 'listras amarelas', v: { style: 'stripes', fill: '#ffd400', track: '#222222', ink: '#ffffff', font: 'Anton', label: 'EM CONSTRUÇÃO', doneLabel: 'PRONTO', thick: 60, width: 70, round: 20, bg: '#111111', hitch: 2 } },
+  { n: '👾 8-bit', d: 'quadradinhos de pixel', v: { style: 'pixel', fill: '#ff4fd8', track: '#2b1055', ink: '#ffe46b', font: 'Press Start 2P', label: 'NIVEL 1', doneLabel: 'GANHOU!', thick: 56, width: 70, bg: '#12052a', hitch: 2 } },
+  { n: '➖ Linha no topo', d: 'barrinha fina de vídeo', v: { style: 'line', fill: '#ff0033', track: '#555555', ink: '#ffffff', font: 'Inter', label: '', doneLabel: '', showPct: false, thick: 10, width: 100, pos: 't', bg: '#000000', hitch: 0, ease: 'linear', dur: 8 } },
+];
+EXPORT.presets($('presets'), PRESETS, (p) => {
+  EXPORT.setValues({ from: 0, to: 100, dur: 4, hold: 1, ease: 'inout', showPct: true, useGrad: false, fill2: '#14a3ff', round: 100, pos: 'c', ...p.v });
+  setStyle(p.v.style);
+  OS.showTab('t1');
+});
+
+const IDS = ['style', 'from', 'to', 'dur', 'hold', 'ease', 'hitch', 'label', 'doneLabel', 'showPct', 'fill', 'fill2', 'useGrad', 'track', 'ink', 'width', 'thick', 'round', 'font', 'pos', 'bg'];
+const S = () => EXPORT.values(IDS);
+
+/** Curva do progresso com travadinhas: pontos (tempo, valor) crescentes. */
+function progressAt(s, t) {
+  const u = clamp(t / s.dur);
+  let v;
+  if (!s.hitch) v = EASE[s.ease](u);
+  else {
+    const n = s.hitch, pts = [[0, 0]];
+    let tv = 0;
+    const vals = [...Array(n)].map((_, i) => (i + .3 + rnd(i, 7) * .5) / (n + .5)).sort((a, b) => a - b);
+    for (let i = 0; i < n; i++) {
+      const tt = (i + 1) / (n + 1);
+      pts.push([tt - .06 / (n + 1) * 4, vals[i]], [tt, vals[i]]);
+    }
+    pts.push([1, 1]);
+    for (let i = 1; i < pts.length; i++) {
+      if (u <= pts[i][0]) { const [t0, v0] = pts[i - 1], [t1, v1] = pts[i]; tv = v0 + (v1 - v0) * EASE[s.ease](clamp((u - t0) / Math.max(1e-6, t1 - t0))); break; }
+      tv = 1;
+    }
+    v = tv;
+  }
+  return (s.from + (s.to - s.from) * v) / 100;
+}
+
+function rr(x, y, w, h, r) { r = Math.max(0, Math.min(r, h / 2, w / 2)); ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+
+function drawAt(t, transp) {
+  const s = S();
+  const { W, H } = ex.settings();
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  const k = Math.min(W, H) / 1080;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  if (!transp) { ctx.fillStyle = s.bg; ctx.fillRect(0, 0, W, H); }
+  const p = progressAt(s, t), done = t >= s.dur && s.to >= 100;
+  const bw = W * s.width / 100, th = s.thick * k, x = (W - bw) / 2;
+  const cy = s.pos === 't' ? (s.style === 'line' ? th / 2 : H * .15) : s.pos === 'b' ? (s.style === 'line' ? H - th / 2 : H * .85) : H / 2;
+  const y = cy - th / 2, r = th / 2 * s.round / 100;
+  const fill = (x0, x1) => { if (!s.useGrad) return s.fill; const g = ctx.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, s.fill); g.addColorStop(1, s.fill2); return g; };
+  const pctTxt = Math.round(p * 100) + '%';
+  const label = done && s.doneLabel ? s.doneLabel : s.label;
+  const text = (txt, tx, ty, size, align = 'center', base = 'middle', color = s.ink) => {
+    if (!txt) return;
+    ctx.font = `700 ${size}px "${s.font}"`; ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = base; ctx.fillText(txt, tx, ty);
+  };
+  const fs = Math.max(18 * k, Math.min(th * .55, 60 * k));
+  const labels = () => {
+    text(label, x, y - fs * .9, fs, 'left', 'alphabetic');
+    if (s.showPct) text(pctTxt, x + bw, y - fs * .9, fs, 'right', 'alphabetic');
+  };
+
+  switch (s.style) {
+    case 'bar':
+    case 'stripes': {
+      ctx.fillStyle = s.track; rr(x, y, bw, th, r); ctx.fill();
+      ctx.save(); rr(x, y, bw, th, r); ctx.clip();
+      ctx.fillStyle = fill(x, x + bw); ctx.fillRect(x, y, bw * p, th);
+      if (s.style === 'stripes') {
+        ctx.beginPath(); ctx.rect(x, y, bw * p, th); ctx.clip();
+        ctx.fillStyle = 'rgba(0,0,0,.28)';
+        const sw = th * .9, off = (t * th * 1.2) % (sw * 2);
+        for (let sx = x - th * 2 + off; sx < x + bw; sx += sw * 2) { ctx.beginPath(); ctx.moveTo(sx, y + th); ctx.lineTo(sx + sw, y + th); ctx.lineTo(sx + sw + th, y); ctx.lineTo(sx + th, y); ctx.fill(); }
+      }
+      ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(x, y, bw * p, th * .35);
+      ctx.restore();
+      labels();
+      break;
+    }
+    case 'blocks':
+    case 'pixel': {
+      const pad = th * .14, bs = s.style === 'pixel' ? th - pad * 2 : th * .55, gap = th * .14;
+      ctx.fillStyle = s.track; ctx.fillRect(x, y, bw, th);
+      ctx.strokeStyle = s.style === 'pixel' ? s.ink : '#888'; ctx.lineWidth = Math.max(2, 4 * k); ctx.strokeRect(x, y, bw, th);
+      const n = Math.floor((bw - pad * 2 + gap) / (bs + gap)), on = Math.floor(n * p + 1e-6);
+      for (let i = 0; i < on; i++) {
+        ctx.fillStyle = s.style === 'pixel' && s.useGrad ? (i % 2 ? s.fill2 : s.fill) : s.fill;
+        const bx = x + pad + i * (bs + gap);
+        ctx.fillRect(bx, y + pad, bs, th - pad * 2);
+        if (s.style === 'blocks') { ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(bx, y + pad, bs, (th - pad * 2) * .35); }
+      }
+      labels();
+      break;
+    }
+    case 'win': {
+      const ww = bw, wh = th * 5.2, wx = (W - ww) / 2, wy = cy - wh / 2, tb = th * 1.05;
+      ctx.fillStyle = '#c0c0c0'; ctx.fillRect(wx, wy, ww, wh);
+      ctx.fillStyle = '#fff'; ctx.fillRect(wx, wy, ww, 2 * k); ctx.fillRect(wx, wy, 2 * k, wh);
+      ctx.fillStyle = '#404040'; ctx.fillRect(wx, wy + wh - 2 * k, ww, 2 * k); ctx.fillRect(wx + ww - 2 * k, wy, 2 * k, wh);
+      const g = ctx.createLinearGradient(wx, 0, wx + ww, 0); g.addColorStop(0, '#000080'); g.addColorStop(1, '#1084d0');
+      ctx.fillStyle = g; ctx.fillRect(wx + 4 * k, wy + 4 * k, ww - 8 * k, tb);
+      text(label, wx + 14 * k, wy + 4 * k + tb / 2, tb * .55, 'left', 'middle', '#fff');
+      // arquivos voando
+      const fx = wx + ww * .12 + ((t * .6) % 1) * ww * .76, fy = wy + tb + th * 1.3 - Math.sin(((t * .6) % 1) * Math.PI) * th * .9;
+      ctx.font = `${th * .9}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      if (!done) ctx.fillText('📄', fx, fy);
+      ctx.fillText('📁', wx + ww * .1, wy + tb + th * 1.3); ctx.fillText('📂', wx + ww * .9, wy + tb + th * 1.3);
+      const by = wy + wh - th * 1.8, bx = wx + 16 * k, bbw = ww - 32 * k;
+      ctx.fillStyle = s.track; ctx.fillRect(bx, by, bbw, th);
+      ctx.fillStyle = '#808080'; ctx.fillRect(bx, by, bbw, 2 * k); ctx.fillRect(bx, by, 2 * k, th);
+      const bs = th * .5, n = Math.floor((bbw - 6 * k) / (bs + 2 * k)), on = Math.floor(n * p);
+      ctx.fillStyle = s.fill;
+      for (let i = 0; i < on; i++) ctx.fillRect(bx + 4 * k + i * (bs + 2 * k), by + 4 * k, bs, th - 8 * k);
+      if (s.showPct) text(pctTxt, W / 2, by - th * .55, th * .6, 'center', 'middle', '#000');
+      break;
+    }
+    case 'ring': {
+      const R = Math.min(W, H) * s.width / 100 / 2, lw = th;
+      ctx.lineWidth = lw; ctx.lineCap = s.round > 50 ? 'round' : 'butt';
+      ctx.strokeStyle = s.track; ctx.beginPath(); ctx.arc(W / 2, cy, R, 0, Math.PI * 2); ctx.stroke();
+      if (p > 0) { ctx.strokeStyle = fill(W / 2 - R, W / 2 + R); ctx.beginPath(); ctx.arc(W / 2, cy, R, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * p); ctx.stroke(); }
+      if (s.showPct) text(pctTxt, W / 2, cy + (label ? -R * .08 : 0), R * .45);
+      text(label, W / 2, cy + R * .3, R * .14);
+      break;
+    }
+    case 'dots': {
+      const n = 12, R = Math.min(W, H) * s.width / 100 / 2.5, dr = th * .3;
+      for (let i = 0; i < n; i++) {
+        const a = i / n * Math.PI * 2 - Math.PI / 2, f = ((i / n - t * 1.2) % 1 + 1) % 1;
+        ctx.globalAlpha = .2 + .8 * (1 - f);
+        ctx.fillStyle = s.fill; ctx.beginPath(); ctx.arc(W / 2 + Math.cos(a) * R, cy + Math.sin(a) * R, dr, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      if (s.showPct) text(pctTxt, W / 2, cy, R * .45);
+      text(label, W / 2, cy + R + dr * 3, Math.max(24 * k, R * .18));
+      break;
+    }
+    case 'battery': {
+      const bh = th * 1.2, bww = bw, bx = (W - bww) / 2, by = cy - bh / 2, lw = Math.max(6 * k, bh * .07);
+      ctx.strokeStyle = s.ink; ctx.lineWidth = lw; rr(bx, by, bww, bh, bh * .15); ctx.stroke();
+      ctx.fillStyle = s.ink; rr(bx + bww + lw * .5, cy - bh * .2, lw * 2.2, bh * .4, lw * .6); ctx.fill();
+      const pad = lw * 1.6, inner = bww - pad * 2;
+      ctx.fillStyle = s.track; ctx.fillRect(bx + pad, by + pad, inner, bh - pad * 2);
+      ctx.fillStyle = p < .2 ? '#ff3b3b' : p < .5 ? '#ffc300' : s.fill;
+      ctx.fillRect(bx + pad, by + pad, inner * p, bh - pad * 2);
+      if (!done) { ctx.font = `${bh * .5}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.globalAlpha = .5 + .5 * Math.sin(t * 6); ctx.fillText('⚡', W / 2, cy); ctx.globalAlpha = 1; }
+      if (s.showPct) text(pctTxt, W / 2, by + bh + bh * .35, bh * .3);
+      text(label, W / 2, by - bh * .3, bh * .22);
+      break;
+    }
+    case 'line': {
+      ctx.fillStyle = s.track; ctx.fillRect(x, y, bw, th);
+      ctx.fillStyle = fill(x, x + bw); ctx.fillRect(x, y, bw * p, th);
+      if (p > 0 && p < 1) { ctx.beginPath(); ctx.arc(x + bw * p, cy, th * 1.1, 0, Math.PI * 2); ctx.fill(); }
+      if (s.showPct || label) text((label ? label + ' ' : '') + (s.showPct ? pctTxt : ''), W / 2, s.pos === 'b' ? y - 40 * k : y + th + 40 * k, 34 * k);
+      break;
+    }
+  }
+}
+
+// ---------- prévia ----------
+let t0 = performance.now();
+const restart = () => (t0 = performance.now());
+$('playBtn').onclick = restart;
+$('panel').addEventListener('input', (e) => { if (['from', 'to', 'dur', 'ease', 'hitch'].includes(e.target.id)) restart(); });
+const total = () => { const s = S(); return s.dur + s.hold; };
+const ex = EXPORT.mount($('exp'), {
+  canvas: cv, draw: drawAt, seconds: total, name: () => 'progresso-' + S().style, defaultRes: '1920x1080',
+  prepare: () => EXPORT.loadFont(700, S().font),
+  onSettings: (s) => $('pv').classList.toggle('chk', s.transp),
+});
+(function loop() {
+  if (!ex.busy) {
+    const t = (performance.now() - t0) / 1000;
+    drawAt(Math.min(t, total()), ex.settings().transp);
+    if (t > total() + .8) restart();
+  }
+  requestAnimationFrame(loop);
+})();
+setStyle('bar');
+document.fonts.ready.then(restart);
+</script>
+</body>
+</html>

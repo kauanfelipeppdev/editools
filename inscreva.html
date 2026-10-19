@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Botão de inscreva-se · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+<script src="assets/export.js"></script>
+<style>
+  #pv canvas { max-height: 62vh; }
+  .yt-key { font-family: monospace; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="botao_inscreva_se.exe" data-icon="🔔">
+    <div class="window-body">
+      <div class="toolbar"><a class="btn" href="index.html">🏠 Home</a><button data-open="help">? Ajuda</button><button data-open="apiHelp">🔑 Como pegar a chave da API</button><span class="spacer"></span><button id="playBtn">▶ Repetir prévia</button></div>
+      <div class="tool wide-panel">
+        <div class="panel" id="panel">
+          <div class="btns grow tabs" role="tablist">
+            <button role="tab" aria-selected="true" data-tab="t1">✏️ Personalizar</button>
+            <button role="tab" aria-selected="false" data-tab="t2">⭐ Modelos prontos</button>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t1">
+            <div class="stack">
+              <fieldset><legend>Puxar do YouTube</legend><div class="stack">
+                <label class="field"><span>Link do canal</span><input type="text" id="ytUrl" placeholder="https://www.youtube.com/@seucanal"></label>
+                <label class="field"><span>Chave da API do YouTube</span><input type="password" id="ytKey" class="yt-key" placeholder="AIza…" autocomplete="off"></label>
+                <button id="ytGo">📥 Puxar foto, nome e inscritos</button>
+                <p class="hint" id="ytSt">A chave fica salva só neste navegador. Sem ela, preencha os campos abaixo à mão.</p>
+              </div></fieldset>
+              <fieldset><legend>Canal</legend><div class="stack">
+                <div class="field-row"><input type="checkbox" id="showChannel" checked><label for="showChannel">Mostrar foto e nome do canal</label></div>
+                <div class="two">
+                  <label class="field"><span>Nome do canal</span><input type="text" id="channel" value="Meu Canal"></label>
+                  <label class="field"><span>Inscritos</span><input type="text" id="subs" value="12,3 mil inscritos"></label>
+                </div>
+                <div class="row"><button id="avatarBtn">🖼️ Foto do canal</button><button id="avatarClear" title="Tirar foto">✕</button><div class="field-row"><input type="checkbox" id="verified"><label for="verified">Selo de verificado</label></div></div>
+              </div></fieldset>
+              <fieldset><legend>Botões</legend><div class="stack">
+                <div class="two">
+                  <label class="field"><span>Texto antes</span><input type="text" id="txtA" value="Inscrever-se"></label>
+                  <label class="field"><span>Texto depois</span><input type="text" id="txtB" value="Inscrito"></label>
+                </div>
+                <div class="field-row"><input type="checkbox" id="showBell" checked><label for="showBell">🔔 Ativar o sininho (escolher "Todas")</label></div>
+                <div class="field-row"><input type="checkbox" id="showLike" checked><label for="showLike">👍 Clicar no gostei</label></div>
+                <label class="field"><span>Gostei (número)</span><input type="number" id="likes" value="12345" min="0"></label>
+                <div class="row"><button id="btnImg">🔘 Usar meu botão (PNG)</button><button id="btnImgClear" title="Voltar ao botão padrão">✕</button></div>
+                <p class="hint">Dica: faça um botão no Criador de botões e use "Enviar para…" pra trazer ele pra cá.</p>
+              </div></fieldset>
+              <details open><summary>Estilo e animação</summary>
+                <div class="stack" style="margin-top:6px">
+                  <div class="two">
+                    <label class="field"><span>Visual</span><select id="look"><option value="dark">YouTube escuro</option><option value="light">YouTube claro</option><option value="none">Só os botões (sem cartão)</option></select></label>
+                    <label class="field"><span>Idioma dos botões</span><select id="lang"><option value="pt">Português</option><option value="en">English</option><option value="es">Español</option></select></label>
+                    <label class="field"><span>Posição</span><select id="pos"><option value="c">Centro</option><option value="b">Embaixo</option><option value="bl">Embaixo à esquerda</option><option value="br">Embaixo à direita</option><option value="t">Em cima</option></select></label>
+                    <label class="field"><span>Cursor</span><select id="cursor"><option value="arrow">Seta</option><option value="hand">Mãozinha</option><option value="none">Sem cursor</option></select></label>
+                  </div>
+                  <label class="field"><span>Tamanho <output data-suffix="%"></output></span><input type="range" id="scale" min="30" max="200" value="100"></label>
+                  <label class="field"><span>Velocidade <output data-suffix="%"></output></span><input type="range" id="speed" min="50" max="200" value="100"></label>
+                  <div class="field-row"><input type="checkbox" id="exitAnim" checked><label for="exitAnim">Sumir no final</label></div>
+                  <div class="row"><span class="lbl">Fundo</span><select id="bgMode" style="flex:1"><option value="chroma">Verde (chroma key)</option><option value="color">Cor</option></select><input type="color" id="bg" value="#00b140"></div>
+                </div>
+              </details>
+            </div>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t2" hidden><div class="presets" id="presets"></div></div>
+          <div id="exp"></div>
+        </div>
+        <div id="pv" class="preview chk"><canvas id="cv"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="ajuda.txt" data-icon="📝">
+    <div class="window-body">
+      <ul>
+        <li>O cursor entra, clica em <b>Inscrever-se</b>, abre o menu do sininho e escolhe <b>Todas</b>, e depois clica no <b>gostei</b>. Desligue o que não quiser.</li>
+        <li>Cole o <b>link do seu canal</b> pra puxar a foto, o nome e os inscritos (precisa de uma chave grátis da API do YouTube).</li>
+        <li>Já vem com <b>fundo transparente</b> (WEBM ou PNG). Se o seu editor não lê transparência, exporte em MP4 com fundo verde e use chroma key.</li>
+      </ul>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">OK</button></div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="apiHelp" data-title="chave_da_api.txt" data-icon="🔑">
+    <div class="window-body">
+      <p style="margin-top:0">O navegador não deixa um site ler a página do YouTube direto, então os dados vêm da <b>API oficial do YouTube</b>, que pede uma chave (é grátis):</p>
+      <ol>
+        <li>Entre em <b>console.cloud.google.com</b> e crie um projeto.</li>
+        <li>Em <b>APIs e serviços › Biblioteca</b>, ative a <b>YouTube Data API v3</b>.</li>
+        <li>Em <b>Credenciais › Criar credenciais › Chave de API</b>, copie a chave (começa com AIza).</li>
+        <li>Cole aqui. Ela fica salva só no seu navegador e só é enviada pro próprio Google.</li>
+      </ol>
+      <p class="hint">Dica: em Credenciais, restrinja a chave à YouTube Data API v3.</p>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">OK</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const { EASE, clamp } = EXPORT;
+const cv = $('cv'), ctx = cv.getContext('2d');
+let avatar = null, btnImg = null, subsCount = null;
+
+// ícones (Material Icons, Apache 2.0), em 24×24
+const P = (d) => new Path2D(d);
+const ICON = {
+  like: P('M18.77 11h-4.23l1.52-4.94C16.38 5.03 15.54 4 14.38 4c-.58 0-1.14.24-1.52.65L7 11H3v10h4h1h9.43c1.06 0 1.98-.67 2.19-1.61l1.34-6C21.23 12.15 20.18 11 18.77 11zM7 20H4v-8h3V20zM19.98 13.17l-1.34 6C18.54 19.65 18.03 20 17.43 20H8v-8.61l5.6-6.06C13.79 5.12 14.08 5 14.38 5c.26 0 .5.11.63.3.07.1.15.26.09.47l-1.52 4.94L13.18 12h1.35h4.23c.41 0 .8.17 1.03.46.13.15.26.4.19.71z'),
+  likeOn: P('M3 11h3v10H3V11zm15.77 0h-4.23l1.52-4.94C16.38 5.03 15.54 4 14.38 4c-.58 0-1.14.24-1.52.65L8 10v11h9.43c1.06 0 1.98-.67 2.19-1.61l1.34-6C21.23 12.15 20.18 11 18.77 11z'),
+  bell: P('M10 20h4c0 1.1-.9 2-2 2s-2-.9-2-2zm10-2.65V19H4v-1.65l2-1.88v-5.15C6 7.4 7.56 5.1 10 4.34v-.38c0-1.42 1.49-2.5 2.99-1.76.65.32 1.01 1.03 1.01 1.76v.39c2.44.75 4 3.06 4 5.98v5.15l2 1.87zm-1 .42-2-1.88v-5.47c0-2.47-1.19-4.36-3.13-5.1-1.26-.53-2.64-.5-3.84.03C8.15 6.11 7 7.99 7 10.42v5.47l-2 1.88V18h14v-.23z'),
+  bellOn: P('M10 20h4c0 1.1-.9 2-2 2s-2-.9-2-2zm10-2.65V19H4v-1.65l2-1.88v-5.15C6 7.4 7.56 5.1 10 4.34v-.38c0-1.42 1.49-2.5 2.99-1.76.65.32 1.01 1.03 1.01 1.76v.39c2.44.75 4 3.06 4 5.98v5.15l2 1.87zM20.5 9.5h2c0-3.06-1.37-5.8-3.52-7.64l-1.3 1.53C19.4 4.85 20.5 7.05 20.5 9.5zM6.32 3.39 5.02 1.86C2.87 3.7 1.5 6.44 1.5 9.5h2c0-2.45 1.1-4.65 2.82-6.11z'),
+  bellOff: P('M3.85 3.15 3.15 3.85 6.19 6.9C6.07 7.24 6 7.61 6 8v6.32l-2 1.88V18h14.29l1.85 1.85.71-.71L3.85 3.15zM5 17v-.37l2-1.88V8c0-.03.01-.06.01-.09L16.1 17H5zm5 2h4c0 1.1-.9 2-2 2s-2-.9-2-2zM8.3 4.26C9.03 3.87 9.95 3.5 10 3.47v-.51c0-1.42 1.49-2.5 2.99-1.76.65.32 1.01 1.03 1.01 1.76v.39c2.44.75 4 3.06 4 5.98v5.04l-1-1V9.33c0-2.47-1.19-4.36-3.13-5.1-1.26-.53-2.64-.5-3.84.03-.08.04-.16.09-.24.13L8.3 4.26z'),
+  person: P('M14 8c0-2.21-1.79-4-4-4S6 5.79 6 8s1.79 4 4 4 4-1.79 4-4zm-2 0c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zM2 18v2h16v-2c0-2.66-5.33-4-8-4s-8 1.34-8 4zm2 0c.2-.71 3.3-2 6-2 2.69 0 5.78 1.28 6 2H4zm13-8h6v2h-6z'),
+  chevron: P('m18 9.28-6.35 6.35-6.37-6.35.72-.71 5.64 5.65 5.65-5.65z'),
+  check: P('M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM9.8 17.3l-4.2-4.1L7 11.8l2.8 2.7L17 7.4l1.4 1.4-8.6 8.5z'),
+};
+const LANGS = {
+  pt: { a: 'Inscrever-se', b: 'Inscrito', all: 'Todas', custom: 'Personalizadas', none: 'Nenhuma', unsub: 'Cancelar inscrição', subs: (n) => `${n} inscritos`, num: (n) => fmtNum(n, 'pt') },
+  en: { a: 'Subscribe', b: 'Subscribed', all: 'All', custom: 'Personalized', none: 'None', unsub: 'Unsubscribe', subs: (n) => `${n} subscribers`, num: (n) => fmtNum(n, 'en') },
+  es: { a: 'Suscribirse', b: 'Suscrito', all: 'Todas', custom: 'Personalizadas', none: 'Ninguna', unsub: 'Anular suscripción', subs: (n) => `${n} suscriptores`, num: (n) => fmtNum(n, 'es') },
+};
+/** Número curto igual ao YouTube: 1,2 mil · 3,4 mi · 12.3K · 1.2M */
+function fmtNum(n, lang) {
+  n = +n || 0;
+  const one = (v) => (v < 10 ? Math.floor(v * 10) / 10 : Math.floor(v)).toLocaleString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR', { maximumFractionDigits: 1 });
+  if (lang === 'en') return n >= 1e9 ? one(n / 1e9) + 'B' : n >= 1e6 ? one(n / 1e6) + 'M' : n >= 1e3 ? one(n / 1e3) + 'K' : String(n);
+  if (n >= 1e9) return one(n / 1e9) + (lang === 'es' ? ' mil M' : ' bi');
+  if (n >= 1e6) return one(n / 1e6) + (lang === 'es' ? ' M' : ' mi');
+  if (n >= 1e3) return one(n / 1e3) + ' mil';
+  return String(n);
+}
+
+const PRESETS = [
+  { n: '🌙 YouTube escuro', d: 'inscrever, sininho e gostei', v: { look: 'dark', lang: 'pt', showBell: true, showLike: true, showChannel: true } },
+  { n: '☀️ YouTube claro', d: 'cartão branco', v: { look: 'light', lang: 'pt', showBell: true, showLike: true, showChannel: true } },
+  { n: '🔔 Só inscrever + sininho', d: 'sem o gostei', v: { look: 'dark', lang: 'pt', showBell: true, showLike: false, showChannel: true } },
+  { n: '🔘 Só os botões', d: 'sem cartão e sem canal', v: { look: 'none', lang: 'pt', showBell: true, showLike: true, showChannel: false } },
+  { n: '🇺🇸 English', d: 'subscribe + bell + like', v: { look: 'dark', lang: 'en', showBell: true, showLike: true, showChannel: true } },
+  { n: '🇪🇸 Español', d: 'suscribirse', v: { look: 'dark', lang: 'es', showBell: true, showLike: true, showChannel: true } },
+];
+EXPORT.presets($('presets'), PRESETS, (p) => { EXPORT.setValues({ cursor: 'arrow', ...p.v }); applyLang(); restart(); OS.showTab('t1'); });
+let lastLang = 'pt';
+function applyLang() {
+  const L = LANGS[$('lang').value], old = LANGS[lastLang];
+  if (!$('txtA').value || $('txtA').value === old.a) $('txtA').value = L.a;
+  if (!$('txtB').value || $('txtB').value === old.b) $('txtB').value = L.b;
+  if (subsCount != null) $('subs').value = L.subs(L.num(subsCount));
+  lastLang = $('lang').value;
+}
+$('lang').addEventListener('change', applyLang);
+if (OS.LANG === 'en') { $('lang').value = 'en'; applyLang(); $('subs').value = '12.3K subscribers'; $('channel').value = 'My Channel'; }
+
+const IDS = ['showChannel', 'channel', 'subs', 'verified', 'txtA', 'txtB', 'showBell', 'showLike', 'likes', 'look', 'lang', 'pos', 'cursor', 'scale', 'speed', 'exitAnim', 'bgMode', 'bg'];
+const S = () => EXPORT.values(IDS);
+
+function timeline(s) {
+  const k = 100 / s.speed, T = {};
+  let t = .45 * k;
+  T.inEnd = t;
+  T.moveSub = [t, t += .8 * k]; T.clickSub = t; t += .55 * k;
+  if (s.showBell) {
+    T.moveBell = [t, t += .45 * k]; T.clickBell = t; t += .25 * k;
+    T.moveAll = [t, t += .35 * k]; T.clickAll = t; t += .55 * k;
+  }
+  if (s.showLike) { T.moveLike = [t, t += .55 * k]; T.clickLike = t; t += .6 * k; }
+  T.cursorOut = [t, t + .5 * k]; t += .7 * k;
+  T.exit = s.exitAnim ? [t, t + .4 * k] : null;
+  T.total = t + (s.exitAnim ? .45 * k : .3);
+  return T;
+}
+
+const lerp = (a, b, p) => a + (b - a) * p;
+function icon(path, x, y, size, color) { ctx.save(); ctx.translate(x, y); ctx.scale(size / 24, size / 24); ctx.fillStyle = color; ctx.fill(path); ctx.restore(); }
+function drawCursor(kind, x, y, sz, pressed) {
+  if (kind === 'none') return;
+  ctx.save(); ctx.translate(x, y); ctx.scale(sz * (pressed ? .85 : 1), sz * (pressed ? .85 : 1));
+  ctx.lineJoin = 'round'; ctx.lineWidth = 1.6;
+  if (kind === 'hand') {
+    ctx.font = '30px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText('👆', 2, -4);
+  } else {
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 24); ctx.lineTo(6, 18.5); ctx.lineTo(10, 27); ctx.lineTo(14, 25.2); ctx.lineTo(10, 16.8); ctx.lineTo(17.5, 16.8); ctx.closePath();
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = '#000'; ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 4; ctx.shadowOffsetY = 2;
+    ctx.fill(); ctx.shadowColor = 'transparent'; ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawAt(t, transp) {
+  const s = S(), L = LANGS[s.lang] || LANGS.pt;
+  const { W, H } = ex.settings();
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  if (!transp) { ctx.fillStyle = s.bgMode === 'chroma' ? '#00b140' : s.bg; ctx.fillRect(0, 0, W, H); }
+  const T = timeline(s);
+  const u = Math.min(W, H) / 1080 * s.scale / 100 * 2;
+  const F = (w, px) => `${w} ${px * u}px Roboto, Arial, sans-serif`;
+  const dark = s.look !== 'light';
+  const C = dark
+    ? { card: '#0f0f0f', ink: '#f1f1f1', sub: '#aaaaaa', subBtn: '#f1f1f1', subInk: '#0f0f0f', chip: '#272727', chipInk: '#f1f1f1', line: 'rgba(255,255,255,.2)', menu: '#282828', hover: 'rgba(255,255,255,.1)' }
+    : { card: '#ffffff', ink: '#0f0f0f', sub: '#606060', subBtn: '#0f0f0f', subInk: '#ffffff', chip: '#f2f2f2', chipInk: '#0f0f0f', line: 'rgba(0,0,0,.1)', menu: '#ffffff', hover: 'rgba(0,0,0,.08)' };
+  const subd = t >= T.clickSub, belled = T.clickAll != null && t >= T.clickAll, liked = T.clickLike != null && t >= T.clickLike;
+
+  // medidas (em px do YouTube × u)
+  const bh = 36 * u, av = 40 * u, gap = 12 * u, ic = 24 * u;
+  ctx.font = F(500, 14);
+  const wA = btnImg ? btnImg.width / btnImg.height * bh : ctx.measureText(s.txtA).width + 32 * u;
+  const wB = ctx.measureText(s.txtB).width + 16 * u + ic + 6 * u + 20 * u + 8 * u;
+  // a pílula muda de largura quando a pessoa se inscreve
+  const morph = EASE.out(clamp((t - T.clickSub) / .25));
+  const bw = subd ? lerp(wA, wB, morph) : wA;
+  ctx.font = F(500, 16); const nameW = s.showChannel ? Math.max(ctx.measureText(s.channel).width + (s.verified ? 20 * u : 0), (ctx.font = F(400, 12), ctx.measureText(s.subs).width)) : 0;
+  const likeTxt = L.num(+s.likes + (liked ? 1 : 0));
+  ctx.font = F(500, 14);
+  const likeW = s.showLike ? 16 * u + ic + 6 * u + ctx.measureText(likeTxt).width + 16 * u + 1 * u + 16 * u + ic + 16 * u : 0;
+  const maxBw = Math.max(wA, wB);
+  const pad = s.look === 'none' ? 0 : 16 * u;
+  const cw = pad * 2 + (s.showChannel ? av + gap + nameW + 24 * u : 0) + maxBw + (s.showLike ? 16 * u + likeW : 0);
+  const ch = pad * 2 + Math.max(av, bh);
+  const pos = s.pos, m = 60 * Math.min(W, H) / 1080;
+  const cx = pos === 'bl' ? m + cw / 2 : pos === 'br' ? W - m - cw / 2 : W / 2;
+  const cy = pos === 'c' ? H / 2 : pos === 't' ? m + ch / 2 : H - m - ch / 2 - (s.showBell ? 150 * u : 0);
+
+  // entrada / saída
+  let sc = EASE.back(clamp(t / T.inEnd)), alpha = clamp(t / T.inEnd * 2);
+  if (T.exit && t > T.exit[0]) { const q = clamp((t - T.exit[0]) / (T.exit[1] - T.exit[0])); sc *= 1 - EASE.in(q) * .4; alpha *= 1 - q; }
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha = alpha; ctx.translate(cx, cy); ctx.scale(sc, sc); ctx.translate(-cx, -cy);
+  const x0 = cx - cw / 2, y0 = cy - ch / 2;
+  if (s.look !== 'none') {
+    ctx.beginPath(); ctx.roundRect(x0, y0, cw, ch, 16 * u);
+    ctx.fillStyle = C.card; ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 30 * u; ctx.shadowOffsetY = 6 * u; ctx.fill(); ctx.shadowColor = 'transparent';
+  }
+  let x = x0 + pad;
+  ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+  if (s.showChannel) {
+    ctx.save(); ctx.beginPath(); ctx.arc(x + av / 2, cy, av / 2, 0, 7); ctx.clip();
+    if (avatar) { const k2 = Math.max(av / avatar.width, av / avatar.height); ctx.drawImage(avatar, x + av / 2 - avatar.width * k2 / 2, cy - avatar.height * k2 / 2, avatar.width * k2, avatar.height * k2); }
+    else { ctx.fillStyle = '#5c6bc0'; ctx.fillRect(x, cy - av / 2, av, av); ctx.fillStyle = '#fff'; ctx.font = F(500, 20); ctx.textAlign = 'center'; ctx.fillText((s.channel.trim()[0] || '?').toUpperCase(), x + av / 2, cy + 1 * u); ctx.textAlign = 'left'; }
+    ctx.restore();
+    x += av + gap;
+    ctx.fillStyle = C.ink; ctx.font = F(500, 16); ctx.fillText(s.channel, x, cy - 9 * u);
+    if (s.verified) icon(ICON.check, x + ctx.measureText(s.channel).width + 4 * u, cy - 9 * u - 7 * u, 14 * u, C.sub);
+    ctx.fillStyle = C.sub; ctx.font = F(400, 12); ctx.fillText(s.subs, x, cy + 11 * u);
+    x += nameW + 24 * u;
+  }
+  // botão inscrever-se / inscrito
+  const press = (tc) => (tc != null && t >= tc && t < tc + .14 ? .94 : 1);
+  const bx = x, by = cy - bh / 2;
+  ctx.save(); ctx.translate(bx + bw / 2, cy); const ps = Math.min(press(T.clickSub), press(T.clickBell)); ctx.scale(ps, ps); ctx.translate(-(bx + bw / 2), -cy);
+  if (btnImg && !subd) ctx.drawImage(btnImg, bx, by, bw, bh);
+  else {
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, bh / 2);
+    ctx.fillStyle = subd ? C.chip : C.subBtn; ctx.fill();
+    if (!subd) { ctx.fillStyle = C.subInk; ctx.font = F(500, 14); ctx.textAlign = 'center'; ctx.fillText(s.txtA, bx + bw / 2, cy + 1 * u); ctx.textAlign = 'left'; }
+    else {
+      ctx.save(); ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, bh / 2); ctx.clip(); ctx.globalAlpha *= morph;
+      // sininho balança quando se inscreve e quando ativa "Todas"
+      const ring = (tc) => (tc != null && t >= tc && t < tc + .8 ? Math.sin((t - tc) * 28) * .45 * (1 - (t - tc) / .8) : 0);
+      ctx.save(); ctx.translate(bx + 16 * u + ic / 2, cy - ic * .38); ctx.rotate(ring(T.clickSub) + ring(T.clickAll)); ctx.translate(-ic / 2, -ic * .12);
+      icon(belled ? ICON.bellOn : ICON.bell, 0, 0, ic, C.chipInk); ctx.restore();
+      ctx.fillStyle = C.chipInk; ctx.font = F(500, 14); ctx.fillText(s.txtB, bx + 16 * u + ic + 6 * u, cy + 1 * u);
+      icon(ICON.chevron, bx + bw - 8 * u - 20 * u, cy - 10 * u, 20 * u, C.chipInk);
+      ctx.restore();
+    }
+  }
+  ctx.restore();
+  const ripple = (tc, rx, ry) => { if (tc == null) return; const q = (t - tc) / .45; if (q < 0 || q > 1) return; ctx.save(); ctx.globalAlpha = (1 - q) * .5 * alpha; ctx.fillStyle = dark ? '#fff' : '#000'; ctx.beginPath(); ctx.arc(rx, ry, (8 + q * 30) * u, 0, 7); ctx.fill(); ctx.restore(); };
+  const subPt = [bx + wA * .55, cy + bh * .15];
+  const bellPt = [bx + 16 * u + ic * .6, cy + 4 * u];
+  x += maxBw;
+  let likePt;
+  if (s.showLike) {
+    x += 16 * u;
+    const lx = x, half = 16 * u + ic + 6 * u + ctx.measureText(likeTxt).width + 16 * u;
+    ctx.beginPath(); ctx.roundRect(lx, by, likeW, bh, bh / 2); ctx.fillStyle = C.chip; ctx.fill();
+    ctx.fillStyle = C.line; ctx.fillRect(lx + half, by + 6 * u, 1 * u, bh - 12 * u);
+    const q = T.clickLike != null ? t - T.clickLike : -1, pop = q >= 0 && q < .35 ? 1 + Math.sin(q / .35 * Math.PI) * .35 : 1;
+    ctx.save(); ctx.translate(lx + 16 * u + ic / 2, cy); ctx.scale(pop, pop); icon(liked ? ICON.likeOn : ICON.like, -ic / 2, -ic / 2, ic, C.chipInk); ctx.restore();
+    ctx.fillStyle = C.chipInk; ctx.font = F(500, 14); ctx.fillText(likeTxt, lx + 16 * u + ic + 6 * u, cy + 1 * u);
+    ctx.save(); ctx.translate(lx + half + 1 * u + 16 * u + ic / 2, cy); ctx.rotate(Math.PI); icon(ICON.like, -ic / 2, -ic / 2, ic, C.chipInk); ctx.restore();
+    likePt = [lx + 16 * u + ic * .6, cy + 4 * u];
+  }
+  // menu do sininho
+  let allPt;
+  if (T.clickBell != null) {
+    const mx = bx, my = by + bh + 8 * u, mw = 230 * u, ih = 40 * u;
+    const items = [[ICON.bellOn, L.all], [ICON.bell, L.custom], [ICON.bellOff, L.none], [ICON.person, L.unsub]];
+    allPt = [mx + 70 * u, my + 8 * u + ih / 2];
+    const open = clamp((t - T.clickBell) / .15) * (1 - clamp((t - T.clickAll - .05) / .15));
+    if (open > 0) {
+      ctx.save(); ctx.globalAlpha = alpha * open;
+      ctx.translate(mx, my); ctx.scale(.94 + .06 * open, .94 + .06 * open); ctx.translate(-mx, -my);
+      ctx.beginPath(); ctx.roundRect(mx, my, mw, ih * 4 + 16 * u, 12 * u); ctx.fillStyle = C.menu; ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 24 * u; ctx.shadowOffsetY = 4 * u; ctx.fill(); ctx.shadowColor = 'transparent';
+      const hover = t >= T.moveAll[1] - .1;
+      items.forEach(([pth, label], i) => {
+        const iy = my + 8 * u + i * ih;
+        if (i === 0 && hover) { ctx.fillStyle = C.hover; ctx.fillRect(mx, iy, mw, ih); }
+        icon(pth, mx + 16 * u, iy + ih / 2 - 12 * u, 24 * u, C.ink);
+        ctx.fillStyle = C.ink; ctx.font = F(400, 14); ctx.fillText(label, mx + 56 * u, iy + ih / 2 + 1 * u);
+      });
+      ctx.restore();
+    }
+  }
+  ripple(T.clickSub, ...subPt); ripple(T.clickBell, ...bellPt); if (allPt) ripple(T.clickAll, ...allPt); if (likePt) ripple(T.clickLike, ...likePt);
+  ctx.restore();
+
+  // cursor
+  const start = [cx + cw * .3, cy + ch * 2.4], out = [cx + cw * .55, cy + ch * 2.8];
+  let p = start, pressed = false, last = start;
+  const stops = [[T.moveSub, subPt, T.clickSub], [T.moveBell, bellPt, T.clickBell], [T.moveAll, allPt, T.clickAll], [T.moveLike, likePt, T.clickLike]].filter((z) => z[0]);
+  for (const [mv, pt, tc] of stops) {
+    if (t >= mv[0]) {
+      const q = EASE.inout(clamp((t - mv[0]) / (mv[1] - mv[0])));
+      p = [lerp(last[0], pt[0], q), lerp(last[1], pt[1], q)];
+      if (t >= tc && t < tc + .14) pressed = true;
+    }
+    last = pt;
+  }
+  if (t >= T.cursorOut[0]) { const q = EASE.inout(clamp((t - T.cursorOut[0]) / (T.cursorOut[1] - T.cursorOut[0]))); p = [lerp(last[0], out[0], q), lerp(last[1], out[1], q)]; }
+  const cA = t < T.moveSub[0] ? clamp((t - T.inEnd * .5) / .3) : t > T.cursorOut[0] ? 1 - clamp((t - T.cursorOut[0]) / (T.cursorOut[1] - T.cursorOut[0])) : 1;
+  if (cA > 0) { ctx.globalAlpha = cA; drawCursor(s.cursor, p[0], p[1], u * .75, pressed); ctx.globalAlpha = 1; }
+}
+
+// ---------- puxar dados do YouTube ----------
+try { $('ytKey').value = localStorage.getItem('imapng:ytKey') || ''; } catch {}
+$('ytKey').addEventListener('change', () => { try { localStorage.setItem('imapng:ytKey', $('ytKey').value.trim()); } catch {} });
+function parseChannel(raw) {
+  const s = raw.trim();
+  let m;
+  if ((m = s.match(/youtube\.com\/channel\/(UC[\w-]{22})/i)) || (m = s.match(/^(UC[\w-]{22})$/))) return { id: m[1] };
+  if ((m = s.match(/youtube\.com\/@([\w.\-À-ÿ]+)/i)) || (m = s.match(/^@([\w.\-À-ÿ]+)$/))) return { handle: '@' + m[1] };
+  if ((m = s.match(/youtube\.com\/user\/([\w.-]+)/i))) return { user: m[1] };
+  if ((m = s.match(/youtube\.com\/c\/([^/?#]+)/i))) return { search: decodeURIComponent(m[1]) };
+  if (s && !/[/:]/.test(s)) return { handle: '@' + s.replace(/^@/, '') };
+  return null;
+}
+const ytSt = (msg, err) => { $('ytSt').textContent = msg; $('ytSt').style.color = err ? '#b00020' : ''; };
+$('ytGo').onclick = async () => {
+  const key = $('ytKey').value.trim(), c = parseChannel($('ytUrl').value);
+  if (!c) return ytSt('Não reconheci o link. Use algo como https://www.youtube.com/@seucanal', true);
+  if (!key) { OS.openWin('apiHelp'); return ytSt('Cole a chave da API primeiro (veja "Como pegar a chave da API").', true); }
+  try { localStorage.setItem('imapng:ytKey', key); } catch {}
+  ytSt('Buscando o canal…');
+  const api = (path, q) => fetch(`https://www.googleapis.com/youtube/v3/${path}?${new URLSearchParams({ ...q, key })}`).then(async (r) => { const j = await r.json(); if (!r.ok) throw new Error(j.error?.message || r.status); return j; });
+  try {
+    let q = { part: 'snippet,statistics' };
+    if (c.id) q.id = c.id; else if (c.handle) q.forHandle = c.handle; else if (c.user) q.forUsername = c.user;
+    else { const sr = await api('search', { part: 'snippet', type: 'channel', q: c.search, maxResults: 1 }); if (!sr.items?.length) throw new Error('canal não encontrado'); q.id = sr.items[0].id.channelId; }
+    const j = await api('channels', q);
+    const ch = j.items?.[0];
+    if (!ch) throw new Error('canal não encontrado');
+    const L = LANGS[$('lang').value];
+    $('channel').value = ch.snippet.title;
+    subsCount = ch.statistics.hiddenSubscriberCount ? null : +ch.statistics.subscriberCount;
+    $('subs').value = subsCount == null ? '' : L.subs(L.num(subsCount));
+    const th = ch.snippet.thumbnails, url = (th.high || th.medium || th.default).url;
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => { avatar = img; restart(); ytSt(`✅ ${ch.snippet.title}${subsCount == null ? ' (o canal esconde os inscritos)' : ' · ' + $('subs').value}`); };
+    img.onerror = () => ytSt('Peguei o nome e os inscritos, mas a foto não carregou. Use "Foto do canal".', true);
+    img.src = url;
+  } catch (e) {
+    console.error(e);
+    ytSt('Não deu: ' + (/API key not valid/i.test(e.message) ? 'a chave da API é inválida.' : /quota/i.test(e.message) ? 'a cota diária da chave acabou.' : /disabled|not been used/i.test(e.message) ? 'ative a YouTube Data API v3 no projeto da chave.' : e.message), true);
+  }
+};
+
+$('avatarBtn').onclick = async () => { const f = await OS.pickFile('image/*'); if (f) setImg(f, (i) => (avatar = i)); };
+$('avatarClear').onclick = () => (avatar = null);
+$('btnImg').onclick = async () => { const f = await OS.pickFile('image/*'); if (f) setImg(f, (i) => (btnImg = i)); };
+$('btnImgClear').onclick = () => (btnImg = null);
+function setImg(f, cb) { const i = new Image(); i.onload = () => { cb(i); restart(); }; i.src = URL.createObjectURL(f); }
+OS.onInbox((f) => setImg(f, (i) => (btnImg = i)), /^image\//);
+
+let t0 = performance.now();
+const restart = () => (t0 = performance.now());
+$('playBtn').onclick = restart;
+const total = () => timeline(S()).total;
+const ex = EXPORT.mount($('exp'), {
+  canvas: cv, draw: drawAt, seconds: total, name: () => 'inscreva-se', transparent: true, defaultRes: '1920x1080',
+  prepare: () => EXPORT.loadFont(500, 'Roboto'),
+  onSettings: (st) => { $('pv').classList.toggle('chk', st.transp); },
+});
+(function loop() {
+  if (!ex.busy) {
+    const t = (performance.now() - t0) / 1000;
+    drawAt(Math.min(t, total()), ex.settings().transp);
+    if (t > total() + .8) restart();
+  }
+  requestAnimationFrame(loop);
+})();
+document.fonts.ready.then(restart);
+</script>
+</body>
+</html>

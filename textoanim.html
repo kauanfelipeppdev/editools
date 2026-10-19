@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Animação de texto · ImAPNG</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Bebas+Neue&family=Bungee&family=Cinzel:wght@700&family=Fredoka:wght@500;700&family=Inter:wght@400;700;900&family=Luckiest+Guy&family=Montserrat:wght@400;700;900&family=Orbitron:wght@700;900&family=Permanent+Marker&family=Poppins:wght@400;700;900&family=Press+Start+2P&family=Roboto+Mono:wght@400;700&family=Special+Elite&family=VT323&display=swap">
+<script src="assets/export.js"></script>
+<style>
+  #pv canvas { max-height: 62vh; }
+  .fx { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  .fx button { height: auto; padding: 5px 2px; font-size: 11px; line-height: 1.25; }
+  .fx button[aria-pressed=true] { font-weight: bold; box-shadow: inset 1px 1px 3px rgba(0,0,0,.45); }
+  .fx button span { display: block; font-size: 17px; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="animacao_de_texto.exe" data-icon="🔤">
+    <div class="window-body">
+      <div class="toolbar"><a class="btn" href="index.html">🏠 Home</a><button data-open="help">? Ajuda</button><span class="spacer"></span><button id="playBtn">▶ Repetir prévia</button></div>
+      <div class="tool wide-panel">
+        <div class="panel" id="panel">
+          <div class="btns grow tabs" role="tablist">
+            <button role="tab" aria-selected="true" data-tab="t1">✏️ Personalizar</button>
+            <button role="tab" aria-selected="false" data-tab="t2">⭐ Modelos prontos</button>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t1">
+            <div class="stack">
+              <label class="field"><span>Texto</span><textarea id="text" rows="2">TEXTO ANIMADO</textarea></label>
+              <div class="fx" id="fx"></div>
+              <input type="hidden" id="effect" value="pop">
+              <div class="two">
+                <label class="field"><span>Atraso entre letras <output data-suffix=" ms"></output></span><input type="range" id="stagger" min="0" max="300" value="60"></label>
+                <label class="field"><span>Duração de cada letra <output data-suffix=" ms"></output></span><input type="range" id="charDur" min="50" max="2000" value="500" step="10"></label>
+                <label class="field"><span>Segurar no fim (s)</span><input type="number" id="hold" value="1.5" min="0" max="30" step="0.5"></label>
+                <label class="field"><span>Intensidade <output data-suffix="%"></output></span><input type="range" id="amount" min="0" max="200" value="100"></label>
+              </div>
+              <div class="field-row"><input type="checkbox" id="outAnim" checked><label for="outAnim">Animar a saída também</label></div>
+              <details open><summary>Estilo</summary>
+                <div class="stack" style="margin-top:6px">
+                  <div class="two">
+                    <label class="field"><span>Fonte</span><select id="font"></select></label>
+                    <label class="field"><span>Peso</span><select id="weight"><option value="400">Normal</option><option value="700">Negrito</option><option value="900" selected>Black</option></select></label>
+                  </div>
+                  <label class="field"><span>Tamanho <output data-suffix="px"></output></span><input type="range" id="size" min="20" max="500" value="160"></label>
+                  <label class="field"><span>Espaço entre letras <output data-suffix="px"></output></span><input type="range" id="spacing" min="-20" max="80" value="0"></label>
+                  <div class="row"><span class="lbl">Cor</span><input type="color" id="color" value="#ffffff"><span class="lbl" style="min-width:0">Gradiente</span><input type="checkbox" id="useGrad"><input type="color" id="color2" value="#ff4fd8"></div>
+                  <div class="row"><span class="lbl">Contorno</span><input type="range" id="stroke" min="0" max="30" value="0" style="flex:1"><input type="color" id="strokeColor" value="#000000"></div>
+                  <div class="row"><span class="lbl">Sombra / brilho</span><input type="range" id="glow" min="0" max="80" value="0" style="flex:1"><input type="color" id="glowColor" value="#000000"></div>
+                  <div class="two">
+                    <label class="field"><span>Alinhamento</span><select id="align"><option value="center">Centro</option><option value="left">Esquerda</option><option value="right">Direita</option></select></label>
+                    <label class="field"><span>Fundo</span><input type="color" id="bg" value="#111111" style="width:100%"></label>
+                  </div>
+                  <div class="field-row"><input type="checkbox" id="upper"><label for="upper">Tudo maiúsculo</label></div>
+                </div>
+              </details>
+            </div>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t2" hidden><div class="presets" id="presets"></div></div>
+          <div id="exp"></div>
+        </div>
+        <div id="pv" class="preview"><canvas id="cv"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="ajuda.txt" data-icon="📝">
+    <div class="window-body">
+      <ul>
+        <li>Escolha o efeito, escreva o texto e ajuste o tempo. Cada letra entra com um atraso em relação à anterior.</li>
+        <li><b>Onda, glitch, neon, arco-íris e tremor</b> continuam se mexendo enquanto o texto fica parado na tela.</li>
+        <li>Pra colocar por cima do vídeo, exporte em <b>WEBM transparente</b> ou <b>sequência PNG</b>.</li>
+      </ul>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">OK</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const { EASE, clamp, rnd } = EXPORT;
+const cv = $('cv'), ctx = cv.getContext('2d');
+$('font').innerHTML = EXPORT.fontOptions('Montserrat');
+
+const EFFECTS = {
+  typewriter: ['⌨️', 'Máquina de escrever'], pop: ['💥', 'Pop'], bounce: ['🏀', 'Quique'],
+  wave: ['🌊', 'Onda'], glitch: ['📺', 'Glitch'], scramble: ['🔀', 'Embaralhar'],
+  blur: ['🌫️', 'Desfoque'], slide: ['⬆️', 'Deslizar'], zoom: ['🔍', 'Zoom'],
+  neon: ['💡', 'Neon piscando'], rainbow: ['🌈', 'Arco-íris'], explode: ['🎆', 'Explosão'],
+  shake: ['🫨', 'Tremor'], flip: ['🔄', 'Virar'], fade: ['👻', 'Surgir'],
+};
+const LOOPING = ['wave', 'glitch', 'neon', 'rainbow', 'shake'];
+const fxBox = $('fx');
+for (const [k, [i, n]] of Object.entries(EFFECTS)) fxBox.insertAdjacentHTML('beforeend', `<button data-fx="${k}" aria-pressed="false"><span>${i}</span>${n}</button>`);
+function setEffect(k) {
+  $('effect').value = k;
+  fxBox.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.fx === k));
+  restart();
+}
+fxBox.onclick = (e) => { const b = e.target.closest('[data-fx]'); if (b) setEffect(b.dataset.fx); };
+
+const PRESETS = [
+  { n: '🎬 Título de YouTube', d: 'pop amarelo com contorno', v: { effect: 'pop', text: 'VOCÊ NÃO VAI ACREDITAR', font: 'Montserrat', weight: '900', size: 130, color: '#ffe600', useGrad: false, stroke: 14, strokeColor: '#000000', glow: 20, glowColor: '#000000', stagger: 45, charDur: 450, upper: true, bg: '#1d1d1d' } },
+  { n: '💻 Hacker', d: 'embaralha e decifra', v: { effect: 'scramble', text: 'ACESSO LIBERADO', font: 'Roboto Mono', weight: '700', size: 120, color: '#33ff66', useGrad: false, stroke: 0, glow: 25, glowColor: '#00ff55', stagger: 50, charDur: 700, upper: true, bg: '#020a04' } },
+  { n: '⌨️ Máquina de escrever', d: 'letra por letra com cursor', v: { effect: 'typewriter', text: 'Era uma vez…', font: 'Special Elite', weight: '400', size: 140, color: '#2a2118', useGrad: false, stroke: 0, glow: 0, stagger: 110, charDur: 50, upper: false, bg: '#f3e9d2' } },
+  { n: '💡 Neon', d: 'liga piscando', v: { effect: 'neon', text: 'ABERTO', font: 'Bungee', weight: '400', size: 200, color: '#ffffff', useGrad: false, stroke: 0, glow: 45, glowColor: '#ff2bd6', stagger: 120, charDur: 700, upper: true, bg: '#0b0221' } },
+  { n: '📺 Glitch', d: 'RGB separado e cortes', v: { effect: 'glitch', text: 'SINAL PERDIDO', font: 'Anton', weight: '400', size: 190, color: '#ffffff', useGrad: false, stroke: 0, glow: 0, stagger: 30, charDur: 300, upper: true, bg: '#000000' } },
+  { n: '🌊 Onda fofa', d: 'letras balançando', v: { effect: 'wave', text: 'oiii gente', font: 'Fredoka', weight: '700', size: 180, color: '#ff8ac6', useGrad: true, color2: '#8a7dff', stroke: 10, strokeColor: '#ffffff', glow: 0, stagger: 60, charDur: 500, upper: false, bg: '#fff3fa' } },
+  { n: '🏀 Quique', d: 'cai e quica', v: { effect: 'bounce', text: 'BOING!', font: 'Luckiest Guy', weight: '400', size: 220, color: '#ff7a00', useGrad: false, stroke: 12, strokeColor: '#3a1500', glow: 0, stagger: 90, charDur: 900, upper: true, bg: '#bde7ff' } },
+  { n: '🎞️ Cinema', d: 'surge do desfoque', v: { effect: 'blur', text: 'O FILME', font: 'Cinzel', weight: '700', size: 170, color: '#f5d48a', useGrad: true, color2: '#b8862b', stroke: 0, glow: 0, stagger: 70, charDur: 1200, spacing: 18, upper: true, bg: '#050505' } },
+  { n: '🌈 Arco-íris', d: 'cores girando', v: { effect: 'rainbow', text: 'FESTA', font: 'Bungee', weight: '400', size: 230, color: '#ffffff', useGrad: false, stroke: 10, strokeColor: '#111111', glow: 0, stagger: 60, charDur: 400, upper: true, bg: '#1a1a1a' } },
+  { n: '🎆 Explosão', d: 'letras voam até o lugar', v: { effect: 'explode', text: 'KABOOM', font: 'Bangers', weight: '400', size: 230, color: '#ffffff', useGrad: true, color2: '#ffcc00', stroke: 12, strokeColor: '#b00000', glow: 0, stagger: 25, charDur: 900, upper: true, bg: '#2b0000' } },
+];
+EXPORT.presets($('presets'), PRESETS, (p) => {
+  EXPORT.setValues({ spacing: 0, amount: 100, align: 'center', hold: 1.5, outAnim: true, color2: '#ff4fd8', ...p.v });
+  setEffect(p.v.effect);
+  OS.showTab('t1');
+});
+
+const IDS = ['text', 'effect', 'stagger', 'charDur', 'hold', 'amount', 'outAnim', 'font', 'weight', 'size', 'spacing', 'color', 'useGrad', 'color2', 'stroke', 'strokeColor', 'glow', 'glowColor', 'align', 'bg', 'upper'];
+const S = () => EXPORT.values(IDS);
+
+// ---------- tempo ----------
+function timing(s, n) {
+  const st = s.stagger / 1000, cd = s.effect === 'typewriter' ? .01 : s.charDur / 1000;
+  const inT = Math.max(0, n - 1) * st + cd;
+  const outT = s.outAnim ? inT : 0;
+  return { st, cd, inT, outT, total: inT + s.hold + outT };
+}
+
+// ---------- layout ----------
+function layout(s, W, H, k) {
+  const text = s.upper ? s.text.toUpperCase() : s.text;
+  const size = s.size * k, sp = s.spacing * k;
+  ctx.font = `${s.weight} ${size}px "${s.font}"`;
+  let lines = text.split('\n').map((l) => [...l]);
+  const lw = (l) => ctx.measureText(l.join('')).width + sp * Math.max(0, l.length - 1);
+  const maxW = Math.max(...lines.map(lw), 1);
+  let scale = maxW > W * .92 ? W * .92 / maxW : 1;
+  const fs = size * scale;
+  ctx.font = `${s.weight} ${fs}px "${s.font}"`;
+  const lh = fs * 1.15, top = H / 2 - (lines.length - 1) * lh / 2;
+  const chars = [];
+  let n = 0;
+  lines.forEach((l, li) => {
+    const w = ctx.measureText(l.join('')).width + sp * scale * Math.max(0, l.length - 1);
+    let x0 = s.align === 'left' ? W * .05 : s.align === 'right' ? W * .95 - w : (W - w) / 2;
+    l.forEach((c, j) => {
+      const x = x0 + ctx.measureText(l.slice(0, j).join('')).width + sp * scale * j;
+      const cw = ctx.measureText(c).width;
+      chars.push({ c, x, cx: x + cw / 2, cw, y: top + li * lh, i: c.trim() ? n++ : -1 });
+    });
+  });
+  return { chars, fs, n, x0: chars[0]?.x || W / 2, lh };
+}
+
+const SCR = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&@*+=?!<>';
+function drawAt(t, transp) {
+  const s = S();
+  const [W, H] = [ex.settings().W, ex.settings().H];
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  const k = Math.min(W, H) / 1080 * (W >= H ? 1 : .95);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  if (!transp) { ctx.fillStyle = s.bg; ctx.fillRect(0, 0, W, H); }
+  const L = layout(s, W, H, k), tm = timing(s, L.n), amt = s.amount / 100;
+  ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+  ctx.lineJoin = 'round';
+  const outStart = tm.inT + s.hold;
+  let grad = null;
+  if (s.useGrad) { grad = ctx.createLinearGradient(0, H / 2 - L.fs / 2, 0, H / 2 + L.fs / 2); grad.addColorStop(0, s.color); grad.addColorStop(1, s.color2); }
+  const fx = s.effect;
+  const glitchOn = fx === 'glitch' && (rnd(Math.floor(t * 8), 3) > .55 || t < tm.inT);
+  let lastVisible = null;
+
+  for (const ch of L.chars) {
+    if (ch.i < 0) continue;
+    let p = clamp((t - ch.i * tm.st) / tm.cd);
+    if (s.outAnim && t >= outStart) p = Math.min(p, 1 - clamp((t - outStart - ch.i * tm.st) / tm.cd));
+    if (p <= 0 && fx !== 'scramble') continue;
+    let dx = 0, dy = 0, sc = 1, rot = 0, a = 1, blur = 0, sx = 1, glyph = ch.c, color = grad || s.color;
+    const e = EASE.out(p), r1 = rnd(ch.i, 1), r2 = rnd(ch.i, 2);
+    switch (fx) {
+      case 'typewriter': a = p > 0 ? 1 : 0; break;
+      case 'pop': sc = EASE.back(p); a = clamp(p * 3); break;
+      case 'bounce': dy = -(1 - EASE.bounce(p)) * L.fs * 1.6 * amt; a = clamp(p * 4); break;
+      case 'wave': dy = Math.sin(t * 4 + ch.i * .55) * L.fs * .12 * amt + (1 - e) * L.fs * .5; a = p; break;
+      case 'slide': dy = (1 - e) * L.fs * .9 * amt; a = p; break;
+      case 'zoom': sc = 1 + (1 - e) * 2.5 * amt; a = p; break;
+      case 'blur': blur = (1 - e) * 30 * amt * k; a = p; sc = 1 + (1 - e) * .15; break;
+      case 'fade': a = EASE.inout(p); break;
+      case 'flip': sx = Math.cos((1 - e) * Math.PI / 2); a = clamp(p * 2); break;
+      case 'explode': {
+        const ang = r1 * Math.PI * 2, dist = (1 - e) * Math.max(W, H) * .6 * amt;
+        dx = Math.cos(ang) * dist; dy = Math.sin(ang) * dist; rot = (1 - e) * (r2 - .5) * 8; a = clamp(p * 2); break;
+      }
+      case 'scramble':
+        if (t < ch.i * tm.st * .4) { a = 0; break; }
+        if (p < 1) glyph = SCR[Math.floor(rnd(ch.i, Math.floor(t * 20)) * SCR.length)];
+        break;
+      case 'neon': {
+        const on = p >= 1 ? rnd(ch.i, Math.floor(t * 12)) > .03 * amt : rnd(ch.i, Math.floor(t * 20)) < p;
+        a = on ? 1 : .15; break;
+      }
+      case 'rainbow': color = `hsl(${(ch.i * 25 + t * 160) % 360} 95% 60%)`; sc = EASE.back(p); a = clamp(p * 3); break;
+      case 'shake': dx = (rnd(ch.i, Math.floor(t * 30)) - .5) * L.fs * .08 * amt; dy = (rnd(ch.i + 9, Math.floor(t * 30)) - .5) * L.fs * .08 * amt; rot = (rnd(ch.i + 4, Math.floor(t * 30)) - .5) * .15 * amt; a = clamp(p * 3); break;
+      case 'glitch':
+        a = p > 0 ? 1 : 0;
+        if (glitchOn) { dx = (rnd(ch.i, Math.floor(t * 24)) - .5) * L.fs * .3 * amt; }
+        break;
+    }
+    if (a <= 0) continue;
+    lastVisible = ch;
+    ctx.save();
+    ctx.globalAlpha = clamp(a);
+    ctx.translate(ch.cx + dx, ch.y + dy);
+    ctx.rotate(rot);
+    ctx.scale(sc * sx, sc);
+    if (blur > .3) ctx.filter = `blur(${blur}px)`;
+    const glow = s.glow * k * (fx === 'neon' && a < 1 ? .2 : 1);
+    if (fx === 'glitch' && glitchOn) {
+      const o = L.fs * .04 * amt;
+      ctx.globalCompositeOperation = transp ? 'source-over' : 'screen';
+      ctx.fillStyle = 'rgba(255,0,60,.85)'; ctx.fillText(glyph, -o, 0);
+      ctx.fillStyle = 'rgba(0,240,255,.85)'; ctx.fillText(glyph, o, 0);
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    if (glow) { ctx.shadowColor = s.glowColor; ctx.shadowBlur = glow; if (s.glowColor !== '#000000' || fx === 'neon') { ctx.fillStyle = s.glowColor; ctx.fillText(glyph, 0, 0); } else { ctx.shadowOffsetY = glow * .25; } }
+    if (s.stroke) { ctx.lineWidth = s.stroke * 2 * k; ctx.strokeStyle = s.strokeColor; ctx.strokeText(glyph, 0, 0); ctx.shadowColor = 'transparent'; }
+    ctx.fillStyle = color; ctx.fillText(glyph, 0, 0);
+    ctx.restore();
+  }
+  // fatias horizontais do glitch
+  if (fx === 'glitch' && glitchOn) {
+    for (let j = 0; j < 4; j++) {
+      const y = rnd(j, Math.floor(t * 16)) * H, h = (rnd(j + 5, Math.floor(t * 16)) * .06 + .01) * H, o = (rnd(j + 2, Math.floor(t * 16)) - .5) * W * .08 * amt;
+      ctx.drawImage(cv, 0, y, W, h, o, y, W, h);
+    }
+  }
+  // cursor da máquina de escrever
+  if (fx === 'typewriter' && Math.floor(t * 2.2) % 2 === 0 && !(s.outAnim && t > tm.total - .05)) {
+    const c = lastVisible;
+    const x = c ? c.x + c.cw + 4 * k : L.x0, y = c ? c.y : H / 2;
+    ctx.fillStyle = s.color; ctx.fillRect(x, y - L.fs * .45, Math.max(3, L.fs * .07), L.fs * .9);
+  }
+}
+
+// ---------- prévia ----------
+let t0 = performance.now();
+const restart = () => (t0 = performance.now());
+$('playBtn').onclick = restart;
+$('panel').addEventListener('input', (e) => { if (['text', 'stagger', 'charDur', 'outAnim'].includes(e.target.id)) restart(); });
+const total = () => { const s = S(); return timing(s, (s.upper ? s.text.toUpperCase() : s.text).replace(/\s/g, '').length).total; };
+const ex = EXPORT.mount($('exp'), {
+  canvas: cv, draw: drawAt, seconds: () => total() + (LOOPING.includes(S().effect) && !S().outAnim ? 0 : .2),
+  name: () => 'texto-' + S().text.slice(0, 24), defaultRes: '1920x1080',
+  prepare: () => EXPORT.loadFont(S().weight, S().font, S().text),
+  onSettings: (s) => $('pv').classList.toggle('chk', s.transp),
+});
+(function loop() {
+  if (!ex.busy) {
+    const t = (performance.now() - t0) / 1000;
+    drawAt(Math.min(t, total()), ex.settings().transp);
+    if (t > total() + .8) restart();
+  }
+  requestAnimationFrame(loop);
+})();
+setEffect('pop');
+document.fonts.ready.then(restart);
+</script>
+</body>
+</html>

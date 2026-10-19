@@ -314,6 +314,7 @@ const drop = $('drop');
 drop.onclick = () => $('file').click();
 drop.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') $('file').click(); };
 $('file').onchange = (e) => { addFiles(e.target.files); e.target.value = ''; };
+OS.onInbox((f) => addFiles([f]), /^image\//);
 window.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('over'); });
 window.addEventListener('dragleave', (e) => { if (!e.relatedTarget) drop.classList.remove('over'); });
 window.addEventListener('drop', (e) => {
