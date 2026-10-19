@@ -21,7 +21,7 @@
     bars.forEach((b, i) => { x.fillStyle = b; x.fillRect(24 + i * 34, 24, 34, 60); });
     x.font = `bold ${h * .09}px Tahoma, sans-serif`;
     x.textAlign = 'center'; x.fillStyle = '#fff'; x.shadowColor = '#000'; x.shadowBlur = 12;
-    x.fillText('ImAPNG', w / 2, h * .2);
+    x.fillText('EdiTools', w / 2, h * .2);
     return c;
   }
 

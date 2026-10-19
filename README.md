@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🖼️ editools
+# 🖼️ EdiTools
 
 **Ferramentas gratuitas pra quem edita vídeo, numa área de trabalho retrô.**
 Legenda automática com IA, removedor de fundo, conversa animada, terminal, thumbnail, texto 3D, VHS, petpet e muito mais, direto no navegador.
@@ -13,7 +13,7 @@ Legenda automática com IA, removedor de fundo, conversa animada, terminal, thum
 ![PWA](https://img.shields.io/badge/PWA-offline-5A0FC8?style=flat-square&logo=pwa&logoColor=white)
 ![Sem build](https://img.shields.io/badge/build-nenhum-success?style=flat-square)
 
-<img src="docs/index.png" alt="Área de trabalho do editools no tema Windows XP" width="900">
+<img src="docs/index.png" alt="Área de trabalho do EdiTools no tema Windows XP" width="900">
 
 </div>
 
@@ -35,7 +35,7 @@ Legenda automática com IA, removedor de fundo, conversa animada, terminal, thum
 | | Ferramenta | O que faz |
 |:-:|---|---|
 | 💬 | **Legenda automática** | A IA Whisper transcreve o vídeo palavra por palavra. 10 estilos prontos (destaque amarelo, karaokê, caixinha na palavra, neon…), tudo personalizável. Exporta SRT, VTT, legenda transparente ou o vídeo já legendado |
-| 📱 | **Conversa animada** | Vídeo de chat mensagem por mensagem, com "digitando…", ✓✓ de lida, imagens, grupos e som de notificação. 5 visuais genéricos |
+| 📱 | **Conversa animada** | Vídeo de chat mensagem por mensagem, com "digitando…", ✓✓ de lida, imagens, grupos e som de notificação. 7 visuais genéricos, incluindo um **chat com IA** em que a resposta vai sendo escrita aos poucos |
 | 🖱️ | **Gravador de scroll** | Transforma o print da página inteira num vídeo rolando, com paradas, moldura de navegador, celular ou notebook |
 | ⌨️ | **Terminal** | Janela de terminal bonita (14 temas, 10 fontes, macOS/Windows/Linux) em PNG, SVG, área de transferência ou vídeo com a digitação acontecendo |
 | 📼 | **Modulador VHS** | Ruído, scanlines, glitch, sangramento de cor e letreiro de câmera em foto ou vídeo |
@@ -79,7 +79,7 @@ Legenda automática com IA, removedor de fundo, conversa animada, terminal, thum
 
 Na área de trabalho e no menu Iniciar também tem atalhos pros sites do **Photoshop**, **After Effects**, **Premiere Pro** e **Illustrator**.
 
-> Quase tudo que gera vídeo exporta em **MP4**, **WEBM com transparência** ou **sequência PNG**, quadro a quadro (pode trocar de aba enquanto gera).
+> Tudo que tem fundo tem a opção de **fundo transparente**. Quase tudo que gera vídeo exporta em **MP4**, **WEBM com transparência** ou **sequência PNG**, quadro a quadro (pode trocar de aba enquanto gera).
 
 ## 📸 Telas
 

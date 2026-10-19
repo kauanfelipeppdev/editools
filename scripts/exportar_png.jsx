@@ -1,4 +1,4 @@
-// ImAPNG · Exportar PNG
+// EdiTools · Exportar PNG
 // Salva o frame atual da composição ativa como PNG (com transparência), sem passar pela fila de render.
 (function () {
     var comp = app.project.activeItem;

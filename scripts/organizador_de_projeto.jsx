@@ -1,4 +1,4 @@
-// ImAPNG · Organizador de projeto
+// EdiTools · Organizador de projeto
 // Joga cada item solto do painel Project na pasta certa: Comps, Vídeos, Áudios, Imagens, Sólidos e Outros.
 (function () {
     var proj = app.project;

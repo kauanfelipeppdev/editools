@@ -1,7 +1,7 @@
-/* Service worker do ImAPNG: deixa o site abrir offline.
+/* Service worker do EdiTools: deixa o site abrir offline.
    Páginas: tenta a rede primeiro (pra pegar atualização) e cai no cache sem internet.
    Bibliotecas e fontes das CDNs: cache primeiro, atualizando por trás. */
-const VERSION = 'imapng-v3';
+const VERSION = 'imapng-v4';
 const SHELL = [
   './',
   'arquivos.html',

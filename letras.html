@@ -3,10 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Letras recortadas · ImAPNG</title>
+<title>Letras recortadas · EdiTools</title>
 <link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
 <script src="assets/os.js"></script>
 <link rel="stylesheet" href="assets/os.css">
+<script src="assets/export.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Alfa+Slab+One&family=Anton&family=Archivo+Black&family=Bebas+Neue&family=Bodoni+Moda:wght@700;900&family=Courier+Prime:wght@700&family=DM+Serif+Display&family=Lobster&family=Oswald:wght@700&family=Permanent+Marker&family=Playfair+Display:ital,wght@0,900;1,900&family=Rubik+Mono+One&family=Shrikhand&family=Ultra&display=swap">
@@ -63,6 +64,7 @@ aqui</textarea>
                 <select id="dur" style="flex:1"><option value="3">3 s</option><option value="5" selected>5 s</option><option value="10">10 s</option></select>
               </div>
               <div class="btns grow"><button id="pngBtn">💾 Baixar imagem</button><button id="vidBtn">🎬 Vídeo (fundo verde)</button></div>
+              <button id="vidTBtn">🎬 Vídeo transparente (WEBM)</button>
             </div>
           </fieldset>
         </div>
@@ -292,6 +294,25 @@ $('vidBtn').onclick = async () => {
   $('pv').classList.remove('green');
   btn.disabled = false;
   OS.download(blob, 'letras-fundo-verde.' + ext);
+};
+
+$('vidTBtn').onclick = async () => {
+  const btn = $('vidTBtn'), label = btn.textContent; btn.disabled = true;
+  const was = !!anim; stopAnim();
+  W = cv.width = Math.ceil(W * 1.06 / 2) * 2; H = cv.height = Math.ceil(H * 1.06 / 2) * 2; lockSize = true; layout();
+  // quadro a quadro: a cada "batida" da animação as letras trocam, igual na prévia
+  const afps = +$('fps').value;
+  let lastK = -1;
+  try {
+    await EXPORT.encode({
+      canvas: cv, fmt: 'webm', transp: true, fps: 30, seconds: +$('dur').value, name: 'letras-transparente',
+      draw: (t) => { const k = Math.floor(t * afps); if (k !== lastK) { lastK = k; if (k) tick(); else draw(); } else draw(); },
+      onProgress: (p) => (btn.textContent = `⏳ ${Math.round(p * 100)}%`),
+    });
+  } catch (e) { console.error(e); OS.dialog('Erro', 'Não consegui gerar o vídeo transparente. Tente o Chrome ou Edge.', '❌'); }
+  lockSize = false; letters.forEach((l) => { l.jx = l.jy = l.ja = 0; }); layout();
+  btn.textContent = label; btn.disabled = false;
+  if (was) startAnim();
 };
 
 generate(true);

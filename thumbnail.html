@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Thumbnail · ImAPNG</title>
+<title>Thumbnail · EdiTools</title>
 <link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
 <script src="assets/os.js"></script>
 <link rel="stylesheet" href="assets/os.css">
@@ -108,7 +108,7 @@ const cv = $('cv'), ctx = cv.getContext('2d');
 const W = 1280, H = 720;
 const FONTS = ['Anton', 'Bebas Neue', 'Bangers', 'Bungee', 'Luckiest Guy', 'Montserrat', 'Poppins', 'Inter', 'Permanent Marker', 'Impact', 'Arial'];
 let layers = [], sel = null, uid = 0;
-const bg = { img: null, color1: '#1d4ed8', color2: '#9333ea', grad: true, blur: 0, dark: 0 };
+const bg = { img: null, color1: '#1d4ed8', color2: '#9333ea', grad: true, blur: 0, dark: 0, none: false };
 
 // ---------- camadas ----------
 const DEF = {
@@ -201,9 +201,13 @@ function drawLayer(l) {
   return b;
 }
 
-function draw(forExport) {
+function draw(forExport, jpg) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  // fundo
+  ctx.clearRect(0, 0, W, H);
+  cv.classList.toggle('chk', bg.none);
+  // fundo (sem fundo = PNG transparente; o JPG não guarda transparência, então sai branco)
+  if (bg.none) { if (jpg) { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H); } }
+  else {
   if (bg.grad) { const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, bg.color1); g.addColorStop(1, bg.color2); ctx.fillStyle = g; } else ctx.fillStyle = bg.color1;
   ctx.fillRect(0, 0, W, H);
   if (bg.img) {
@@ -213,6 +217,7 @@ function draw(forExport) {
     ctx.filter = 'none';
   }
   if (bg.dark) { ctx.fillStyle = `rgba(0,0,0,${bg.dark / 100})`; ctx.fillRect(0, 0, W, H); }
+  }
   for (const l of layers) drawLayer(l);
   if (forExport) return;
   if ($('thirds').checked) { ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 1; for (let i = 1; i < 3; i++) { ctx.beginPath(); ctx.moveTo(W * i / 3, 0); ctx.lineTo(W * i / 3, H); ctx.moveTo(0, H * i / 3); ctx.lineTo(W, H * i / 3); ctx.stroke(); } }
@@ -285,7 +290,7 @@ function renderProps() {
   $('propTitle').textContent = l ? 'Propriedades · ' + label(l) : 'Fundo';
   let h = '';
   if (!l) {
-    h = `<div class="btns"><button id="bgImgBtn">🖼️ Imagem de fundo</button><button id="bgImgClr">✕</button></div>` + F.color('color1', 'Cor 1') + F.color('color2', 'Cor 2') + F.check('grad', 'Gradiente') + F.range('blur', 'Desfoque da imagem', 0, 30) + F.range('dark', 'Escurecer', 0, 80);
+    h = F.check('none', 'Fundo transparente (sem fundo)') + `<div class="btns"><button id="bgImgBtn">🖼️ Imagem de fundo</button><button id="bgImgClr">✕</button></div>` + F.color('color1', 'Cor 1') + F.color('color2', 'Cor 2') + F.check('grad', 'Gradiente') + F.range('blur', 'Desfoque da imagem', 0, 30) + F.range('dark', 'Escurecer', 0, 80);
   } else {
     if (l.type === 'image') h = `<div class="btns"><button id="swapImg">🖼️ Trocar imagem</button><button id="fitBg">🎨 Usar como fundo</button></div>` + F.range('w', 'Largura', 40, 1600) + F.range('outline', 'Contorno (figurinha)', 0, 30) + F.color('outlineColor', 'Cor do contorno') + F.range('shadow', 'Sombra', 0, 80) + F.check('flip', 'Espelhar');
     if (l.type === 'text') h = F.text('text', 'Texto', true) + F.select('font', 'Fonte', FONTS) + F.range('size', 'Tamanho', 20, 400) + F.color('color', 'Cor') + F.range('stroke', 'Contorno', 0, 40) + F.color('strokeColor', 'Cor do contorno') + F.range('shadow', 'Sombra', 0, 80) + F.check('boxOn', 'Caixa atrás do texto') + F.color('boxColor', 'Cor da caixa') + F.check('upper', 'Tudo maiúsculo') + F.range('lineH', 'Espaço entre linhas', .7, 1.6, .05);
@@ -402,9 +407,9 @@ document.addEventListener('tabchange', (e) => {
 ['vTitle', 'vChannel', 'vDur', 'feedDark'].forEach((id) => $(id).addEventListener('input', () => !$('feed').hidden && renderFeed()));
 
 // ---------- exportar ----------
-async function exportCanvas() {
+async function exportCanvas(jpg) {
   const [ow, oh] = $('outSize').value.split('x').map(Number);
-  draw(true);
+  draw(true, jpg);
   if (ow === W) return cv;
   const c = document.createElement('canvas'); c.width = ow; c.height = oh;
   const x = c.getContext('2d'); x.imageSmoothingQuality = 'high'; x.drawImage(cv, 0, 0, ow, oh);
@@ -412,7 +417,7 @@ async function exportCanvas() {
 }
 $('pngBtn').onclick = async () => { const c = await exportCanvas(); OS.download(await OS.canvasBlob(c), 'thumbnail.png'); };
 $('jpgBtn').onclick = async () => {
-  const c = await exportCanvas();
+  const c = await exportCanvas(true);
   let q = .95, blob;
   do { blob = await OS.canvasBlob(c, 'image/jpeg', q); q -= .07; } while (blob.size > 2e6 && q > .3);
   OS.download(blob, 'thumbnail.jpg');

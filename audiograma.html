@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Audiograma · ImAPNG</title>
+<title>Audiograma · EdiTools</title>
 <link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
 <script src="assets/os.js"></script>
 <link rel="stylesheet" href="assets/os.css">
@@ -266,13 +266,13 @@ $('playBtn').onclick = () => (srcNode ? pause() : play());
 const now = () => (srcNode ? ac.currentTime - startedAt : pausedAt);
 
 const ex = EXPORT.mount($('exp'), {
-  canvas: cv, transparent: false, draw: drawAt, seconds: () => +$('len').value, name: () => name + '-audiograma', defaultRes: '1080x1080',
-  formats: ['mp4', 'webm'],
+  canvas: cv, draw: drawAt, seconds: () => +$('len').value, name: () => name + '-audiograma', defaultRes: '1080x1080',
+  onSettings: (st) => $('pv').classList.toggle('chk', st.transp),
   prepare: async () => { if (!buf) throw Object.assign(new Error('sem áudio'), { userMsg: 'Abra um áudio primeiro.' }); pause(); await EXPORT.loadFont(900, $('font').value); },
   audio: () => EXPORT.sliceAudio(buf, +$('from').value, +$('len').value),
 });
 (function loop() {
-  if (!ex.busy) drawAt(Math.min(now(), +$('len').value), false);
+  if (!ex.busy) drawAt(Math.min(now(), +$('len').value), ex.settings().transp);
   requestAnimationFrame(loop);
 })();
 </script>

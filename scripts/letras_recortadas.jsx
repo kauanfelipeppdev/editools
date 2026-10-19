@@ -1,4 +1,4 @@
-// ImAPNG · Letras recortadas
+// EdiTools · Letras recortadas
 // Transforma a camada de texto selecionada em letras separadas, cada uma num "recorte de revista"
 // (caixa colorida atrás, rotação e tamanho aleatórios). Tem tremida stop motion opcional.
 (function () {

@@ -1,9 +1,9 @@
-// ImAPNG · Script Manager
+// EdiTools · Script Manager
 // Painel com um botão pra cada script .jsx da mesma pasta. Coloque esta pasta inteira em
 // "Scripts/ScriptUI Panels" e abra pelo menu Window > script_manager.jsx (dá pra encaixar na interface).
 (function (thisObj) {
     var here = File($.fileName).parent;
-    var win = thisObj instanceof Panel ? thisObj : new Window("palette", "ImAPNG Scripts", undefined, { resizeable: true });
+    var win = thisObj instanceof Panel ? thisObj : new Window("palette", "EdiTools Scripts", undefined, { resizeable: true });
     win.orientation = "column";
     win.alignChildren = ["fill", "top"];
     win.spacing = 4;

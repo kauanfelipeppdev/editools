@@ -10,8 +10,8 @@
     'Minimizar': 'Minimize', 'Maximizar': 'Maximize', 'Fechar': 'Close', 'Atalhos da área de trabalho': 'Desktop shortcuts', 'Abre o site da Adobe': "Opens Adobe's website",
     'Arquivo': 'File', 'Editar': 'Edit', 'Exibir': 'View', 'Ajuda': 'Help', 'Formatar': 'Format', 'NOVO': 'NEW', 'Escolha a versão do Windows': 'Pick your Windows version',
     'Ferramentas gratuitas pra quem edita vídeo. Tudo roda no seu navegador: suas imagens não saem do computador': 'Free tools for video editors. Everything runs in your browser: your images never leave your computer',
-    'Bem-vindo ao ImAPNG!\n\nMova tudo: no computador, clique na barra de título de qualquer janela e arraste.\n\nRemovedor de fundo: tira o fundo de várias imagens de uma vez, com retoque no pincel.\n\nCriador de botões: monte o botão com o estilo que quiser e baixe em PNG transparente.\n\nSolte um arquivo em cima de um ícone pra abrir a ferramenta já com ele.\n\nTudo que você baixa fica em Meus arquivos, e de lá vai pra outra ferramenta com "Enviar para…".\n\nMenu Iniciar: todas as ferramentas, os programas da Adobe, papel de parede e idioma':
-      'Welcome to ImAPNG!\n\nMove things around: on a computer, click any window\'s title bar and drag.\n\nBackground remover: removes the background from many images at once, with brush touch-ups.\n\nButton maker: build a button in any style and download a transparent PNG.\n\nDrop a file on an icon to open that tool with it already loaded.\n\nEverything you download goes to My files, and from there to another tool with "Send to…".\n\nStart menu: all tools, Adobe apps, wallpaper and language',
+    'Bem-vindo ao EdiTools!\n\nMova tudo: no computador, clique na barra de título de qualquer janela e arraste.\n\nRemovedor de fundo: tira o fundo de várias imagens de uma vez, com retoque no pincel.\n\nCriador de botões: monte o botão com o estilo que quiser e baixe em PNG transparente.\n\nSolte um arquivo em cima de um ícone pra abrir a ferramenta já com ele.\n\nTudo que você baixa fica em Meus arquivos, e de lá vai pra outra ferramenta com "Enviar para…".\n\nMenu Iniciar: todas as ferramentas, os programas da Adobe, papel de parede e idioma':
+      'Welcome to EdiTools!\n\nMove things around: on a computer, click any window\'s title bar and drag.\n\nBackground remover: removes the background from many images at once, with brush touch-ups.\n\nButton maker: build a button in any style and download a transparent PNG.\n\nDrop a file on an icon to open that tool with it already loaded.\n\nEverything you download goes to My files, and from there to another tool with "Send to…".\n\nStart menu: all tools, Adobe apps, wallpaper and language',
     'dicas.txt - Bloco de Notas': 'tips.txt - Notepad', 'ajuda.txt - Bloco de Notas': 'help.txt - Notepad', 'lembrete.txt - Bloco de Notas': 'reminder.txt - Notepad', 'dicas_de_uso.txt - Bloco de Notas': 'how_to_use.txt - Notepad',
     'ajuda.txt': 'help.txt', 'leia-me.txt': 'readme.txt', 'como_instalar.txt': 'how_to_install.txt', 'como_tirar_o_print.txt': 'how_to_take_the_screenshot.txt', 'ferramentas.exe': 'tools.exe', 'temas.exe': 'themes.exe',
     'Propriedades de Vídeo': 'Display Properties', 'Papel de parede': 'Wallpaper', 'Proteção de tela': 'Screensaver', 'Aguardar': 'Wait', 'Visualizar': 'Preview', 'Cor sólida…': 'Solid color…', 'Minha imagem…': 'My image…',
@@ -86,7 +86,7 @@
     'scripts.exe': 'scripts.exe', 'scripts para After Effects': 'After Effects scripts',
     'meus_arquivos.exe': 'my_files.exe', 'tudo que você exportou fica guardado aqui': 'everything you exported is kept here',
     'links.exe': 'links.exe', 'links, conversor MP4 → MP3 e mais': 'links, MP4 → MP3 converter and more',
-    'gerador_de_letras_recortadas.exe': 'ransom_letters_maker.exe', 'DVDficar_sua_logo.exe': 'DVD_your_logo.exe', 'meus_links.exe': 'my_links.exe', 'winamp_imapng.exe': 'winamp_imapng.exe',
+    'gerador_de_letras_recortadas.exe': 'ransom_letters_maker.exe', 'DVDficar_sua_logo.exe': 'DVD_your_logo.exe', 'meus_links.exe': 'my_links.exe', 'winamp_editools.exe': 'winamp_editools.exe',
     'conversor_mp4_mp3.exe': 'mp4_to_mp3.exe', 'conversor_mp4_to_mp3.exe': 'mp4_to_mp3.exe',
 
     // ---------- títulos das páginas ----------
@@ -181,6 +181,13 @@
     'Não reconheci o link. Use algo como https://www.youtube.com/@seucanal': "I didn't recognize the link. Use something like https://www.youtube.com/@yourchannel", 'Cole a chave da API primeiro (veja "Como pegar a chave da API")': 'Paste the API key first (see "How to get the API key")',
     'Peguei o nome e os inscritos, mas a foto não carregou. Use "Foto do canal"': 'Got the name and subscribers, but the photo did not load. Use "Channel photo"', 'canal não encontrado': 'channel not found',
     'a chave da API é inválida': 'the API key is invalid', 'a cota diária da chave acabou': "the key's daily quota ran out", 'ative a YouTube Data API v3 no projeto da chave': "enable the YouTube Data API v3 in the key's project", '(o canal esconde os inscritos)': '(the channel hides its subscribers)',
+
+
+    // ---------- fundo transparente / chat com IA ----------
+    'Fundo transparente (grava em WEBM)': 'Transparent background (records WEBM)', 'Vídeo transparente (WEBM)': 'Transparent video (WEBM)', 'Fundo transparente (sem fundo)': 'Transparent background (none)',
+    'Não consegui gerar o vídeo transparente. Tente o Chrome ou Edge': "Couldn't create the transparent video. Try Chrome or Edge",
+    'Chat com IA': 'AI chat', 'Chat com IA (escuro)': 'AI chat (dark)', 'Chat com IA (claro)': 'AI chat (light)', 'resposta escrita aos poucos': 'answer typed out bit by bit', 'Assistente': 'Assistant',
+    'Pensando…': 'Thinking…', 'Pensando': 'Thinking', 'Pergunte alguma coisa': 'Ask anything',
 
     // ---------- terminal ----------
     'Exportar PNG': 'Export PNG', 'Copiar imagem': 'Copy image', 'Título da janela': 'Window title', 'Comandos e saída': 'Commands and output', 'Prompt': 'Prompt', 'Antes do prompt': 'Before the prompt', 'ex: user@pc ~/app': 'e.g. user@pc ~/app',
@@ -366,7 +373,7 @@
 
   // Frases com números ou nomes no meio
   const RULES = [
-    [/^(.+) · ImAPNG$/, (m) => `${t(m[1])} · ImAPNG`],
+    [/^(.+) · EdiTools$/, (m) => `${t(m[1])} · EdiTools`],
     [/^quadro (\d+) de (\d+)$/, 'frame $1 of $2'],
     [/^codificando quadro (\d+) de (\d+)$/, 'encoding frame $1 of $2'],
     [/^(\d+) arquivo\(s\) · (.+) usados$/, '$1 file(s) · $2 used'],
@@ -390,6 +397,7 @@
     [/^Concluído! (.+)$/, 'Done! $1'],
     [/^Não deu: (.+)$/, (m) => `Couldn't do it: ${t(m[1])}`],
     [/^gravando… (.+)$/, 'recording… $1'],
+    [/^gerando… (.+)$/, 'rendering… $1'],
     [/^salvo! (.+)$/, 'saved! $1'],
     [/^Status: ● GRAVANDO · (.+)$/, 'Status: ● RECORDING · $1'],
     [/^Status: rodando · (.+) · processamento local$/, 'Status: running · $1 · local processing'],

@@ -1,4 +1,4 @@
-/* ImAPNG OS — base compartilhada: temas, janelas arrastáveis, barra de tarefas e utilitários. */
+/* EdiTools OS — base compartilhada: temas, janelas arrastáveis, barra de tarefas e utilitários. */
 (function () {
   const THEMES = {
     '98': { name: 'Windows 98', css: 'https://unpkg.com/98.css@0.1.21/dist/98.css' },
@@ -227,7 +227,7 @@
       <div class="tasks"></div>
       <div class="tray"><button class="tray-lang" title="Idioma / Language">${LANG === 'en' ? 'EN' : 'PT'}</button><span class="tray-files" title="Meus arquivos">📂</span><span class="tray-theme" title="Trocar tema">🎨</span><time></time></div>
       <div class="startmenu" role="menu" hidden>
-        <div class="sm-head"><span class="sm-avatar">🖼️</span><b>ImAPNG</b></div>
+        <div class="sm-head"><span class="sm-avatar">🖼️</span><b>EdiTools</b></div>
         <div class="sm-body">
           <a href="index.html" class="sm-item" role="menuitem"><span>🏠</span>Área de trabalho</a>
           <div class="sm-sep"></div>
@@ -489,7 +489,7 @@
       <div class="btns end"><button id="setOk">OK</button></div>
     </div></div>`;
     document.body.appendChild(w);
-    w.querySelector('#setText').value = store.get('saverText', 'ImAPNG');
+    w.querySelector('#setText').value = store.get('saverText', 'EdiTools');
     buildWindow(w);
     if (LANG === 'en' && window.I18N) window.I18N.apply(w);
     const $ = (id) => w.querySelector('#' + id);
@@ -543,7 +543,7 @@
       const x = cv.getContext('2d');
       const fit = () => { cv.width = innerWidth; cv.height = innerHeight; };
       fit(); addEventListener('resize', fit);
-      const text = store.get('saverText', 'ImAPNG') || 'ImAPNG';
+      const text = store.get('saverText', 'EdiTools') || 'EdiTools';
       const W = () => cv.width, H = () => cv.height;
       let st = {};
       const hue = () => `hsl(${(Date.now() / 20) % 360} 90% 60%)`;

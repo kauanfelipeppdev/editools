@@ -1,4 +1,4 @@
-// ImAPNG · Expressões em massa
+// EdiTools · Expressões em massa
 // Selecione propriedades (ex.: Position de várias camadas) e aplique a mesma expressão em todas de uma vez.
 (function () {
     var comp = app.project.activeItem;

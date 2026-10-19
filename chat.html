@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Conversa animada · ImAPNG</title>
+<title>Conversa animada · EdiTools</title>
 <link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
 <script src="assets/os.js"></script>
 <link rel="stylesheet" href="assets/os.css">
@@ -47,7 +47,7 @@
           <div class="tabpanel" role="tabpanel" id="t2" hidden>
             <div class="stack">
               <div class="two">
-                <label class="field"><span>Tema</span><select id="theme"><option value="light">Claro</option><option value="dark">Escuro</option><option value="green">Verde</option><option value="purple">Roxo neon</option><option value="retro">Bate-papo 2000</option></select></label>
+                <label class="field"><span>Tema</span><select id="theme"><option value="light">Claro</option><option value="dark">Escuro</option><option value="green">Verde</option><option value="purple">Roxo neon</option><option value="retro">Bate-papo 2000</option><option value="ai">Chat com IA (escuro)</option><option value="ailight">Chat com IA (claro)</option></select></label>
                 <label class="field"><span>Enquadramento</span><select id="frame"><option value="full">Tela inteira</option><option value="phone">Celular no meio</option><option value="bubbles">Só as mensagens</option></select></label>
                 <label class="field"><span>Fonte</span><select id="font"><option>Inter</option><option>Roboto</option><option>Nunito</option><option>Arial</option><option>Comic Sans MS</option></select></label>
                 <label class="field"><span>Hora inicial</span><input type="time" id="clock" value="21:30"></label>
@@ -134,6 +134,12 @@ const PRESETS = [
   { n: '🛍️ Cliente e loja', d: 'atendimento rápido', theme: 'green', names: ['Você', 'Loja'], script: `--- Hoje\nA: oi! ainda tem o tênis branco 42?\nB: Olá! Temos sim 😊\nB: Quer que eu separe pra você?\nA: quero!! chega até sexta?\nB: Chega amanhã 🚚\nA: perfeito, obrigado!\nB: Nós que agradecemos 💚` },
   { n: '👻 Terror', d: 'mensagem que assusta', theme: 'dark', names: ['Você', 'Desconhecido'], script: `B: oi\nA: quem é?\nB: olha pra trás\nA: kkk engraçadinho\nB: bonita sua blusa azul\nA: …\nA: como você sabe disso\nB: 🙂` },
   { n: '👯 Grupo de amigos', d: '3 pessoas', theme: 'purple', names: ['Você', 'Ana', 'Leo'], script: `B: quem vai no show sábado?\nC: eu!!!\nA: bora 🔥\nB: vou comprar os ingressos agora\nC: compra pra mim tbm\nA: e pra mim 👀\nB: pix de vocês tá me devendo desde 2023 😂` },
+  { n: '🤖 Chat com IA', d: 'resposta escrita aos poucos', theme: 'ai', names: ['Você', 'Assistente'], script: `A: me explica o que é chroma key em poucas palavras
+B: Chroma key é a técnica de gravar na frente de um fundo de cor única (quase sempre verde) e depois trocar essa cor por outra imagem na edição.\\nÉ assim que o apresentador do tempo aparece na frente do mapa. 🌦️
+A: e por que verde?
+B: Porque o verde quase não aparece na pele humana, então o programa consegue separar a pessoa do fundo sem apagar ninguém.\\nAs câmeras digitais também captam o verde com mais detalhe, o que deixa o recorte mais limpo.
+A: valeu!!
+B: Por nada! Se quiser, posso te passar um passo a passo pra fazer no seu editor. ✂️` },
   { n: '💾 Bate-papo 2000', d: 'janela retrô', theme: 'retro', names: ['xX_Voce_Xx', 'gatinha_2003'], script: `B: oiii td bem?\nA: td e vc?\nB: blz :D\nB: vc viu o clipe novo??\nA: aaaa vi sim!!!\nB: chamou o fulano pro chat?\nA: ele saiu kkkk` },
 ];
 EXPORT.presets($('presets'), PRESETS, (p) => {
@@ -153,6 +159,9 @@ const TH = {
   green: { bg: '#ece5dd', head: '#1f8a70', headInk: '#fff', meta: '#6d7b77', me: '#d4f8c4', meInk: '#111', them: '#ffffff', themInk: '#111', input: '#ffffff', sep: '#d8eee8', tick: '#34b7f1', pattern: true },
   purple: { bg: ['#1b1033', '#2a1450'], head: 'rgba(255,255,255,.06)', headInk: '#fff', meta: '#a99bd3', me: ['#8b5cf6', '#ec4899'], meInk: '#fff', them: '#2e2547', themInk: '#f1ecff', input: 'rgba(255,255,255,.08)', sep: 'rgba(255,255,255,.1)', tick: '#ffd6f0' },
   retro: { bg: '#ffffff', head: ['#0a246a', '#a6caf0'], headInk: '#fff', meta: '#555', me: null, meInk: '#000', them: null, themInk: '#000', input: '#ffffff', sep: '#ccc', tick: '#000', retro: true },
+  // chat com IA (visual genérico de assistente): a resposta não tem bolha e vai sendo escrita aos poucos
+  ai: { bg: '#212121', head: '#212121', headInk: '#ececec', meta: '#9b9b9b', me: '#303030', meInk: '#ececec', them: null, themInk: '#ececec', input: '#303030', sep: '#2f2f2f', tick: '#fff', logo: '#ececec', logoInk: '#212121', ai: true },
+  ailight: { bg: '#ffffff', head: '#ffffff', headInk: '#0d0d0d', meta: '#8f8f8f', me: '#f1f1f1', meInk: '#0d0d0d', them: null, themInk: '#0d0d0d', input: '#f4f4f4', sep: '#ececec', tick: '#000', logo: '#0d0d0d', logoInk: '#ffffff', ai: true },
 };
 
 // ---------- roteiro → mensagens ----------
@@ -195,14 +204,21 @@ function build(sr) {
   let y = 0, t = .6, minute = 0;
   const [hh, mm] = ($('clock').value || '21:30').split(':').map(Number);
   const items = [];
-  const maxW = sr.w * (th.retro ? .9 : .72) - fs * 1.6;
+  const maxW = sr.w * (th.retro ? .9 : .72) - fs * 1.6, aiW = sr.w - fs * 4.4;
   msgs.forEach((m, i) => {
     if (m.sep) { items.push({ sep: m.sep, y, h: fs * 2.2, t }); y += fs * 2.6; return; }
     const me = m.who === 0, prev = msgs[i - 1];
     const firstOfRun = !prev || prev.sep || prev.who !== m.who;
-    const showName = !me && (group || th.retro) && firstOfRun;
+    const showName = !me && (group || th.retro) && firstOfRun && !th.ai;
     ctx.font = `400 ${m.big ? fs * 2.6 : fs}px "${font}"`;
-    let lines = [], bw, bh;
+    let lines = [], bw, bh, stream = 0;
+    if (th.ai && !m.img) {
+      // "\n" escrito no roteiro vira parágrafo
+      const paras = m.text.split('\\n');
+      if (me) { lines = paras.flatMap((p) => wrap(p, maxW)); bw = Math.max(...lines.map((l) => ctx.measureText(l).width)) + fs * 1.6; bh = lines.length * fs * 1.4 + fs * 1.0; }
+      else { lines = paras.flatMap((p, i) => [...(i ? [''] : []), ...wrap(p, aiW)]); bw = aiW; bh = lines.length * fs * 1.45 + fs * .4; stream = clamp(m.text.length * .028, .6, 8) * sp; }
+      if (m.big && me) bw = ctx.measureText(m.text).width + fs * .4;
+    } else {
     if (m.img) { bw = Math.min(maxW, sr.w * .6); bh = bw * m.img.height / m.img.width; bh = Math.min(bh, sr.h * .45); bw = bh * m.img.width / m.img.height; }
     else {
       lines = th.retro ? wrap(m.text, maxW) : wrap(m.text, maxW);
@@ -212,6 +228,7 @@ function build(sr) {
       bh = lines.length * fs * 1.3 + fs * (m.big ? .2 : 1) + (lines.length > 1 && metaW ? fs * .9 : 0);
       if (m.big) bw = lw + fs * .4;
     }
+    }
     const nameH = showName ? fs * 1.2 : 0;
     // tempo: digitando antes da mensagem
     const len = m.img ? 12 : m.text.length;
@@ -219,9 +236,9 @@ function build(sr) {
     const tType = t + pause, tShow = tType + ($('typing').checked || (me && $('inputType').checked) ? typeDur : .1);
     if (i && i % 3 === 0) minute++;
     const time = `${String((hh + Math.floor((mm + minute) / 60)) % 24).padStart(2, '0')}:${String((mm + minute) % 60).padStart(2, '0')}`;
-    items.push({ ...m, me, lines, bw, bh, nameH, y, h: nameH + bh, tType, tShow, time, firstOfRun, fs });
-    y += nameH + bh + (msgs[i + 1] && !msgs[i + 1].sep && msgs[i + 1].who === m.who ? fs * .3 : fs * .8);
-    t = tShow;
+    items.push({ ...m, me, lines, bw, bh, nameH, y, h: nameH + bh, tType, tShow, time, firstOfRun, fs, stream });
+    y += nameH + bh + (msgs[i + 1] && !msgs[i + 1].sep && msgs[i + 1].who === m.who ? fs * .3 : fs * (th.ai ? 1.4 : .8));
+    t = tShow + stream;
   });
   return { items, u, fs, font, th, total: t + 2 * sp, group, bubbles };
 }
@@ -247,11 +264,13 @@ function drawAt(t, transp) {
     ctx.fillStyle = '#0b0b0d'; ctx.beginPath(); ctx.roundRect(sr.x - bz, sr.y - bz, sr.w + bz * 2, sr.h + bz * 2, sr.w * .13); ctx.fill();
     ctx.beginPath(); ctx.roundRect(sr.x, sr.y, sr.w, sr.h, sr.w * .1); ctx.clip();
   } else { ctx.beginPath(); ctx.rect(sr.x, sr.y, sr.w, sr.h); ctx.clip(); }
-  if (!(bubbles && transp) && !bubbles) {
+  // com fundo transparente, some o papel de parede do chat (ficam as mensagens, o topo e o campo de texto)
+  if (!bubbles && !transp) {
     ctx.fillStyle = fillOf(th.bg, sr.x, sr.y, 0, sr.h); ctx.fillRect(sr.x, sr.y, sr.w, sr.h);
     if (th.pattern) { ctx.fillStyle = 'rgba(0,0,0,.035)'; for (let py = 0; py < sr.h; py += 60 * u) for (let px = (py / (60 * u)) % 2 * 30 * u; px < sr.w; px += 60 * u) { ctx.beginPath(); ctx.arc(sr.x + px, sr.y + py, 6 * u, 0, 7); ctx.fill(); } }
   } else if (bubbles && !transp) { ctx.fillStyle = $('outside').value; ctx.fillRect(sr.x, sr.y, sr.w, sr.h); }
 
+  if (th.ai) { drawAI(t, sr, L, bubbles); ctx.restore(); return; }
   const headH = bubbles ? 0 : (sr.phone ? 210 : 190) * u, inputH = bubbles ? 0 : 150 * u;
   const viewTop = sr.y + headH + fs * .8, viewBot = sr.y + sr.h - inputH - fs * .8;
   // quanto já apareceu → rolagem
@@ -379,6 +398,127 @@ function drawAt(t, transp) {
     ctx.fillStyle = th.retro ? '#000' : th.meInk; ctx.font = `${40 * u}px sans-serif`; ctx.textAlign = 'center'; ctx.fillText(typingMe ? '➤' : '🎤', sx + 2 * u, sy + 2 * u);
   }
   ctx.restore();
+}
+
+// ---------- chat com IA ----------
+// ícone de gostei em contorno (Material Icons, Apache 2.0)
+const THUMB = new Path2D('M18.77 11h-4.23l1.52-4.94C16.38 5.03 15.54 4 14.38 4c-.58 0-1.14.24-1.52.65L7 11H3v10h4h1h9.43c1.06 0 1.98-.67 2.19-1.61l1.34-6C21.23 12.15 20.18 11 18.77 11zM7 20H4v-8h3V20zM19.98 13.17l-1.34 6C18.54 19.65 18.03 20 17.43 20H8v-8.61l5.6-6.06C13.79 5.12 14.08 5 14.38 5c.26 0 .5.11.63.3.07.1.15.26.09.47l-1.52 4.94L13.18 12h1.35h4.23c.41 0 .8.17 1.03.46.13.15.26.4.19.71z');
+function aiLogo(cx, cy, r, th, spin = 0) {
+  ctx.save(); ctx.translate(cx, cy);
+  ctx.fillStyle = th.logo; ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.fill();
+  ctx.rotate(spin); ctx.fillStyle = th.logoInk;
+  // estrelinha de 4 pontas
+  ctx.beginPath();
+  for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4, rr = i % 2 ? r * .2 : r * .62; ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); }
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function drawAI(t, sr, L, bubbles) {
+  const { th, u, fs, font } = L;
+  const headH = bubbles ? 0 : (sr.phone ? 190 : 160) * u, inputH = bubbles ? 0 : 190 * u;
+  const viewTop = sr.y + headH + fs * .8, viewBot = sr.y + sr.h - inputH - fs * .6, viewH = viewBot - viewTop;
+  const thinking = L.items.find((it) => !it.sep && !it.me && $('typing').checked && t >= it.tType && t < it.tShow);
+  // altura de cada item no instante t: cresce enquanto a resposta é escrita, então a rolagem fica contínua
+  const prog = (it) => (it.stream ? clamp((t - it.tShow) / it.stream) : 1);
+  const hNow = (it) => (it.sep ? it.h : it.me ? it.h * EASE.out(clamp((t - it.tShow) / .3)) : it.h * Math.max(.05, prog(it)));
+  const shown = L.items.filter((it) => t >= (it.sep ? it.t : it.tShow));
+  let bottom = 0;
+  shown.forEach((it) => (bottom = it.y + hNow(it)));
+  if (thinking) bottom += fs * 2.6;
+  const oy = viewTop - Math.max(0, bottom - viewH);
+  const lx = sr.x + fs * 2.6;
+  for (const it of shown) {
+    const y = oy + it.y;
+    if (it.sep) { ctx.font = `600 ${fs * .7}px "${font}"`; ctx.fillStyle = th.meta; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(it.sep, sr.x + sr.w / 2, y + fs); continue; }
+    if (y > viewBot + fs * 2 || y + it.h < viewTop - fs * 4) continue;
+    const age = t - it.tShow;
+    ctx.save(); ctx.globalAlpha = clamp(age / .2);
+    ctx.font = `400 ${it.big ? fs * 2.6 : fs}px "${font}"`; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    if (it.me) {
+      const x = sr.x + sr.w - fs * .9 - it.bw;
+      if (it.img) { ctx.beginPath(); ctx.roundRect(x, y, it.bw, it.bh, fs * .8); ctx.clip(); ctx.drawImage(it.img, x, y, it.bw, it.bh); }
+      else if (it.big) { ctx.textAlign = 'right'; ctx.fillText(it.text, x + it.bw, y); }
+      else {
+        ctx.fillStyle = th.me; ctx.beginPath(); ctx.roundRect(x, y, it.bw, it.bh, fs * 1.1); ctx.fill();
+        ctx.fillStyle = th.meInk; it.lines.forEach((l, j) => ctx.fillText(l, x + fs * .8, y + fs * .5 + j * fs * 1.4));
+      }
+    } else {
+      aiLogo(sr.x + fs * 1.3, y + fs * .55, fs * .62, th, it.stream && prog(it) < 1 ? t * 3 : 0);
+      if (it.img) ctx.drawImage(it.img, lx, y, it.bw, it.bh);
+      else {
+        // escreve aos poucos, com um pontinho no fim enquanto escreve
+        let left = Math.floor(it.lines.join(' ').length * prog(it)), lastX = lx, lastY = y;
+        ctx.fillStyle = th.themInk;
+        for (let j = 0; j < it.lines.length && left > 0; j++) {
+          const l = it.lines[j], part = l.slice(0, left);
+          ctx.fillText(part, lx, y + j * fs * 1.45);
+          left -= l.length + 1;
+          lastX = lx + ctx.measureText(part).width; lastY = y + j * fs * 1.45;
+        }
+        if (prog(it) < 1) { ctx.beginPath(); ctx.arc(lastX + fs * .45, lastY + fs * .5, fs * .28, 0, 7); ctx.fill(); }
+        else if ($('ticks').checked) {
+          // botões de ação embaixo da resposta: copiar, refazer, gostei / não gostei
+          ctx.globalAlpha *= clamp((t - it.tShow - it.stream) / .3);
+          ctx.strokeStyle = th.meta; ctx.lineWidth = Math.max(1, fs * .07); ctx.lineJoin = 'round';
+          const ay = y + it.bh - fs * .1, s = fs * .55;
+          ctx.strokeRect(lx, ay, s * .8, s); ctx.strokeRect(lx + s * .3, ay - s * .3, s * .8, s);
+          ctx.beginPath(); ctx.arc(lx + fs * 1.9, ay + s * .4, s * .5, .3, Math.PI * 1.8); ctx.stroke();
+          ctx.fillStyle = th.meta;
+          for (let k = 0; k < 2; k++) { ctx.save(); ctx.translate(lx + fs * (3.15 + k * 1.2), ay + s * .4); if (k) ctx.rotate(Math.PI); ctx.scale(s * 1.15 / 24, s * 1.15 / 24); ctx.translate(-12, -12); ctx.fill(THUMB); ctx.restore(); }
+        }
+      }
+    }
+    ctx.restore();
+  }
+  if (thinking) {
+    const last = shown[shown.length - 1];
+    const y = oy + (last ? last.y + hNow(last) + fs * 1.4 : 0);
+    aiLogo(sr.x + fs * 1.3, y + fs * .55, fs * .62, th, t * 2);
+    ctx.save(); ctx.font = `400 ${fs}px "${font}"`; ctx.textBaseline = 'top'; ctx.textAlign = 'left';
+    // "Pensando…" com um brilho passando pelo texto
+    const label = OS.T('Pensando…'), w = ctx.measureText(label).width;
+    const g = ctx.createLinearGradient(lx, 0, lx + w, 0), p = (t * .8) % 1.4 - .2;
+    g.addColorStop(0, th.meta); g.addColorStop(clamp(p - .15), th.meta); g.addColorStop(clamp(p), th.themInk); g.addColorStop(clamp(p + .15), th.meta); g.addColorStop(1, th.meta);
+    ctx.fillStyle = g; ctx.fillText(label, lx, y);
+    ctx.restore();
+  }
+  if (bubbles) return;
+  // topo: menu, nome do assistente e nova conversa
+  ctx.fillStyle = th.head; ctx.fillRect(sr.x, sr.y, sr.w, headH);
+  const hy = sr.y + headH - 60 * u;
+  ctx.strokeStyle = th.headInk; ctx.fillStyle = th.headInk; ctx.lineWidth = 5 * u; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  for (let i = 0; i < 2; i++) { ctx.beginPath(); ctx.moveTo(sr.x + 44 * u, hy - 10 * u + i * 20 * u); ctx.lineTo(sr.x + (i ? 72 : 88) * u, hy - 10 * u + i * 20 * u); ctx.stroke(); }
+  const title = $('chatName').value || PEOPLE[1].name;
+  ctx.font = `600 ${42 * u}px "${font}"`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(title, sr.x + sr.w / 2 - 14 * u, hy);
+  const tx = sr.x + sr.w / 2 - 14 * u + ctx.measureText(title).width / 2;
+  ctx.globalAlpha = .6; ctx.beginPath(); ctx.moveTo(tx + 12 * u, hy - 5 * u); ctx.lineTo(tx + 21 * u, hy + 4 * u); ctx.lineTo(tx + 30 * u, hy - 5 * u); ctx.stroke(); ctx.globalAlpha = 1;
+  const nx = sr.x + sr.w - 76 * u;
+  ctx.beginPath(); ctx.roundRect(nx - 18 * u, hy - 18 * u, 36 * u, 36 * u, 8 * u); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(nx - 4 * u, hy + 6 * u); ctx.lineTo(nx + 20 * u, hy - 18 * u); ctx.stroke();
+  // campo de texto
+  const iy = sr.y + sr.h - inputH;
+  ctx.fillStyle = th.bg; ctx.fillRect(sr.x, iy, sr.w, inputH);
+  const fx = sr.x + 30 * u, fw = sr.w - 60 * u, fh = 120 * u, fy = iy + 20 * u;
+  ctx.fillStyle = th.input; ctx.beginPath(); ctx.roundRect(fx, fy, fw, fh, fh / 2); ctx.fill();
+  ctx.fillStyle = th.meta; ctx.font = `300 ${54 * u}px sans-serif`; ctx.textAlign = 'center'; ctx.fillText('+', fx + 62 * u, fy + fh / 2 + 2 * u);
+  const typingMe = $('inputType').checked && L.items.find((it) => !it.sep && it.me && t >= it.tType && t < it.tShow);
+  ctx.font = `400 ${36 * u}px "${font}"`; ctx.textAlign = 'left';
+  if (typingMe) {
+    const full = typingMe.img ? '📷 ' + OS.T('Foto') : typingMe.text.replace(/\\n/g, ' ');
+    let txt = full.slice(0, Math.floor(full.length * clamp((t - typingMe.tType) / (typingMe.tShow - typingMe.tType - .15))));
+    while (ctx.measureText(txt).width > fw - 240 * u && txt.length) txt = txt.slice(1);
+    ctx.fillStyle = th.themInk; ctx.fillText(txt, fx + 110 * u, fy + fh / 2);
+    if (Math.floor(t * 3) % 2 === 0) ctx.fillRect(fx + 114 * u + ctx.measureText(txt).width, fy + fh * .3, 3 * u, fh * .4);
+  } else { ctx.fillStyle = th.meta; ctx.fillText(OS.T('Pergunte alguma coisa'), fx + 110 * u, fy + fh / 2); }
+  // botão de enviar: seta quando tem texto, quadradinho de "parar" enquanto a IA responde
+  const sx = fx + fw - 62 * u, sy = fy + fh / 2;
+  const busy = L.items.some((it) => !it.sep && !it.me && t >= it.tType && t < it.tShow + it.stream);
+  ctx.globalAlpha = typingMe || busy ? 1 : .45; ctx.fillStyle = th.themInk;
+  ctx.beginPath(); ctx.arc(sx, sy, 38 * u, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+  ctx.fillStyle = th.bg; ctx.strokeStyle = th.bg;
+  if (busy && !typingMe) ctx.fillRect(sx - 11 * u, sy - 11 * u, 22 * u, 22 * u);
+  else { ctx.lineWidth = 6 * u; ctx.beginPath(); ctx.moveTo(sx, sy + 16 * u); ctx.lineTo(sx, sy - 16 * u); ctx.moveTo(sx - 13 * u, sy - 3 * u); ctx.lineTo(sx, sy - 16 * u); ctx.lineTo(sx + 13 * u, sy - 3 * u); ctx.stroke(); }
 }
 
 // ---------- som das mensagens ----------

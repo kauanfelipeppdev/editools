@@ -1,4 +1,4 @@
-// ImAPNG · Importar SRT
+// EdiTools · Importar SRT
 // Lê um arquivo de legenda .srt e cria uma camada de texto para cada fala, já no tempo certo.
 (function () {
     var comp = app.project.activeItem;

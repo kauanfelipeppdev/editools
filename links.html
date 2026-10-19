@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Links · ImAPNG</title>
+<title>Links · EdiTools</title>
 <link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
 <script src="assets/os.js"></script>
 <link rel="stylesheet" href="assets/os.css">
@@ -42,7 +42,7 @@
   </div>
 
   <div class="col">
-    <section class="window" id="amp" data-title="winamp_imapng.exe" data-icon="🎵">
+    <section class="window" id="amp" data-title="winamp_editools.exe" data-icon="🎵">
       <div class="window-body">
         <div class="amp"><div class="marquee"><span id="now">Tocando agora: nada · clique em 📂 pra escolher suas músicas</span></div><canvas id="viz" width="600" height="120"></canvas></div>
         <div class="btns" style="margin-top:8px">
@@ -81,7 +81,7 @@
 
 <script>
 // ✏️ Coloque aqui os seus links (deixe url vazia pra esconder o botão).
-const HANDLE = 'ImAPNG';
+const HANDLE = 'EdiTools';
 const LINKS = [
   { icon: '🏠', label: 'Site (ferramentas)', url: 'index.html' },
   { icon: '✂️', label: 'Removedor de fundo', url: 'removedor.html' },
@@ -165,7 +165,7 @@ const CMDS = {
   tools: () => OS.TOOLS.map((t) => t.name).join('\n'),
   open: (a) => { const t = OS.TOOLS.find((t) => t.name.startsWith(a) || t.file.startsWith(a)); if (!t) return 'Arquivo não encontrado.'; setTimeout(() => (location.href = t.file), 400); return 'Abrindo ' + t.name + '…'; },
   date: () => new Date().toLocaleString('pt-BR'),
-  ping: () => `Disparando imapng.local\nResposta de 127.0.0.1: bytes=32 tempo<1ms TTL=128\nResposta de 127.0.0.1: bytes=32 tempo<1ms TTL=128\nResposta de 127.0.0.1: bytes=32 tempo<1ms TTL=128`,
+  ping: () => `Disparando editools.local\nResposta de 127.0.0.1: bytes=32 tempo<1ms TTL=128\nResposta de 127.0.0.1: bytes=32 tempo<1ms TTL=128\nResposta de 127.0.0.1: bytes=32 tempo<1ms TTL=128`,
   color: () => { const c = ['#c0c0c0', '#3f3', '#0ff', '#ff0', '#f6f']; cmd.style.color = c[(c.indexOf(cmd.dataset.c || '#c0c0c0') + 1) % c.length]; cmd.dataset.c = cmd.style.color; return ''; },
   cls: () => { while (cmd.firstChild !== line) cmd.removeChild(cmd.firstChild); return null; },
 };

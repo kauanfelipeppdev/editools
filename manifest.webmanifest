@@ -1,6 +1,6 @@
 {
-  "name": "ImAPNG · ferramentas pra edição",
-  "short_name": "ImAPNG",
+  "name": "EdiTools · ferramentas pra edição",
+  "short_name": "EdiTools",
   "description": "Ferramentas gratuitas pra quem edita vídeo, numa área de trabalho retrô. Tudo roda no navegador.",
   "start_url": "index.html",
   "scope": "./",

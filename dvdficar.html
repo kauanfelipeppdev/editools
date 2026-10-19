@@ -3,10 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DVDficar · ImAPNG</title>
+<title>DVDficar · EdiTools</title>
 <link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
 <script src="assets/os.js"></script>
 <link rel="stylesheet" href="assets/os.css">
+<script src="assets/export.js"></script>
 <style>
   #pv { background: #000; }
   #corner { position: absolute; top: 8px; right: 10px; color: #fff; font: bold 13px 'Courier New', monospace; text-shadow: 0 0 4px #000; display: none; }
@@ -33,6 +34,7 @@
               <label class="field"><span>Velocidade <output></output></span><input type="range" id="speed" min="1" max="20" value="6"></label>
               <label class="field"><span>Tamanho <output data-suffix="%"></output></span><input type="range" id="size" min="5" max="60" value="22"></label>
               <div class="row"><span class="lbl">Fundo:</span><input type="color" id="bg" value="#000000"><button id="rndBtn">🎲 Random</button></div>
+              <div class="field-row"><input type="checkbox" id="transp"><label for="transp">Fundo transparente (grava em WEBM)</label></div>
               <div class="field-row"><input type="checkbox" id="dyn" checked><label for="dyn">Cor dinâmica (muda a cada batida)</label></div>
               <div class="field-row"><input type="checkbox" id="trail"><label for="trail">Efeito rastro</label></div>
               <div class="field-row"><input type="checkbox" id="corners"><label for="corners">Contar batidas no canto 👀</label></div>
@@ -100,6 +102,11 @@ function retint() {
 let last = performance.now();
 function frame(now) {
   const dt = Math.min(50, now - last) / 16.67; last = now;
+  if (!exporting) { step(dt); render($('transp').checked); }
+  requestAnimationFrame(frame);
+}
+/** Anda a física da logo `dt` quadros de 60 fps. */
+function step(dt) {
   const s = size(), [lw, lh] = [tinted.width, tinted.height];
   const sp = +$('speed').value * (Math.min(s.w, s.h) / 1080) * 1.6;
   x += vx * sp * dt; y += vy * sp * dt;
@@ -112,15 +119,21 @@ function frame(now) {
     hue = (hue + 60 + Math.random() * 180) % 360;
     retint();
   }
+}
+function render(transp) {
+  const s = size();
   ctx.globalAlpha = $('trail').checked ? .12 : 1;
-  ctx.fillStyle = $('bg').value; ctx.fillRect(0, 0, s.w, s.h);
+  if (transp) {
+    // sem fundo: o rastro some apagando um pouco a cada quadro
+    if ($('trail').checked) { ctx.globalCompositeOperation = 'destination-out'; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, s.w, s.h); ctx.globalCompositeOperation = 'source-over'; }
+    else ctx.clearRect(0, 0, s.w, s.h);
+  } else { ctx.fillStyle = $('bg').value; ctx.fillRect(0, 0, s.w, s.h); }
   ctx.globalAlpha = 1;
   ctx.drawImage(tinted, x, y);
   if ($('corners').checked) {
     ctx.font = `bold ${s.h * .03}px Courier New, monospace`; ctx.fillStyle = '#fff'; ctx.textAlign = 'right';
     ctx.fillText(`batidas: ${hits}  cantos: ${cornerHits}`, s.w - s.w * .02, s.h * .05);
   }
-  requestAnimationFrame(frame);
 }
 
 async function setLogo(file) {
@@ -137,9 +150,25 @@ $('size').oninput = retint;
 $('dyn').onchange = retint;
 $('rndBtn').onclick = () => { $('bg').value = '#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0'); };
 
-let rec = null;
+let rec = null, exporting = false;
+$('transp').onchange = () => $('pv').classList.toggle('chk', $('transp').checked);
 $('recBtn').onclick = async () => {
-  if (rec) return finish();
+  if (rec || exporting) return rec && finish();
+  if ($('transp').checked) {
+    // transparente: quadro a quadro, simulando a física em passos fixos
+    exporting = true; $('recBtn').disabled = true;
+    const fps = 60;
+    try {
+      await EXPORT.encode({
+        canvas: cv, fmt: 'webm', transp: true, fps, seconds: +$('dur').value, name: 'dvdficar-transparente',
+        draw: (t, tr, i) => { if (i) step(60 / fps); render(true); },
+        onProgress: (p) => ($('st').textContent = `> gerando… ${Math.round(p * 100)}%`),
+      });
+      $('st').textContent = '> pronto!';
+    } catch (e) { console.error(e); OS.dialog('Erro', 'Não consegui gerar o vídeo transparente. Tente o Chrome ou Edge.', '❌'); }
+    exporting = false; $('recBtn').disabled = false;
+    return;
+  }
   if (!window.MediaRecorder) return OS.dialog('Sem suporte', 'Seu navegador não grava vídeo. Use Chrome ou Edge.', '❌');
   rec = OS.recordCanvas(cv, { fps: 60, bitrate: 16e6 });
   $('recBtn').textContent = '⏹ Parar';

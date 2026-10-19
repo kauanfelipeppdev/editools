@@ -1,4 +1,4 @@
-// ImAPNG · Logo DVD
+// EdiTools · Logo DVD
 // Faz a camada selecionada quicar pelas bordas da composição igual ao descanso de tela do DVD,
 // trocando de cor a cada batida (efeito Fill + expressão).
 (function () {

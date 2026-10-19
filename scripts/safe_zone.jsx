@@ -1,4 +1,4 @@
-// ImAPNG · Safe Zone
+// EdiTools · Safe Zone
 // Cria uma camada guia (não aparece no render) com as áreas seguras de TikTok, Reels e Shorts
 // na composição ativa. Uso: selecione a comp e rode o script (File > Scripts > Run Script File).
 (function () {

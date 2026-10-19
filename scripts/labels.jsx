@@ -1,4 +1,4 @@
-// ImAPNG · Labels
+// EdiTools · Labels
 // Pinta a cor (label) de cada camada da comp ativa de acordo com o tipo:
 // texto, forma, sólido, ajuste, null, câmera/luz, vídeo, imagem, áudio e pré-comp.
 (function () {
