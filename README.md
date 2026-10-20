@@ -63,6 +63,7 @@ Legenda automática com IA, removedor de fundo, conversa animada, terminal, thum
 | | Ferramenta | O que faz |
 |:-:|---|---|
 | 🔤 | **Animação de texto** | 15 efeitos: máquina de escrever, pop, quique, onda, glitch, embaralhar, desfoque, neon, arco-íris, explosão… |
+| 📊 | **Gráfico animado** | Colunas, barras, linha, área, pizza, rosca e corrida de barras; números contando, vários períodos e fundo transparente |
 | ⏳ | **Barra de progresso** | 9 estilos (blocos retrô, janela de cópia, anel, bateria, pixel…) com "travadinhas" de carregamento de verdade |
 | 🔔 | **Botão de inscreva-se** | No visual do YouTube: o cursor clica em Inscrever-se, ativa o sininho em "Todas" e dá gostei. Cole o link do canal pra puxar foto, nome e inscritos |
 | ⏱️ | **Cronômetro** | Regressiva ou cronômetro em 6 estilos (flip, display digital, LED, anel…), com modo ao vivo em tela cheia |

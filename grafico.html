@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gráfico animado · EdiTools</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Bebas+Neue&family=Bungee&family=Cinzel:wght@700&family=Fredoka:wght@500;700&family=Inter:wght@400;700;900&family=Luckiest+Guy&family=Montserrat:wght@400;700;900&family=Orbitron:wght@700;900&family=Permanent+Marker&family=Poppins:wght@400;700;900&family=Press+Start+2P&family=Roboto+Mono:wght@400;700&family=Special+Elite&family=VT323&display=swap">
+<script src="assets/export.js"></script>
+<style>
+  #pv canvas { max-height: 62vh; }
+  .fx { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .fx button { height: auto; padding: 5px 2px; font-size: 11px; line-height: 1.25; }
+  .fx button[aria-pressed=true] { font-weight: bold; box-shadow: inset 1px 1px 3px rgba(0,0,0,.45); }
+  .fx button span { display: block; font-size: 17px; }
+  #data { width: 100%; min-height: 150px; font-family: Consolas, "Courier New", monospace; font-size: 12px; resize: vertical; box-sizing: border-box; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="grafico_animado.exe" data-icon="📊">
+    <div class="window-body">
+      <div class="toolbar"><a class="btn" href="index.html">🏠 Home</a><button data-open="help">? Ajuda</button><span class="spacer"></span><button id="playBtn">▶ Repetir prévia</button></div>
+      <div class="tool wide-panel">
+        <div class="panel" id="panel">
+          <div class="btns grow tabs" role="tablist">
+            <button role="tab" aria-selected="true" data-tab="t1">✏️ Personalizar</button>
+            <button role="tab" aria-selected="false" data-tab="t2">⭐ Modelos prontos</button>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t1">
+            <div class="stack">
+              <div class="fx" id="fx"></div>
+              <input type="hidden" id="kind" value="bar">
+              <label class="field"><span>Dados</span><textarea id="data" spellcheck="false"></textarea></label>
+              <p class="hint">Uma linha por item: <b>Nome = valor</b>. Vários valores separados por <b>;</b> viram períodos (o gráfico anda de um pro outro). Uma linha começando com <b>#</b> dá nome aos períodos. Cor opcional no fim, tipo <b>#ff0000</b>.</p>
+              <div class="two">
+                <label class="field"><span>Título</span><input type="text" id="title" value="Meu gráfico"></label>
+                <label class="field"><span>Subtítulo</span><input type="text" id="sub" value=""></label>
+              </div>
+              <div class="two">
+                <label class="field"><span>Antes do número</span><input type="text" id="prefix" value="" placeholder="R$ "></label>
+                <label class="field"><span>Depois do número</span><input type="text" id="suffix" value="" placeholder="%"></label>
+                <label class="field"><span>Casas decimais</span><input type="number" id="dec" value="0" min="0" max="3"></label>
+                <label class="field"><span>Números</span><select id="numfmt"><option value="std">1.234.567</option><option value="compact">1,2 mi (curto)</option></select></label>
+              </div>
+              <div class="two">
+                <label class="field"><span>Duração (s)</span><input type="number" id="dur" value="4" min="0.5" max="120" step="0.5"></label>
+                <label class="field"><span>Segurar no fim (s)</span><input type="number" id="hold" value="1.5" min="0" max="30" step="0.5"></label>
+                <label class="field"><span>Ritmo</span><select id="ease"><option value="inout">Suave</option><option value="out" selected>Rápido no começo</option><option value="back">Com sobra</option><option value="elastic">Elástico</option><option value="bounce">Quicando</option><option value="linear">Constante</option></select></label>
+                <label class="field"><span>Ordem</span><select id="sort"><option value="none">Como digitei</option><option value="desc">Maior primeiro</option><option value="asc">Menor primeiro</option></select></label>
+              </div>
+              <div class="field-row"><input type="checkbox" id="stagger" checked><label for="stagger">Um item de cada vez</label></div>
+              <details open><summary>Estilo</summary>
+                <div class="stack" style="margin-top:6px">
+                  <label class="field"><span>Cores</span><select id="pal"><option value="vivid">Vibrante</option><option value="pastel">Pastel</option><option value="neon">Neon</option><option value="ocean">Tons de azul</option><option value="sunset">Pôr do sol</option><option value="retro">Retrô</option><option value="mono">Uma cor só</option></select></label>
+                  <div class="row"><span class="lbl">Cor principal</span><input type="color" id="c1" value="#4f7cff"><span class="lbl" style="min-width:0">Fundo</span><input type="color" id="bg" value="#0f1220"><span class="lbl" style="min-width:0">Texto</span><input type="color" id="ink" value="#ffffff"></div>
+                  <div class="two">
+                    <label class="field"><span>Fonte</span><select id="font"></select></label>
+                    <label class="field"><span>Máx. de barras (corrida)</span><input type="number" id="top" value="8" min="2" max="20"></label>
+                  </div>
+                  <label class="field"><span>Espessura <output data-suffix="%"></output></span><input type="range" id="thick" min="20" max="95" value="70"></label>
+                  <label class="field"><span>Arredondamento <output data-suffix="%"></output></span><input type="range" id="round" min="0" max="100" value="25"></label>
+                  <div class="field-row"><input type="checkbox" id="grid" checked><label for="grid">Linhas de grade</label></div>
+                  <div class="field-row"><input type="checkbox" id="showVal" checked><label for="showVal">Mostrar valores</label></div>
+                  <div class="field-row"><input type="checkbox" id="legend" checked><label for="legend">Legenda (pizza, rosca e linhas)</label></div>
+                  <div class="field-row"><input type="checkbox" id="smooth" checked><label for="smooth">Linha curva</label></div>
+                  <div class="field-row"><input type="checkbox" id="glow"><label for="glow">Brilho neon</label></div>
+                </div>
+              </details>
+            </div>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t2" hidden><div class="presets" id="presets"></div></div>
+          <div id="exp"></div>
+        </div>
+        <div id="pv" class="preview"><canvas id="cv"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="ajuda.txt" data-icon="📝">
+    <div class="window-body">
+      <ul>
+        <li>Escolha o tipo de gráfico e escreva os dados, um item por linha: <b>Nome = valor</b>.</li>
+        <li>Com vários valores (<b>10; 25; 40</b>) cada número é um período: colunas, barras e pizza mudam de um pro outro, linha e área ganham uma linha por item e a <b>Corrida</b> vira aquele ranking que troca de posição.</li>
+        <li>Exporte com fundo transparente (WEBM ou PNG) pra colocar o gráfico por cima do seu vídeo.</li>
+      </ul>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">OK</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const { EASE, clamp } = EXPORT;
+const cv = $('cv'), ctx = cv.getContext('2d');
+$('font').innerHTML = EXPORT.fontOptions('Poppins');
+
+const KINDS = {
+  bar: ['📊', 'Colunas'], hbar: ['📶', 'Barras deitadas'], line: ['📈', 'Linha'], area: ['🏔️', 'Área'],
+  pie: ['🥧', 'Pizza'], donut: ['🍩', 'Rosca'], race: ['🏁', 'Corrida'],
+};
+const fxBox = $('fx');
+for (const [k, [i, n]] of Object.entries(KINDS)) fxBox.insertAdjacentHTML('beforeend', `<button data-fx="${k}" aria-pressed="false"><span>${i}</span>${n}</button>`);
+function setKind(k) { $('kind').value = k; fxBox.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.fx === k)); restart(); }
+fxBox.onclick = (e) => { const b = e.target.closest('[data-fx]'); if (b) setKind(b.dataset.fx); };
+
+const PALETTES = {
+  vivid: ['#4f7cff', '#ff5d73', '#ffb020', '#2ed47a', '#a463ff', '#00c2d1', '#ff7a3d', '#e84393'],
+  pastel: ['#8fb3ff', '#ffadc0', '#ffd98a', '#9be7b9', '#c9a7ff', '#8ee3ea', '#ffbf95', '#f5a3cf'],
+  neon: ['#00f0ff', '#ff2bd6', '#c6ff00', '#ff8a00', '#7c4dff', '#00ff88', '#ffe600', '#ff3b3b'],
+  ocean: ['#0b3d91', '#1565c0', '#1e88e5', '#42a5f5', '#64b5f6', '#90caf9', '#26c6da', '#00838f'],
+  sunset: ['#ff4e50', '#fc913a', '#f9d423', '#e1306c', '#a83279', '#ff7e5f', '#feb47b', '#d1495b'],
+  retro: ['#0000aa', '#aa0000', '#00aa00', '#aa5500', '#aa00aa', '#00aaaa', '#555555', '#ff55ff'],
+};
+
+const DATA = {
+  sales: `Jan = 12\nFev = 19\nMar = 15\nAbr = 27\nMai = 31\nJun = 42`,
+  race: `# 2019; 2020; 2021; 2022; 2023; 2024\nYouTube = 2000; 2200; 2300; 2500; 2600; 2700\nInstagram = 1000; 1200; 1400; 2000; 2200; 2400\nTikTok = 300; 700; 1000; 1200; 1500; 1900\nFacebook = 2400; 2600; 2800; 2900; 3000; 3050\nX = 330; 350; 400; 450; 550; 600\nPinterest = 320; 410; 450; 460; 480; 520`,
+};
+const PRESETS = [
+  { n: '📊 Vendas do semestre', d: 'colunas, fundo claro', kind: 'bar', v: { data: DATA.sales, title: 'Vendas do semestre', sub: 'em milhares de reais', prefix: 'R$ ', suffix: ' mil', dec: 0, pal: 'mono', c1: '#4f7cff', bg: '#ffffff', ink: '#1b1f2a', font: 'Poppins', glow: false, ease: 'out', dur: 3 } },
+  { n: '🏁 Corrida das redes', d: 'ranking que troca de lugar', kind: 'race', v: { data: DATA.race, title: 'Redes sociais mais usadas', sub: 'usuários por mês (milhões)', suffix: ' mi', dec: 0, pal: 'vivid', bg: '#0f1220', ink: '#ffffff', font: 'Montserrat', glow: false, ease: 'inout', dur: 10, stagger: false } },
+  { n: '📈 Crescimento do canal', d: 'área neon', kind: 'area', v: { data: 'Jan = 1200\nFev = 1900\nMar = 3400\nAbr = 3100\nMai = 6200\nJun = 9800\nJul = 15400', title: 'Inscritos no canal', sub: '2024', numfmt: 'compact', pal: 'neon', bg: '#07040f', ink: '#ffffff', font: 'Orbitron', glow: true, ease: 'inout', dur: 4 } },
+  { n: '🍕 Pesquisa', d: 'pizza com porcentagem', kind: 'pie', v: { data: 'Calabresa = 38\nMussarela = 27\nPortuguesa = 15\nFrango = 12\nOutras = 8', title: 'Pizza favorita', sub: 'pesquisa com 500 pessoas', suffix: '%', pal: 'sunset', bg: '#fff7ec', ink: '#3a2412', font: 'Fredoka', glow: false, ease: 'out', dur: 3 } },
+  { n: '🍩 Tempo de tela', d: 'rosca com total no meio', kind: 'donut', v: { data: 'Vídeos = 3.5\nJogos = 2\nRedes = 2.5\nEstudo = 1.5\nOutros = 0.5', title: 'Meu dia no celular', sub: 'horas por dia', suffix: ' h', dec: 1, pal: 'pastel', bg: '#1c1830', ink: '#ffffff', font: 'Poppins', glow: false, ease: 'back', dur: 3 } },
+  { n: '📶 Ranking', d: 'barras deitadas, maior primeiro', kind: 'hbar', v: { data: 'Brasil = 5\nAlemanha = 4\nItália = 4\nArgentina = 3\nFrança = 2\nUruguai = 2', title: 'Títulos de Copa do Mundo', sub: '', pal: 'vivid', bg: '#0b6b3a', ink: '#ffffff', font: 'Bebas Neue', glow: false, sort: 'desc', ease: 'back', dur: 3 } },
+  { n: '📉 Duas linhas', d: 'comparando dois itens', kind: 'line', v: { data: '# Seg; Ter; Qua; Qui; Sex; Sáb; Dom\nEste mês = 20; 34; 30; 48; 55; 70; 82\nMês passado = 18; 22; 27; 25; 33; 40; 44', title: 'Visualizações', sub: 'mil por dia', pal: 'vivid', bg: '#10131c', ink: '#ffffff', font: 'Inter', glow: false, ease: 'inout', dur: 4 } },
+  { n: '👾 Retrô', d: 'cores de PC antigo', kind: 'bar', v: { data: 'HP = 80\nMP = 45\nXP = 95\nGOLD = 60', title: 'STATUS DO HERÓI', sub: '', pal: 'retro', bg: '#000000', ink: '#ffffff', font: 'Press Start 2P', glow: false, round: 0, ease: 'linear', dur: 3, grid: false } },
+];
+EXPORT.presets($('presets'), PRESETS, (p) => {
+  EXPORT.setValues({ prefix: '', suffix: '', dec: 0, numfmt: 'std', sort: 'none', stagger: true, round: 25, thick: 70, grid: true, showVal: true, legend: true, smooth: true, hold: 1.5, ...p.v });
+  setKind(p.kind);
+  OS.showTab('t1');
+});
+
+const IDS = ['kind', 'data', 'title', 'sub', 'prefix', 'suffix', 'dec', 'numfmt', 'dur', 'hold', 'ease', 'sort', 'stagger', 'pal', 'c1', 'bg', 'ink', 'font', 'top', 'thick', 'round', 'grid', 'showVal', 'legend', 'smooth', 'glow'];
+const S = () => EXPORT.values(IDS);
+
+// ---------- dados ----------
+const num = (s) => {
+  s = s.trim().replace(/\s/g, '');
+  if (/,/.test(s)) s = s.replace(/\./g, '').replace(',', '.'); // 1.234,5
+  return parseFloat(s);
+};
+const hexRgb = (h) => { const n = parseInt(h.slice(1).replace(/^(.)(.)(.)$/, '$1$1$2$2$3$3'), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+const mix = (a, b, f) => { const x = hexRgb(a), y = hexRgb(b); return `rgb(${x.map((v, i) => Math.round(v + (y[i] - v) * f)).join(',')})`; };
+const alpha = (c, a) => { if (c.startsWith('rgb(')) return c.replace('rgb(', 'rgba(').replace(')', `,${a})`); const [r, g, b] = hexRgb(c); return `rgba(${r},${g},${b},${a})`; };
+
+function parse(s) {
+  let periods = [];
+  const rows = [];
+  for (let line of s.data.split('\n')) {
+    line = line.trim();
+    if (!line) continue;
+    if (line.startsWith('#') && !/^#[0-9a-f]{3,6}$/i.test(line)) { periods = line.slice(1).split(';').map((x) => x.trim()); continue; }
+    const m = line.match(/^(.*?)\s*[=:]\s*([^=]*)$/);
+    if (!m) continue;
+    let rest = m[2];
+    const color = (rest.match(/#[0-9a-f]{6}\b|#[0-9a-f]{3}\b/i) || [])[0];
+    if (color) rest = rest.replace(color, '');
+    const vals = rest.split(/[;|]/).map(num).filter((v) => !isNaN(v));
+    if (vals.length) rows.push({ name: m[1].trim(), vals, color });
+  }
+  const P = Math.max(1, ...rows.map((r) => r.vals.length));
+  rows.forEach((r) => { while (r.vals.length < P) r.vals.push(r.vals[r.vals.length - 1]); });
+  if (s.sort !== 'none' && s.kind !== 'race') rows.sort((a, b) => (s.sort === 'desc' ? 1 : -1) * (b.vals[P - 1] - a.vals[P - 1]));
+  const pal = PALETTES[s.pal];
+  rows.forEach((r, i) => (r.color ||= pal ? pal[i % pal.length] : mix(s.c1, s.bg, Math.min(.7, i / Math.max(1, rows.length) * .75))));
+  return { rows, P, periods };
+}
+
+function fmt(s, v) {
+  const n = new Intl.NumberFormat(OS.LANG === 'en' ? 'en-US' : 'pt-BR', { minimumFractionDigits: s.dec, maximumFractionDigits: s.dec, ...(s.numfmt === 'compact' ? { notation: 'compact', maximumFractionDigits: 1, minimumFractionDigits: 0 } : {}) }).format(v);
+  return s.prefix + n + s.suffix;
+}
+/** Escala "redonda" pro eixo: 0, 10, 20… */
+function niceAxis(lo, hi, n = 5) {
+  const span = hi - lo || 1, raw = span / n, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((x) => x >= raw);
+  return { lo: Math.floor(lo / step) * step, hi: Math.ceil(hi / step) * step, step };
+}
+
+// ---------- tempo ----------
+const START = .45;
+/** Quanto do item i já cresceu (0–1). */
+function grow(s, i, n, t, len) {
+  const span = len ?? s.dur;
+  const gap = s.stagger && n > 1 ? span * .45 / (n - 1) : 0, d = span - gap * (n - 1);
+  return EASE[s.ease](clamp((t - START - i * gap) / d));
+}
+/** Valor do item no instante t, andando pelos períodos depois de crescer. */
+function morphPos(s, P, t, growLen) {
+  if (P < 2) return 0;
+  const u = clamp((t - START - growLen) / (s.dur - growLen)) * (P - 1);
+  const i = Math.min(P - 2, Math.floor(u));
+  return i + EASE.inout(u - i);
+}
+const valAt = (r, pos) => { const i = Math.floor(pos), f = pos - i; return i >= r.vals.length - 1 ? r.vals[r.vals.length - 1] : r.vals[i] + (r.vals[i + 1] - r.vals[i]) * f; };
+
+function rr(x, y, w, h, r, top = true) {
+  r = Math.max(0, Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2));
+  ctx.beginPath();
+  if (w < 0) { x += w; w = -w; }
+  if (h < 0) { y += h; h = -h; if (top !== 'all') top = !top; }
+  ctx.roundRect(x, y, w, h, top === 'all' ? r : top ? [r, r, 0, 0] : [0, 0, r, r]);
+}
+
+function drawAt(t, transp) {
+  const s = S(), D = parse(s);
+  const { W, H } = ex.settings();
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  const k = Math.min(W, H) / 1080, F = s.font;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  if (!transp) { ctx.fillStyle = s.bg; ctx.fillRect(0, 0, W, H); }
+  const font = (w, size) => (ctx.font = `${w} ${size}px "${F}"`);
+  const text = (txt, x, y, size, { w = 700, align = 'left', base = 'middle', color = s.ink, a = 1 } = {}) => {
+    if (!txt) return;
+    font(w, size); ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = base;
+    ctx.globalAlpha = a; ctx.fillText(txt, x, y); ctx.globalAlpha = 1;
+  };
+  const glow = (c, b) => { if (s.glow) { ctx.shadowColor = c; ctx.shadowBlur = b * k; } };
+  const noGlow = () => { ctx.shadowBlur = 0; };
+  const muted = alpha(s.ink, .55), faint = alpha(s.ink, .14);
+
+  // título e subtítulo entram de cima
+  const pad = 80 * k, ti = EASE.out(clamp(t / .5));
+  let top = pad;
+  const tSize = 64 * k, sSize = 32 * k;
+  if (s.title) { text(s.title, pad, top + (1 - ti) * -30 * k, tSize, { w: 900, base: 'top', a: ti }); top += tSize * 1.25; }
+  if (s.sub) { text(s.sub, pad, top + (1 - ti) * -20 * k, sSize, { w: 400, base: 'top', color: muted, a: ti }); top += sSize * 1.4; }
+  top += s.title || s.sub ? 30 * k : 0;
+  const box = { x: pad, y: top, w: W - pad * 2, h: H - top - pad };
+  const { rows, P, periods } = D;
+  if (!rows.length) { text(OS.T('Escreva os dados: Nome = valor'), W / 2, H / 2, 40 * k, { align: 'center', color: muted }); return; }
+  const n = rows.length, vs = rows.map((r) => r.vals).flat();
+  const valSize = Math.max(20 * k, Math.min(40 * k, box.w / n * .28));
+  const periodLabel = (pos) => {
+    if (P < 2) return;
+    const lbl = periods[Math.round(pos)] ?? String(Math.round(pos) + 1);
+    text(lbl, W - pad, H - pad, 130 * k, { w: 900, align: 'right', base: 'alphabetic', color: alpha(s.ink, .22) });
+  };
+
+  if (s.kind === 'bar' || s.kind === 'hbar') {
+    const horiz = s.kind === 'hbar';
+    const growLen = P > 1 ? s.dur * .35 : s.dur, pos = morphPos(s, P, t, growLen);
+    const ax = niceAxis(Math.min(0, ...vs), Math.max(0, ...vs));
+    // espaço pros nomes e pros números do eixo
+    font(600, 28 * k);
+    const nameW = horiz ? Math.min(box.w * .3, Math.max(...rows.map((r) => ctx.measureText(r.name).width)) + 24 * k) : 0;
+    const axisW = horiz ? 0 : Math.max(ctx.measureText(fmt(s, ax.hi)).width, ctx.measureText(fmt(s, ax.lo)).width) + 20 * k;
+    const nameH = horiz ? 0 : 50 * k, axisH = horiz ? 44 * k : 0;
+    const px = box.x + axisW + nameW, py = box.y + valSize * 1.4, pw = box.w - axisW - nameW - (horiz ? valSize * 4 : 0), ph = box.h - nameH - axisH - valSize * 1.4;
+    const len = horiz ? pw : ph, scale = (v) => (v - ax.lo) / (ax.hi - ax.lo) * len, zero = scale(0);
+    if (s.grid) {
+      ctx.lineWidth = Math.max(1, 2 * k);
+      for (let v = ax.lo; v <= ax.hi + 1e-9; v += ax.step) {
+        const g = scale(v);
+        ctx.strokeStyle = v === 0 ? alpha(s.ink, .35) : faint; ctx.globalAlpha = ti;
+        ctx.beginPath();
+        if (horiz) { ctx.moveTo(px + g, py); ctx.lineTo(px + g, py + ph); } else { ctx.moveTo(px, py + ph - g); ctx.lineTo(px + pw, py + ph - g); }
+        ctx.stroke(); ctx.globalAlpha = 1;
+        if (horiz) text(fmt(s, v), px + g, py + ph + 12 * k, 24 * k, { w: 400, align: 'center', base: 'top', color: muted, a: ti });
+        else text(fmt(s, v), px - 14 * k, py + ph - g, 24 * k, { w: 400, align: 'right', color: muted, a: ti });
+      }
+    }
+    periodLabel(pos);
+    const slot = (horiz ? ph : pw) / n, th = Math.min(slot * s.thick / 100, horiz ? 130 * k : 1e9);
+    // texto que não cabe na coluna diminui até caber
+    const fit = (txt, size, w, max) => { font(w, size); return Math.min(size, size * max / Math.max(1, ctx.measureText(txt).width)); };
+    rows.forEach((r, i) => {
+      const g = grow(s, i, n, t, growLen), v = valAt(r, pos) * g;
+      const c = slot * (i + .5), l = scale(v) - zero, rad = th / 2 * s.round / 100;
+      ctx.fillStyle = r.color; glow(r.color, 30);
+      if (horiz) { rr(px + zero, py + c - th / 2, l, th, rad, 'all'); }
+      else rr(px + c - th / 2, py + ph - zero, th, -l, rad);
+      if (Math.abs(l) > .5) ctx.fill();
+      noGlow();
+      const a = clamp(g * 3);
+      if (horiz) {
+        text(r.name, px - 16 * k, py + c, Math.min(32 * k, th * .6), { w: 600, align: 'right', a: ti });
+        if (s.showVal) text(fmt(s, v), px + zero + l + (l < 0 ? -14 : 14) * k, py + c, Math.min(valSize, th * .6), { align: l < 0 ? 'right' : 'left', a });
+      } else {
+        const ns = Math.max(18 * k, fit(r.name, 28 * k, 600, slot * .95));
+        font(600, ns);
+        let nm = r.name;
+        if (ctx.measureText(nm).width > slot * .95) { while (ctx.measureText(nm + '…').width > slot * .95 && nm.length > 1) nm = nm.slice(0, -1); nm += '…'; }
+        text(nm, px + c, py + ph + 14 * k, ns, { w: 600, align: 'center', base: 'top', a: ti });
+        if (s.showVal) { const tv = fmt(s, v); text(tv, px + c, py + ph - zero - l + (l < 0 ? 12 : -12) * k, fit(tv, valSize, 700, slot * .96), { align: 'center', base: l < 0 ? 'top' : 'alphabetic', a }); }
+      }
+    });
+    return;
+  }
+
+  if (s.kind === 'line' || s.kind === 'area') {
+    // vários períodos: uma linha por item; um valor só: uma linha passando pelos itens
+    const series = P > 1 ? rows.map((r) => ({ name: r.name, color: r.color, vals: r.vals })) : [{ name: s.title, color: rows[0].color, vals: rows.map((r) => r.vals[0]) }];
+    const labels = P > 1 ? [...Array(P)].map((_, i) => periods[i] ?? String(i + 1)) : rows.map((r) => r.name);
+    const N = labels.length;
+    const legend = s.legend && series.length > 1;
+    const ax = niceAxis(Math.min(0, ...vs), Math.max(...vs));
+    font(400, 24 * k);
+    const axisW = Math.max(ctx.measureText(fmt(s, ax.hi)).width, ctx.measureText(fmt(s, ax.lo)).width) + 20 * k;
+    // legenda quebra em mais de uma linha quando não cabe
+    const legRows = [];
+    if (legend) {
+      font(600, 28 * k);
+      let lx = 0;
+      series.forEach((se) => { const w = 44 * k + ctx.measureText(se.name).width + 46 * k; if (!legRows.length || lx + w > box.w) { legRows.push([]); lx = 0; } legRows[legRows.length - 1].push([se, lx]); lx += w; });
+    }
+    const legH = legRows.length * 48 * k + (legend ? 8 * k : 0);
+    const px = box.x + axisW, py = box.y + valSize, pw = box.w - axisW - valSize * 2.5, ph = box.h - 56 * k - legH - valSize;
+    const X = (i) => px + (N < 2 ? pw / 2 : i / (N - 1) * pw), Y = (v) => py + ph - (v - ax.lo) / (ax.hi - ax.lo) * ph;
+    if (s.grid) {
+      ctx.lineWidth = Math.max(1, 2 * k);
+      for (let v = ax.lo; v <= ax.hi + 1e-9; v += ax.step) {
+        ctx.strokeStyle = faint; ctx.globalAlpha = ti; ctx.beginPath(); ctx.moveTo(px, Y(v)); ctx.lineTo(px + pw, Y(v)); ctx.stroke(); ctx.globalAlpha = 1;
+        text(fmt(s, v), px - 14 * k, Y(v), 24 * k, { w: 400, align: 'right', color: muted, a: ti });
+      }
+    }
+    const step = Math.ceil(N / Math.max(2, Math.floor(pw / (110 * k))));
+    labels.forEach((l, i) => { if (i % step === 0 || i === N - 1) text(l, X(i), py + ph + 16 * k, 26 * k, { w: 600, align: 'center', base: 'top', a: ti }); });
+    const q = EASE[s.ease === 'back' || s.ease === 'elastic' || s.ease === 'bounce' ? 'inout' : s.ease](clamp((t - START) / s.dur)) * (N - 1);
+    // ponto da linha em qualquer posição (curva suave entre os pontos)
+    const at = (vals, f) => { const i = Math.min(N - 2, Math.floor(f)), u = f - i; if (N < 2) return vals[0]; const e = s.smooth ? (1 - Math.cos(u * Math.PI)) / 2 : u; return vals[i] + (vals[i + 1] - vals[i]) * e; };
+    const heads = [];
+    series.forEach((se, si) => {
+      const steps = Math.max(2, Math.ceil(q * 24));
+      const pts = [...Array(steps + 1)].map((_, j) => { const f = q * j / steps; return [X(f), Y(at(se.vals, f))]; });
+      if (s.kind === 'area') {
+        const g = ctx.createLinearGradient(0, py, 0, py + ph);
+        g.addColorStop(0, alpha(se.color, series.length > 1 ? .35 : .55)); g.addColorStop(1, alpha(se.color, 0));
+        ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(pts[0][0], Y(Math.max(ax.lo, 0)));
+        pts.forEach(([x, y]) => ctx.lineTo(x, y)); ctx.lineTo(pts[pts.length - 1][0], Y(Math.max(ax.lo, 0))); ctx.fill();
+      }
+      ctx.strokeStyle = se.color; ctx.lineWidth = 7 * k; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; glow(se.color, 25);
+      ctx.beginPath(); pts.forEach(([x, y], j) => (j ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke();
+      // bolinhas nos pontos já alcançados
+      ctx.fillStyle = transp ? se.color : s.bg;
+      for (let i = 0; i <= Math.floor(q + 1e-6); i++) { ctx.beginPath(); ctx.arc(X(i), Y(se.vals[i]), 8 * k, 0, 7); ctx.fill(); ctx.stroke(); }
+      noGlow();
+      const [hx, hy] = pts[pts.length - 1];
+      ctx.fillStyle = se.color; ctx.beginPath(); ctx.arc(hx, hy, 12 * k, 0, 7); ctx.fill();
+      heads.push({ se, hx, hy, y: hy - 26 * k });
+    });
+    // números na ponta das linhas: afasta os que ficariam um em cima do outro
+    if (s.showVal && t > START) {
+      heads.sort((a, b) => a.y - b.y);
+      for (let i = 1; i < heads.length; i++) heads[i].y = Math.max(heads[i].y, heads[i - 1].y + valSize * 1.1);
+      heads.forEach(({ se, hx, y }) => text(fmt(s, at(se.vals, q)), hx + 20 * k, y, valSize, { color: series.length > 1 ? se.color : s.ink }));
+    }
+    legRows.forEach((row, ri) => row.forEach(([se, lx]) => {
+      const y = H - pad - legH + 8 * k + ri * 48 * k + 24 * k;
+      ctx.fillStyle = se.color; ctx.globalAlpha = ti; rr(box.x + lx, y - 15 * k, 30 * k, 30 * k, 8 * k, 'all'); ctx.fill(); ctx.globalAlpha = 1;
+      text(se.name, box.x + lx + 44 * k, y, 28 * k, { w: 600, a: ti });
+    }));
+    return;
+  }
+
+  if (s.kind === 'pie' || s.kind === 'donut') {
+    const growLen = P > 1 ? s.dur * .35 : s.dur, pos = morphPos(s, P, t, growLen);
+    const vals = rows.map((r) => Math.max(0, valAt(r, pos))), sum = vals.reduce((a, b) => a + b, 0) || 1;
+    const wide = box.w > box.h * 1.3, legend = s.legend;
+    const R = Math.min(legend && wide ? box.w * .3 : box.w / 2, (legend && !wide ? box.h - n * 50 * k : box.h) / 2) * .95;
+    const cx = legend && wide ? box.x + box.w * .32 : W / 2, cy = box.y + (legend && !wide ? R : box.h / 2);
+    const sweep = EASE[s.ease](clamp((t - START) / growLen)) * Math.PI * 2, pop = EASE.back(clamp((t - START) / .5));
+    periodLabel(pos);
+    let a0 = -Math.PI / 2;
+    const donut = s.kind === 'donut', inner = R * (1 - s.thick / 100 * .7);
+    rows.forEach((r, i) => {
+      const ang = vals[i] / sum * Math.PI * 2, from = a0, to = Math.min(a0 + ang, -Math.PI / 2 + sweep);
+      a0 += ang;
+      if (to <= from) return;
+      const rr2 = R * (.85 + .15 * pop);
+      ctx.fillStyle = r.color; glow(r.color, 30); ctx.beginPath();
+      if (donut) { ctx.arc(cx, cy, rr2, from, to); ctx.arc(cx, cy, inner * (.85 + .15 * pop), to, from, true); ctx.closePath(); }
+      else { ctx.moveTo(cx, cy); ctx.arc(cx, cy, rr2, from, to); ctx.closePath(); }
+      ctx.fill(); noGlow();
+      // separação fininha entre as fatias
+      if (!transp) { ctx.strokeStyle = s.bg; ctx.lineWidth = 4 * k; ctx.stroke(); }
+      const shown = (to - from) / ang;
+      if (s.showVal && ang > .28 && shown > .99) {
+        const mid = (from + to) / 2, d = donut ? (rr2 + inner) / 2 : rr2 * .64;
+        const fs = Math.min(46 * k, R * .13), fa = clamp((t - START) / growLen * 3 - i * .2);
+        text(s.suffix === '%' ? fmt(s, vals[i]) : Math.round(vals[i] / sum * 100) + '%', cx + Math.cos(mid) * d, cy + Math.sin(mid) * d, fs, { align: 'center', color: '#fff', a: fa });
+      }
+    });
+    if (donut) {
+      const total = sum * EASE.out(clamp((t - START) / growLen));
+      text(fmt(s, total), cx, cy - R * .02, Math.min(80 * k, inner * .42), { w: 900, align: 'center', a: ti });
+      text(OS.T('Total'), cx, cy + inner * .32, Math.min(30 * k, inner * .16), { w: 400, align: 'center', color: muted, a: ti });
+    }
+    if (legend) {
+      const fs = Math.min(34 * k, (wide ? box.h : box.h - R * 2 - 30 * k) / n * .55), lh = fs * 1.6;
+      const lx = wide ? box.x + box.w * .66 : box.x + box.w * .1, ly0 = wide ? cy - lh * n / 2 + lh / 2 : cy + R + 40 * k + lh / 2;
+      rows.forEach((r, i) => {
+        const a = clamp((t - START) * 3 - i * .25), y = ly0 + i * lh;
+        ctx.globalAlpha = a; ctx.fillStyle = r.color; rr(lx, y - fs * .45, fs * .9, fs * .9, fs * .2, 'all'); ctx.fill(); ctx.globalAlpha = 1;
+        text(r.name, lx + fs * 1.4, y, fs, { w: 600, a });
+        if (s.showVal) { font(600, fs); text(fmt(s, vals[i]), lx + fs * 1.4 + ctx.measureText(r.name).width + fs * .6, y, fs, { w: 400, color: muted, a }); }
+      });
+    }
+    return;
+  }
+
+  if (s.kind === 'race') {
+    // corrida de barras: posição suaviza entre o ranking de um período e o do próximo
+    const intro = Math.min(.8, s.dur * .15), u = clamp((t - START - intro) / (s.dur - intro)) * (P - 1);
+    const i0 = Math.min(Math.max(0, P - 2), Math.floor(u)), f = P < 2 ? 0 : u - i0;
+    const rank = (pi) => { const order = rows.map((r, i) => i).sort((a, b) => rows[b].vals[pi] - rows[a].vals[pi]); const out = []; order.forEach((ri, j) => (out[ri] = j)); return out; };
+    const ra = rank(i0), rb = rank(Math.min(P - 1, i0 + 1)), ef = EASE.inout(clamp(f * 1.6 - .3));
+    const cur = rows.map((r) => valAt(r, u));
+    const N = Math.min(s.top, n), slot = box.h / N, th = Math.min(slot * s.thick / 100, 130 * k);
+    const shownMax = Math.max(...cur.filter((_, i) => ra[i] < N || rb[i] < N), 1e-9);
+    font(600, 30 * k);
+    const nameW = Math.min(box.w * .28, Math.max(...rows.map((r) => ctx.measureText(r.name).width)) + 24 * k);
+    const bx = box.x + nameW, bw = box.w - nameW - 260 * k;
+    if (s.grid) {
+      const ax = niceAxis(0, shownMax, 4);
+      for (let v = ax.step; v <= shownMax; v += ax.step) {
+        const gx = bx + v / shownMax * bw;
+        ctx.strokeStyle = faint; ctx.lineWidth = Math.max(1, 2 * k); ctx.beginPath(); ctx.moveTo(gx, box.y); ctx.lineTo(gx, box.y + box.h); ctx.stroke();
+        text(fmt(s, v), gx, box.y - 12 * k, 22 * k, { w: 400, align: 'center', base: 'alphabetic', color: muted });
+      }
+    }
+    periodLabel(u);
+    const g0 = EASE.out(clamp((t - START) / intro));
+    rows.map((r, i) => ({ r, i, p: ra[i] + (rb[i] - ra[i]) * ef })).sort((a, b) => b.p - a.p).forEach(({ r, i, p }) => {
+      if (p > N - .01 + .99) return;
+      const a = clamp(N - p), y = box.y + slot * (p + .5), l = Math.max(0, cur[i] / shownMax * bw * g0);
+      ctx.globalAlpha = a; ctx.fillStyle = r.color; glow(r.color, 25);
+      rr(bx, y - th / 2, Math.max(l, 2 * k), th, th / 2 * s.round / 100, 'all'); ctx.fill(); noGlow(); ctx.globalAlpha = 1;
+      const fs = Math.min(34 * k, th * .55);
+      text(r.name, bx - 16 * k, y, fs, { w: 600, align: 'right', a });
+      if (s.showVal) text(fmt(s, cur[i] * g0), bx + l + 16 * k, y, fs, { a });
+    });
+  }
+}
+
+// ---------- prévia ----------
+let t0 = performance.now();
+const restart = () => (t0 = performance.now());
+$('playBtn').onclick = restart;
+$('panel').addEventListener('input', (e) => { if (['data', 'dur', 'ease', 'stagger', 'sort'].includes(e.target.id)) restart(); });
+// o canvas não pede a fonte sozinho: carrega todos os pesos usados quando ela muda
+const loadFonts = () => Promise.all([900, 700, 600, 400].map((w) => EXPORT.loadFont(w, $('font').value)));
+$('font').addEventListener('change', () => loadFonts().then(restart));
+const total = () => { const s = S(); return START + s.dur + s.hold; };
+const ex = EXPORT.mount($('exp'), {
+  canvas: cv, draw: drawAt, seconds: total, name: () => 'grafico-' + S().kind, defaultRes: '1920x1080',
+  prepare: () => loadFonts(),
+  onSettings: (s) => $('pv').classList.toggle('chk', s.transp),
+});
+(function loop() {
+  if (!ex.busy) {
+    const t = (performance.now() - t0) / 1000;
+    drawAt(Math.min(t, total()), ex.settings().transp);
+    if (t > total() + .8) restart();
+  }
+  requestAnimationFrame(loop);
+})();
+$('data').value = DATA.sales;
+setKind('bar');
+loadFonts().then(restart);
+</script>
+</body>
+</html>

@@ -66,6 +66,7 @@
     'mockups.exe': 'mockups.exe', 'prints e vídeos dentro de celular, notebook e navegador': 'screenshots and videos inside phones, laptops and browsers',
     'audiograma.exe': 'audiogram.exe', 'áudio vira vídeo com onda sonora animada': 'audio becomes a video with an animated waveform',
     'animacao_de_texto.exe': 'text_animation.exe', 'máquina de escrever, glitch, onda, quique e mais': 'typewriter, glitch, wave, bounce and more',
+    'grafico_animado.exe': 'animated_chart.exe', 'colunas, linha, pizza e corrida de barras animadas': 'animated columns, lines, pies and bar races',
     'barra_de_progresso.exe': 'progress_bar.exe', 'barras de carregamento animadas': 'animated loading bars',
     'botao_inscreva_se.exe': 'subscribe_button.exe', 'botão de inscreva-se animado com cursor': 'animated subscribe button with cursor',
     'cronometro.exe': 'timer.exe', 'contagem regressiva e cronômetro em overlay': 'countdown and stopwatch overlay',
@@ -90,7 +91,7 @@
     'conversor_mp4_mp3.exe': 'mp4_to_mp3.exe', 'conversor_mp4_to_mp3.exe': 'mp4_to_mp3.exe',
 
     // ---------- títulos das páginas ----------
-    'Animação de texto': 'Text animation', 'Barra de progresso': 'Progress bar', 'Cronômetro': 'Timer', 'Botão de inscreva-se': 'Subscribe button', 'Terminal': 'Terminal',
+    'Animação de texto': 'Text animation', 'Gráfico animado': 'Animated chart', 'Barra de progresso': 'Progress bar', 'Cronômetro': 'Timer', 'Botão de inscreva-se': 'Subscribe button', 'Terminal': 'Terminal',
     'Conversa animada': 'Animated chat', 'Gravador de scroll': 'Scroll recorder', 'Mockups': 'Mockups', 'Thumbnail': 'Thumbnail', 'Audiograma': 'Audiogram', 'Legenda automática': 'Auto captions',
     'Removedor de fundo': 'Background remover', 'Criador de botões': 'Button maker', 'Letras recortadas': 'Ransom letters', 'DVDficar': 'DVD bounce', 'Modulador VHS': 'VHS modulator',
     'Texto 3D': '3D text', 'Olho de peixe': 'Fisheye', 'Câmera digital': 'Digital camera', 'Áudio analógico': 'Analog audio', 'Pixelador': 'Pixelator', 'Criador de pop-up': 'Pop-up maker',
@@ -143,6 +144,22 @@
     'Escolha o estilo, de quanto até quanto a barra vai e a duração': 'Pick the style, where the bar starts and ends, and the duration',
     'fazem a barra parar e acelerar algumas vezes, igual carregamento de verdade': 'make the bar stall and speed up a few times, like a real loading bar',
     'Exporte com fundo transparente (WEBM ou PNG) pra usar como overlay': 'Export with a transparent background (WEBM or PNG) to use as an overlay',
+
+    // ---------- gráfico animado ----------
+    'Colunas': 'Columns', 'Barras deitadas': 'Horizontal bars', 'Linha': 'Line', 'Área': 'Area', 'Pizza': 'Pie', 'Rosca': 'Donut', 'Corrida': 'Race', 'Dados': 'Data',
+    'Uma linha por item': 'One line per item', 'Nome = valor': 'Name = value', 'Vários valores separados por': 'Several values separated by', 'viram períodos (o gráfico anda de um pro outro). Uma linha começando com': 'become periods (the chart moves from one to the next). A line starting with',
+    'dá nome aos períodos. Cor opcional no fim, tipo': 'names the periods. Optional color at the end, like', 'Meu gráfico': 'My chart', 'Subtítulo': 'Subtitle', 'Antes do número': 'Before the number', 'Depois do número': 'After the number', 'Casas decimais': 'Decimal places',
+    'Números': 'Numbers', '1,2 mi (curto)': '1.2M (short)', 'Com sobra': 'Overshoot', 'Elástico': 'Elastic', 'Quicando': 'Bouncing', 'Ordem': 'Order', 'Como digitei': 'As typed', 'Maior primeiro': 'Largest first', 'Menor primeiro': 'Smallest first',
+    'Um item de cada vez': 'One item at a time', 'Cores': 'Colors', 'Vibrante': 'Vivid', 'Pastel': 'Pastel', 'Neon': 'Neon', 'Tons de azul': 'Shades of blue', 'Pôr do sol': 'Sunset', 'Uma cor só': 'Single color', 'Cor principal': 'Main color',
+    'Máx. de barras (corrida)': 'Max bars (race)', 'Linhas de grade': 'Grid lines', 'Mostrar valores': 'Show values', 'Legenda (pizza, rosca e linhas)': 'Legend (pie, donut and lines)', 'Linha curva': 'Curved line', 'Brilho neon': 'Neon glow', 'Total': 'Total',
+    'Escreva os dados: Nome = valor': 'Type the data: Name = value', 'Vendas do semestre': 'Half-year sales', 'colunas, fundo claro': 'columns, light background', 'em milhares de reais': 'in thousands', 'Corrida das redes': 'Social media race', 'ranking que troca de lugar': 'ranking that swaps places',
+    'Redes sociais mais usadas': 'Most used social networks', 'usuários por mês (milhões)': 'monthly users (millions)', 'Crescimento do canal': 'Channel growth', 'área neon': 'neon area', 'Inscritos no canal': 'Channel subscribers', 'Pesquisa': 'Survey', 'pizza com porcentagem': 'pie with percentages',
+    'Pizza favorita': 'Favorite pizza', 'pesquisa com 500 pessoas': 'survey of 500 people', 'Tempo de tela': 'Screen time', 'rosca com total no meio': 'donut with the total in the middle', 'Meu dia no celular': 'My day on the phone', 'horas por dia': 'hours per day',
+    'Ranking': 'Ranking', 'barras deitadas, maior primeiro': 'horizontal bars, largest first', 'Títulos de Copa do Mundo': 'World Cup titles', 'Duas linhas': 'Two lines', 'comparando dois itens': 'comparing two items', 'Visualizações': 'Views', 'mil por dia': 'thousand per day',
+    'cores de PC antigo': 'old PC colors', 'STATUS DO HERÓI': 'HERO STATS',
+    'Escolha o tipo de gráfico e escreva os dados, um item por linha': 'Pick the chart type and type the data, one item per line', 'Com vários valores': 'With several values',
+    'cada número é um período: colunas, barras e pizza mudam de um pro outro, linha e área ganham uma linha por item e a': 'each number is a period: columns, bars and pie morph from one to the next, line and area get one line per item, and the',
+    'vira aquele ranking que troca de posição': 'becomes that ranking where items swap places', 'Exporte com fundo transparente (WEBM ou PNG) pra colocar o gráfico por cima do seu vídeo': 'Export with a transparent background (WEBM or PNG) to lay the chart over your video',
 
     // ---------- cronômetro ----------
     'Regressiva': 'Countdown', 'Display digital': 'Digital display', 'Flip': 'Flip', 'Etiqueta': 'Label', 'Placar LED': 'LED scoreboard', 'Minutos': 'Minutes', 'Segundos': 'Seconds', 'Alerta nos últimos': 'Alert in the last',

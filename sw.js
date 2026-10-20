@@ -1,7 +1,7 @@
 /* Service worker do EdiTools: deixa o site abrir offline.
    Páginas: tenta a rede primeiro (pra pegar atualização) e cai no cache sem internet.
    Bibliotecas e fontes das CDNs: cache primeiro, atualizando por trás. */
-const VERSION = 'imapng-v4';
+const VERSION = 'imapng-v5';
 const SHELL = [
   './',
   'arquivos.html',
@@ -13,6 +13,7 @@ const SHELL = [
   'contador.html',
   'cronometro.html',
   'dvdficar.html',
+  'grafico.html',
   'gradiente.html',
   'index.html',
   'inscreva.html',
