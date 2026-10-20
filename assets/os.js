@@ -4,6 +4,7 @@
     '98': { name: 'Windows 98', css: 'https://unpkg.com/98.css@0.1.21/dist/98.css' },
     xp: { name: 'Windows XP', css: 'https://unpkg.com/xp.css@0.2.6/dist/XP.css' },
     '7': { name: 'Windows 7 (Aero)', css: 'https://unpkg.com/7.css@0.16.0/dist/7.css' },
+    mac: { name: 'macOS', css: 'assets/macos.css' },
   };
 
   // accept: tipos de arquivo que a ferramenta abre (usado no "Enviar para…" e ao soltar no ícone)
@@ -247,6 +248,13 @@
         </div>
       </div>`;
     document.body.appendChild(bar);
+    // Dock (só aparece no tema macOS): todas as ferramentas, com a atual marcada
+    const dock = document.createElement('nav');
+    dock.className = 'dock';
+    dock.setAttribute('aria-label', 'Dock');
+    dock.innerHTML = `<a href="index.html" title="Área de trabalho"${here() === 'index.html' ? ' class="on"' : ''}>🏠</a><span class="dock-sep"></span>`
+      + TOOLS.map((t) => `<a href="${t.file}" title="${t.name}"${t.file === here() ? ' class="on"' : ''}>${t.icon}</a>`).join('');
+    document.body.appendChild(dock);
     taskList = bar.querySelector('.tasks');
     const start = bar.querySelector('.start'), menu = bar.querySelector('.startmenu');
     const toggle = (open) => { menu.hidden = !open; start.setAttribute('aria-expanded', open); start.classList.toggle('on', open); };

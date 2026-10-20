@@ -1,7 +1,7 @@
 /* Service worker do EdiTools: deixa o site abrir offline.
    Páginas: tenta a rede primeiro (pra pegar atualização) e cai no cache sem internet.
    Bibliotecas e fontes das CDNs: cache primeiro, atualizando por trás. */
-const VERSION = 'imapng-v5';
+const VERSION = 'imapng-v6';
 const SHELL = [
   './',
   'arquivos.html',
@@ -44,6 +44,7 @@ const SHELL = [
   'assets/icon-512.png',
   'assets/icon-maskable.png',
   'assets/media-tool.js',
+  'assets/macos.css',
   'assets/mp3.js',
   'assets/os.css',
   'assets/os.js',
