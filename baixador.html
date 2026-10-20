@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Baixador de vídeo · EdiTools</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+<script src="assets/mp3.js"></script>
+<style>
+  .modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  .modes button { height: auto; padding: 6px 2px; font-size: 11px; line-height: 1.25; }
+  .modes button[aria-pressed=true] { font-weight: bold; box-shadow: inset 1px 1px 3px rgba(0,0,0,.45); }
+  .modes button span { display: block; font-size: 19px; }
+  #url { font-size: 13px; padding: 5px 6px; }
+  .secret { font-family: monospace; }
+  #pv { flex-direction: column; gap: 10px; padding: 14px; color: #ddd; text-align: center; }
+  #pv video { max-width: 100%; max-height: 60vh; background: #000; }
+  #pv audio { width: min(460px, 100%); }
+  .picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; width: 100%; align-self: stretch; }
+  .picks button { height: auto; padding: 4px; display: flex; flex-direction: column; gap: 4px; align-items: center; }
+  .picks img { width: 100%; aspect-ratio: 1; object-fit: cover; background: #222; }
+  .svc { font-size: 11px; line-height: 1.5; }
+  .help pre { white-space: pre-wrap; font-size: 11px; background: rgba(0,0,0,.06); padding: 6px; margin: 4px 0; }
+  progress { width: 100%; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="baixador_de_video.exe" data-icon="⬇️">
+    <div class="window-body">
+      <div class="toolbar"><a class="btn" href="index.html">🏠 Home</a><button data-open="help">? Ajuda</button><button data-open="setup">🖥️ Configurar servidor</button></div>
+      <div class="tool wide-panel">
+        <div class="panel" id="panel">
+          <label class="field"><span>Link do vídeo</span><input type="url" id="url" placeholder="https://www.youtube.com/watch?v=…" autocomplete="off" spellcheck="false"></label>
+          <div class="modes" id="modes">
+            <button data-m="auto" aria-pressed="true"><span>🎬</span>Vídeo</button>
+            <button data-m="audio" aria-pressed="false"><span>🎵</span>Só o áudio</button>
+            <button data-m="mute" aria-pressed="false"><span>🔇</span>Vídeo sem som</button>
+          </div>
+          <fieldset id="vOpts"><legend>Vídeo</legend><div class="two">
+            <label class="field"><span>Qualidade máxima</span><select id="quality"><option value="max">A melhor que tiver</option><option value="2160">4K (2160p)</option><option value="1440">1440p</option><option value="1080" selected>1080p</option><option value="720">720p</option><option value="480">480p</option><option value="360">360p</option></select></label>
+            <label class="field"><span>Formato (YouTube)</span><select id="codec"><option value="h264">MP4 · H.264 (abre em tudo)</option><option value="vp9">WEBM · VP9</option><option value="av1">AV1 (menor, mais novo)</option></select></label>
+          </div></fieldset>
+          <fieldset id="aOpts" hidden><legend>Áudio</legend><div class="two">
+            <label class="field"><span>Formato</span><select id="afmt"><option value="mp3" selected>MP3</option><option value="wav">WAV (sem perda)</option><option value="ogg">OGG</option><option value="opus">OPUS</option><option value="best">Original (sem converter)</option></select></label>
+            <label class="field"><span>Qualidade</span><select id="abr"><option value="320">320 kbps (alta)</option><option value="256">256 kbps</option><option value="128" selected>128 kbps (padrão)</option><option value="96">96 kbps</option></select></label>
+          </div></fieldset>
+          <button id="go" class="default">⬇️ Baixar</button>
+          <progress id="prog" max="1" value="0" hidden></progress>
+          <div class="status-line" id="st">&gt; cole um link e clique em Baixar.</div>
+          <p class="hint" id="srvHint"></p>
+          <p class="hint">Baixe só o que você tem direito de usar: seus próprios vídeos, conteúdo livre ou com permissão de quem fez.</p>
+        </div>
+        <div id="pv" class="preview"><div class="placeholder" style="position:static;cursor:default"><span class="big">⬇️</span><b>O arquivo aparece aqui</b>Depois de baixar, ele também fica em Meus arquivos e dá pra mandar pra outra ferramenta com "Enviar para…".</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="setup" data-title="servidor.exe" data-icon="🖥️">
+    <div class="window-body">
+      <div class="stack">
+        <p style="margin:0">Pra baixar do YouTube, TikTok, Instagram e outros, o EdiTools usa um servidor <b>cobalt</b> (programa livre e gratuito). O navegador sozinho não consegue: esses sites bloqueiam pedidos vindos de outra página.</p>
+        <label class="field"><span>Endereço do servidor</span><input type="url" id="srv" class="secret" placeholder="https://meu-cobalt.exemplo.com/" autocomplete="off" spellcheck="false"></label>
+        <label class="field"><span>Chave do servidor (se ele pedir)</span><input type="password" id="key" class="secret" placeholder="opcional" autocomplete="off"></label>
+        <div class="btns"><button id="test">🔌 Testar servidor</button><button id="forget">Esquecer</button></div>
+        <div class="svc" id="svc"></div>
+        <details><summary>Como ter o meu servidor</summary>
+          <p>Num computador ou VPS com Docker, crie um <b>docker-compose.yml</b>:</p>
+          <pre>services:
+  cobalt:
+    image: ghcr.io/imputnet/cobalt:11
+    init: true
+    read_only: true
+    restart: unless-stopped
+    ports:
+      - 9000:9000/tcp
+    environment:
+      API_URL: "http://localhost:9000/"</pre>
+          <p>Rode <b>docker compose up -d</b> e cole <b>http://localhost:9000/</b> aqui em cima. Num servidor na internet, troque o API_URL pelo endereço público dele.</p>
+          <p>O servidor oficial do cobalt (api.cobalt.tools) não aceita pedidos de outros sites, por isso precisa de um seu (ou de alguém que deixe você usar).</p>
+        </details>
+        <p class="hint">O endereço e a chave ficam salvos só neste navegador. <b>Links diretos</b> de arquivo (terminando em .mp4, .mp3, .webm…) funcionam sem servidor, se o site deixar.</p>
+      </div>
+      <div class="btns end" style="margin-top:8px"><button onclick="this.closest('.window').classList.add('closed')">OK</button></div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="ajuda.txt" data-icon="📝">
+    <div class="window-body">
+      <ul>
+        <li>Cole o link, escolha <b>Vídeo</b>, <b>Só o áudio</b> ou <b>Vídeo sem som</b> e clique em Baixar.</li>
+        <li>YouTube, TikTok, Instagram, X, Reddit e outros precisam de um servidor (veja <b>Configurar servidor</b>).</li>
+        <li>Posts com várias fotos ou vídeos mostram todos pra você escolher.</li>
+        <li>O que você baixa fica em <b>Meus arquivos</b>: mande pra Legenda automática, Audiograma, Mockups e outras com "Enviar para…".</li>
+      </ul>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">OK</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const T = OS.T;
+let mode = 'auto';
+$('modes').onclick = (e) => {
+  const b = e.target.closest('[data-m]'); if (!b) return;
+  mode = b.dataset.m;
+  $('modes').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+  $('vOpts').hidden = mode === 'audio'; $('aOpts').hidden = mode !== 'audio';
+};
+
+// servidor salvo só neste navegador
+const ls = { get: (k) => { try { return localStorage.getItem('imapng:' + k) || ''; } catch { return ''; } }, set: (k, v) => { try { v ? localStorage.setItem('imapng:' + k, v) : localStorage.removeItem('imapng:' + k); } catch {} } };
+$('srv').value = ls.get('cobaltUrl'); $('key').value = ls.get('cobaltKey');
+const server = () => { const v = $('srv').value.trim(); return v && !/\/$/.test(v) ? v + '/' : v; };
+const srvHint = () => ($('srvHint').innerHTML = server() ? `${T('Servidor')}: <b>${server().replace(/^https?:\/\//, '').replace(/\/$/, '')}</b>` : T('Sem servidor: só links diretos de arquivo. Clique em "Configurar servidor" pra baixar do YouTube, TikTok e outros.'));
+$('srv').onchange = () => { ls.set('cobaltUrl', server()); srvHint(); };
+$('key').onchange = () => ls.set('cobaltKey', $('key').value.trim());
+$('forget').onclick = () => { $('srv').value = $('key').value = ''; ls.set('cobaltUrl', ''); ls.set('cobaltKey', ''); $('svc').textContent = ''; srvHint(); };
+srvHint();
+$('test').onclick = async () => {
+  if (!server()) return ($('svc').textContent = T('Cole o endereço do servidor primeiro.'));
+  $('svc').textContent = T('Testando…');
+  try {
+    const r = await fetch(server(), { headers: { Accept: 'application/json' } });
+    const j = await r.json();
+    if (!j.cobalt) throw new Error();
+    $('svc').innerHTML = `✅ <b>cobalt ${j.cobalt.version}</b> · ${T('funciona com')}: ${(j.cobalt.services || []).join(', ')}`;
+  } catch { $('svc').textContent = '❌ ' + T('Não consegui falar com esse servidor. Confira o endereço e se ele está ligado.'); }
+};
+
+const status = (s) => ($('st').textContent = '> ' + s);
+const ERRORS = {
+  'link.invalid': 'Esse link não parece válido.', 'link.unsupported': 'O servidor não sabe baixar desse site.', 'service.unsupported': 'O servidor não sabe baixar desse site.',
+  'content.video.unavailable': 'Vídeo indisponível (privado, apagado ou bloqueado na região).', 'content.video.live': 'Não dá pra baixar uma live enquanto ela está ao vivo.',
+  'content.too_long': 'O vídeo é mais longo do que o servidor permite.', 'content.post.private': 'O post é privado.', 'content.post.age': 'O conteúdo tem restrição de idade.',
+  'rate_exceeded': 'Muitos pedidos seguidos. Espere um minuto e tente de novo.', 'fetch.fail': 'O servidor não conseguiu pegar o vídeo. Tente de novo daqui a pouco.',
+  'fetch.empty': 'O servidor não encontrou nada pra baixar nesse link.', 'youtube.login': 'O YouTube pediu login pra esse vídeo, e o servidor não está conectado a uma conta.',
+  'youtube.decipher': 'O YouTube mudou algo e o servidor precisa ser atualizado.', 'youtube.codec': 'Esse formato não existe pra esse vídeo. Tente MP4 · H.264.',
+};
+function apiError(code = '') {
+  if (/auth/.test(code)) return T('O servidor pediu uma chave. Coloque a chave em "Configurar servidor".');
+  const k = Object.keys(ERRORS).find((k) => code.includes(k));
+  return k ? T(ERRORS[k]) : T('O servidor recusou o pedido') + ` (${code || '?'}).`;
+}
+
+/** Baixa a URL mostrando o progresso; null quando o site não deixa ler (CORS). */
+async function grab(url) {
+  let r;
+  try { r = await fetch(url); } catch { return null; }
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const total = +(r.headers.get('Content-Length') || r.headers.get('Estimated-Content-Length') || 0);
+  const reader = r.body.getReader(), parts = [];
+  let got = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    parts.push(value); got += value.length;
+    if (total) $('prog').value = Math.min(1, got / total);
+    status(`${T('baixando')}… ${(got / 1e6).toFixed(1)} MB${total ? ' / ' + (total / 1e6).toFixed(1) + ' MB' : ''}`);
+  }
+  return new Blob(parts, { type: r.headers.get('Content-Type') || '' });
+}
+
+function show(blob, name) {
+  const pv = $('pv'), u = URL.createObjectURL(blob);
+  pv.innerHTML = '';
+  const isA = /^audio\//.test(blob.type) || /\.(mp3|wav|ogg|opus|m4a)$/i.test(name);
+  const isV = /^video\//.test(blob.type) || /\.(mp4|webm|mov|mkv)$/i.test(name);
+  const isI = /^image\//.test(blob.type) || /\.(jpe?g|png|gif|webp)$/i.test(name);
+  if (isA || isV) pv.append(Object.assign(document.createElement(isA ? 'audio' : 'video'), { src: u, controls: true }));
+  else if (isI) pv.append(Object.assign(document.createElement('img'), { src: u }));
+  const p = document.createElement('div');
+  p.innerHTML = `<b></b><br><small>${(blob.size / 1e6).toFixed(1)} MB</small>`;
+  p.querySelector('b').textContent = name;
+  pv.append(p);
+}
+
+const extOf = (type) => ({ 'video/mp4': 'mp4', 'video/webm': 'webm', 'video/quicktime': 'mov', 'audio/mpeg': 'mp3', 'audio/mp4': 'm4a', 'audio/wav': 'wav', 'audio/ogg': 'ogg', 'audio/webm': 'webm', 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif' }[(type || '').split(';')[0]] || 'bin');
+const nameFrom = (url, type) => { let n = ''; try { n = decodeURIComponent(new URL(url).pathname.split('/').pop()); } catch {} return /\.[a-z0-9]{2,4}$/i.test(n) ? n : (n || 'video') + '.' + extOf(type); };
+
+async function save(url, name) {
+  const blob = await grab(url);
+  if (!blob) {
+    // o site não deixa a página ler o arquivo: abre o link pro navegador baixar
+    const a = Object.assign(document.createElement('a'), { href: url, download: name || '', target: '_blank', rel: 'noopener' });
+    document.body.append(a); a.click(); a.remove();
+    status(T('o site não deixou ler o arquivo, então abri o link numa aba nova pro navegador baixar.'));
+    return;
+  }
+  name = name || nameFrom(url, blob.type);
+  let out = blob;
+  if (mode === 'audio' && /^video\//.test(blob.type)) {
+    // link direto de vídeo + "só o áudio": extrai e converte aqui mesmo
+    status(T('tirando o áudio do vídeo…'));
+    const buf = await MP3.decodeFile(blob);
+    out = await MP3.encode(buf, +$('abr').value, (p) => ($('prog').value = p));
+    name = name.replace(/\.[^.]+$/, '') + '.mp3';
+  }
+  OS.download(out, name);
+  show(out, name);
+  status(T('pronto!') + ' ' + name);
+}
+
+function picker(j) {
+  const pv = $('pv');
+  pv.innerHTML = `<b>${T('Escolha o que baixar')}</b><div class="picks"></div>`;
+  const box = pv.querySelector('.picks');
+  const add = (label, thumb, url, name) => {
+    const b = document.createElement('button');
+    b.innerHTML = (thumb ? `<img alt="" src="${thumb}">` : '<span style="font-size:40px">🎵</span>') + `<span>${label}</span>`;
+    b.onclick = async () => { busy(true); try { await save(url, name); } catch (e) { status(T('erro') + ': ' + e.message); } busy(false); };
+    box.append(b);
+  };
+  j.picker.forEach((it, i) => add(`${it.type === 'photo' ? '🖼️' : '🎬'} ${i + 1}`, it.thumb || (it.type === 'photo' ? it.url : ''), it.url, ''));
+  if (j.audio) add('🎵 ' + T('Áudio'), '', j.audio, j.audioFilename || '');
+  status(T('esse post tem vários arquivos: escolha ao lado.'));
+}
+
+const busy = (on) => { $('go').disabled = on; $('prog').hidden = !on; $('prog').value = 0; };
+$('go').onclick = async () => {
+  const url = $('url').value.trim();
+  if (!/^https?:\/\//i.test(url)) { status(T('cole um link começando com https://')); $('url').focus(); return; }
+  busy(true);
+  status(T('começando…'));
+  try {
+    const direct = /\.(mp4|webm|mov|mkv|m4v|mp3|wav|ogg|opus|m4a|aac|flac)(\?|#|$)/i.test(url);
+    if (direct || !server()) {
+      if (!direct) { status(T('esse link precisa de um servidor (clique em "Configurar servidor"). Tentando baixar direto…')); }
+      await save(url, '');
+    } else {
+      status(T('pedindo o vídeo pro servidor…'));
+      const headers = { Accept: 'application/json', 'Content-Type': 'application/json' };
+      if ($('key').value.trim()) headers.Authorization = 'Api-Key ' + $('key').value.trim();
+      let r;
+      try {
+        r = await fetch(server(), { method: 'POST', headers, body: JSON.stringify({
+          url, downloadMode: mode, videoQuality: $('quality').value, youtubeVideoCodec: $('codec').value,
+          audioFormat: $('afmt').value, audioBitrate: $('abr').value, filenameStyle: 'pretty', alwaysProxy: true, localProcessing: 'disabled',
+        }) });
+      } catch { throw Object.assign(new Error(), { userMsg: T('Não consegui falar com o servidor. Ele está ligado? O endereço está certo?') }); }
+      const j = await r.json().catch(() => ({}));
+      if (j.status === 'error') throw Object.assign(new Error(j.error?.code), { userMsg: apiError(j.error?.code) });
+      if (j.status === 'tunnel' || j.status === 'redirect') await save(j.url, j.filename);
+      else if (j.status === 'picker') picker(j);
+      else throw Object.assign(new Error(j.status), { userMsg: T('O servidor respondeu de um jeito que eu não conheço. Atualize o cobalt pra versão 10 ou mais nova.') });
+    }
+  } catch (e) {
+    console.error(e);
+    const msg = e.userMsg || (/decod|ler o áudio/i.test(e.message) ? e.message : T('Não deu pra baixar esse link') + (e.message ? ` (${e.message})` : '') + '.');
+    status(T('erro') + ': ' + msg);
+    OS.dialog(T('Não deu pra baixar'), msg, '⚠️');
+  }
+  busy(false);
+};
+$('url').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('go').click(); });
+// colar um link na página já preenche o campo
+document.addEventListener('paste', (e) => { const t = e.clipboardData.getData('text'); if (/^https?:\/\//.test(t) && document.activeElement !== $('url') && document.activeElement?.tagName !== 'INPUT') $('url').value = t.trim(); });
+if (!server()) setTimeout(() => OS.openWin && OS.openWin('setup'), 400);
+</script>
+</body>
+</html>

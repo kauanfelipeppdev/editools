@@ -36,6 +36,7 @@ Legenda automática com IA, removedor de fundo, conversa animada, terminal, thum
 |:-:|---|---|
 | 💬 | **Legenda automática** | A IA Whisper transcreve o vídeo palavra por palavra. 10 estilos prontos (destaque amarelo, karaokê, caixinha na palavra, neon…), tudo personalizável. Exporta SRT, VTT, legenda transparente ou o vídeo já legendado |
 | 📱 | **Conversa animada** | Vídeo de chat mensagem por mensagem, com "digitando…", ✓✓ de lida, imagens, grupos e som de notificação. 7 visuais genéricos, incluindo um **chat com IA** em que a resposta vai sendo escrita aos poucos |
+| ⬇️ | **Baixador de vídeo** | Cole o link e baixe o vídeo (até 4K), só o áudio (MP3, WAV, OGG…) ou o vídeo sem som. YouTube, TikTok, Instagram e outros via servidor [cobalt](https://github.com/imputnet/cobalt); links diretos funcionam sem servidor |
 | 🖱️ | **Gravador de scroll** | Transforma o print da página inteira num vídeo rolando, com paradas, moldura de navegador, celular ou notebook |
 | ⌨️ | **Terminal** | Janela de terminal bonita (14 temas, 10 fontes, macOS/Windows/Linux) em PNG, SVG, área de transferência ou vídeo com a digitação acontecendo |
 | 📼 | **Modulador VHS** | Ruído, scanlines, glitch, sangramento de cor e letreiro de câmera em foto ou vídeo |
@@ -128,6 +129,25 @@ Abrindo o `index.html` direto também funciona, mas a instalação como aplicati
 ### 🔑 Puxar dados do canal do YouTube
 
 O botão de inscreva-se usa a **YouTube Data API v3**, que pede uma chave grátis: crie um projeto no [Google Cloud Console](https://console.cloud.google.com/), ative a *YouTube Data API v3* e gere uma *chave de API*. A chave fica salva só no navegador de quem usa.
+
+### ⬇️ Servidor do baixador de vídeo
+
+O navegador não deixa um site estático baixar direto do YouTube, TikTok etc., então o baixador conversa com um servidor [cobalt](https://github.com/imputnet/cobalt) (livre e gratuito). Com Docker, crie um `docker-compose.yml`:
+
+```yaml
+services:
+  cobalt:
+    image: ghcr.io/imputnet/cobalt:11
+    init: true
+    read_only: true
+    restart: unless-stopped
+    ports:
+      - 9000:9000/tcp
+    environment:
+      API_URL: "http://localhost:9000/"
+```
+
+Rode `docker compose up -d` e cole `http://localhost:9000/` em *Configurar servidor*. O servidor público oficial (api.cobalt.tools) não aceita pedidos de outros sites. Baixe só conteúdo que você tem direito de usar.
 
 ## 🗂️ Estrutura
 
