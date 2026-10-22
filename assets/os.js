@@ -249,7 +249,7 @@
   function buildTaskbar() {
     const bar = document.createElement('nav');
     bar.className = 'taskbar';
-    const item = (t) => `<a href="${t.file}" class="sm-item sm-tool" role="menuitem" data-file="${t.file}"><span>${t.icon}</span><i>${t.name}</i><span class="sm-star" data-star="${t.file}" role="button" title="Favoritar" aria-label="Favoritar"></span></a>`;
+    const item = (t) => `<a href="${t.file}" class="sm-item sm-tool" role="menuitem" data-file="${t.file}"><span>${t.icon}</span><i>${t.name}</i><span class="sm-star" data-star="${t.file}" title="Favoritar" aria-label="Favoritar"></span></a>`;
     bar.innerHTML = `
       <button class="start" aria-haspopup="menu" aria-expanded="false"><span class="orb"></span><b>Iniciar</b></button>
       <div class="quick"></div>

@@ -146,8 +146,9 @@
         grid-template-columns: 1fr;
       }
 
+      /* no celular os ícones repetem a lista de ferramentas e empurram tudo pra baixo */
       .home .icons {
-        grid-template-columns: repeat(auto-fill, 76px);
+        display: none;
       }
     }
   </style>
@@ -212,7 +213,7 @@ Menu Iniciar: todas as ferramentas, os programas da Adobe, papel de parede e idi
     const progs = document.getElementById('progs');
     OS.TOOLS.forEach((t) => {
       icons.insertAdjacentHTML('beforeend', `<a class="dicon" href="${t.file}" data-file="${t.file}"><span class="ico">${t.icon}</span>${t.name}</a>`);
-      progs.insertAdjacentHTML('beforeend', `<a class="prog${t.isNew ? ' new' : ''}" href="${t.file}" data-file="${t.file}"><span class="ico">${t.icon}</span><span class="txt"><b>${t.name}${t.isNew ? '<span class="tag">NOVO</span>' : ''}</b><small>${t.desc}</small></span><span class="fav" role="button" data-fav="${t.file}" title="Favoritar"></span></a>`);
+      progs.insertAdjacentHTML('beforeend', `<a class="prog${t.isNew ? ' new' : ''}" href="${t.file}" data-file="${t.file}"><span class="ico">${t.icon}</span><span class="txt"><b>${t.name}${t.isNew ? '<span class="tag">NOVO</span>' : ''}</b><small>${t.desc}</small></span><span class="fav" data-fav="${t.file}" title="Favoritar"></span></a>`);
     });
     // ☆ favorita sem abrir a ferramenta; favoritos vão pra barra de tarefas e pro Dock
     const syncFavs = () => progs.querySelectorAll('[data-fav]').forEach((b) => { const on = OS.favs.has(b.dataset.fav); b.textContent = on ? '★' : '☆'; b.classList.toggle('on', on); b.title = OS.T(on ? 'Tirar dos favoritos' : 'Favoritar'); });
