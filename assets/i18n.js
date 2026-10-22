@@ -67,6 +67,7 @@
     'audiograma.exe': 'audiogram.exe', 'áudio vira vídeo com onda sonora animada': 'audio becomes a video with an animated waveform',
     'animacao_de_texto.exe': 'text_animation.exe', 'máquina de escrever, glitch, onda, quique e mais': 'typewriter, glitch, wave, bounce and more',
     'baixador_de_video.exe': 'video_downloader.exe', 'baixa vídeo ou só o áudio a partir de um link': 'downloads video or just the audio from a link',
+    'criador_de_teia.exe': 'web_maker.exe', 'mapa mental, teia, cadeia e quadro de investigação': 'mind maps, webs, chains and investigation boards',
     'termometro.exe': 'thermometer.exe', 'termômetro, meta de live e medidor animados': 'animated thermometer, stream goal and gauge',
     'grafico_animado.exe': 'animated_chart.exe', 'colunas, linha, pizza e corrida de barras animadas': 'animated columns, lines, pies and bar races',
     'barra_de_progresso.exe': 'progress_bar.exe', 'barras de carregamento animadas': 'animated loading bars',
@@ -93,7 +94,7 @@
     'conversor_mp4_mp3.exe': 'mp4_to_mp3.exe', 'conversor_mp4_to_mp3.exe': 'mp4_to_mp3.exe',
 
     // ---------- títulos das páginas ----------
-    'Animação de texto': 'Text animation', 'Gráfico animado': 'Animated chart', 'Termômetro': 'Thermometer', 'Baixador de vídeo': 'Video downloader', 'Barra de progresso': 'Progress bar', 'Cronômetro': 'Timer', 'Botão de inscreva-se': 'Subscribe button', 'Terminal': 'Terminal',
+    'Animação de texto': 'Text animation', 'Gráfico animado': 'Animated chart', 'Termômetro': 'Thermometer', 'Criador de teia': 'Web maker', 'Baixador de vídeo': 'Video downloader', 'Barra de progresso': 'Progress bar', 'Cronômetro': 'Timer', 'Botão de inscreva-se': 'Subscribe button', 'Terminal': 'Terminal',
     'Conversa animada': 'Animated chat', 'Gravador de scroll': 'Scroll recorder', 'Mockups': 'Mockups', 'Thumbnail': 'Thumbnail', 'Audiograma': 'Audiogram', 'Legenda automática': 'Auto captions',
     'Removedor de fundo': 'Background remover', 'Criador de botões': 'Button maker', 'Letras recortadas': 'Ransom letters', 'DVDficar': 'DVD bounce', 'Modulador VHS': 'VHS modulator',
     'Texto 3D': '3D text', 'Olho de peixe': 'Fisheye', 'Câmera digital': 'Digital camera', 'Áudio analógico': 'Analog audio', 'Pixelador': 'Pixelator', 'Criador de pop-up': 'Pop-up maker',
@@ -173,6 +174,23 @@
     'esse link precisa de um servidor (clique em "Configurar servidor"). Tentando baixar direto…': 'this link needs a server (click "Set up server"). Trying a direct download…', 'pedindo o vídeo pro servidor…': 'asking the server for the video…',
     'Não consegui falar com o servidor. Ele está ligado? O endereço está certo?': "Couldn't reach the server. Is it running? Is the address right?", 'O servidor respondeu de um jeito que eu não conheço. Atualize o cobalt pra versão 10 ou mais nova.': 'The server answered in a way I don\'t know. Update cobalt to version 10 or newer.',
     'Não deu pra baixar esse link': "Couldn't download that link", 'Não deu pra baixar': "Couldn't download",
+
+    // ---------- criador de teia ----------
+    'Conteúdo': 'Content', 'Estrutura': 'Structure', 'Reorganizar': 'Auto arrange', 'Baixar PNG': 'Download PNG', 'Um item por linha.': 'One item per line.', 'Espaço no começo': 'Space at the start',
+    '= filho do item de cima (vira um galho). Ligação extra:': '= child of the item above (becomes a branch). Extra link:', '(com texto:': '(with text:', ', sem seta:': ', no arrow:', 'sem seta:': 'no arrow:', '). Imagem:': '). Image:', '. Cor:': '. Color:', 'no fim.': 'at the end.',
+    'Adicionar imagens': 'Add images', '→ Recuar linha': '→ Indent line', 'Deixa a linha onde está o cursor como filha da de cima': 'Makes the line at the cursor a child of the one above', 'Tirar': 'Remove',
+    'Dica: arraste os itens direto na prévia pra ajeitar a posição.': 'Tip: drag the items right on the preview to adjust their position.', 'Formato': 'Layout', 'Estilo': 'Style', 'Linhas': 'Lines', 'Curvas': 'Curved', 'Retas': 'Straight', 'Setas': 'Arrows', 'Automático': 'Automatic', 'Sempre': 'Always', 'Nunca': 'Never',
+    'Do estilo': "Style's own", 'Cor de destaque': 'Accent color', 'Tamanho dos itens': 'Item size', 'Espaçamento': 'Spacing', 'Animar a montagem (itens aparecendo um a um)': 'Animate the build (items appearing one by one)', 'Duração da montagem (s)': 'Build duration (s)',
+    'Usar minha cor de fundo': 'Use my background color', 'arraste os itens pra mover': 'drag items to move them', 'Mapa mental': 'Mind map', 'Árvore': 'Tree', 'Cadeia': 'Chain', 'Teia': 'Web', 'Círculo': 'Circle', 'Linha do tempo': 'Timeline',
+    'Mapa colorido': 'Colorful map', 'Quadro de investigação': 'Investigation board', 'Constelação': 'Constellation', 'Quadro branco': 'Whiteboard', 'Rede social': 'Social network', 'Planta': 'Blueprint', 'Janelinhas 98': '98 windows', 'Minimalista': 'Minimal',
+    'tema no meio, galhos coloridos': 'topic in the middle, colorful branches', 'fio vermelho e tachinhas': 'red string and pins', 'Cadeia de processo': 'Process chain', 'passo a passo com setas': 'step by step with arrows', 'Árvore da família': 'Family tree', 'de cima pra baixo': 'top to bottom',
+    'Constelação de amigos': 'Friends constellation', 'céu estrelado': 'starry sky', 'datas em sequência': 'dates in order', 'Brainstorm': 'Brainstorm', 'quadro branco de reunião': 'meeting whiteboard', 'Organograma': 'Org chart', 'equipe em planta azul': 'team on a blueprint',
+    'Rede retrô': 'Retro network', 'janelinhas do Windows 98': 'little Windows 98 windows', 'Escreva os itens na aba Conteúdo': 'Type the items in the Content tab', 'Foto': 'Photo',
+    'Escreva um item por linha. Quem tem': 'Write one item per line. Lines with', 'fica ligado ao item de cima com menos espaço, igual a um índice.': 'connect to the item above with less space, like a table of contents.',
+    'Pra ligar dois itens quaisquer, escreva': 'To link any two items, write', '. Dá pra pôr um texto na linha:': '. You can put text on the line:', 'Clique em': 'Click', ': cada foto entra como': ': each photo comes in as', 'e já vira um item.': 'and becomes an item right away.',
+    'Troque o': 'Change the', '(mapa mental, árvore, cadeia, teia, círculo, linha do tempo) e o': '(mind map, tree, chain, web, circle, timeline) and the', '(quadro de investigação, constelação, neon…) quando quiser: o conteúdo é o mesmo.': '(investigation board, constellation, neon…) whenever you like: the content stays the same.',
+    'Arraste os itens na prévia pra ajeitar.': 'Drag the items on the preview to adjust them.', 'volta tudo pro lugar automático.': 'puts everything back in the automatic place.', 'Exporte em vídeo (com a teia se montando) ou em PNG. Fundo transparente funciona em WEBM e PNG.': 'Export as video (with the web building itself) or as PNG. Transparent background works in WEBM and PNG.',
+    'Escreva com espaço no começo da linha pra criar galhos. A tecla Tab faz isso pra você.': 'Start a line with spaces to create branches. The Tab key does it for you.', 'Troque o Formato e o Estilo à vontade: o conteúdo continua o mesmo.': 'Change Layout and Style freely: the content stays the same.', 'Arraste os itens na prévia pra deixar do seu jeito.': 'Drag the items on the preview to make it your own.',
 
     // ---------- termômetro ----------
     'Clássico': 'Classic', 'Meta': 'Goal', 'Deitado': 'Horizontal', 'Medidor': 'Gauge', 'Carinha': 'Face', 'Digital': 'Digital', 'Escala de': 'Scale from', 'até': 'to', 'Começa em': 'Starts at', 'Termina em': 'Ends at',

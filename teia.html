@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Criador de teia · EdiTools</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Bebas+Neue&family=Bungee&family=Cinzel:wght@700&family=Fredoka:wght@500;700&family=Inter:wght@400;700;900&family=Luckiest+Guy&family=Montserrat:wght@400;700;900&family=Orbitron:wght@700;900&family=Permanent+Marker&family=Poppins:wght@400;700;900&family=Press+Start+2P&family=Roboto+Mono:wght@400;700&family=Special+Elite&family=VT323&display=swap">
+<script src="assets/export.js"></script>
+<style>
+  #pv canvas { max-height: 64vh; cursor: grab; touch-action: none; }
+  #pv canvas.drag { cursor: grabbing; }
+  .fx { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  .fx button { height: auto; padding: 5px 2px; font-size: 11px; line-height: 1.25; }
+  .fx button[aria-pressed=true] { font-weight: bold; box-shadow: inset 1px 1px 3px rgba(0,0,0,.45); }
+  .fx button span { display: block; font-size: 17px; }
+  #data { width: 100%; min-height: 170px; font-family: Consolas, "Courier New", monospace; font-size: 12px; resize: vertical; box-sizing: border-box; tab-size: 2; }
+  .imgs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .imgs figure { margin: 0; position: relative; width: 54px; text-align: center; font-size: 10px; }
+  .imgs img { width: 54px; height: 54px; object-fit: cover; display: block; border: 1px solid rgba(0,0,0,.3); }
+  .imgs button { position: absolute; top: -6px; right: -6px; min-width: 0 !important; width: 18px; height: 18px; padding: 0 !important; font-size: 10px; line-height: 1; border-radius: 50%; }
+  .pvhint { position: absolute; left: 8px; bottom: 6px; font-size: 11px; color: #ddd; background: rgba(0,0,0,.55); padding: 2px 6px; pointer-events: none; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="criador_de_teia.exe" data-icon="🕸️">
+    <div class="window-body">
+      <div class="toolbar"><a class="btn" href="index.html">🏠 Home</a><button data-open="help">? Ajuda</button><span class="spacer"></span><button id="resetPos">↺ Reorganizar</button><button id="pngBtn">🖼️ Baixar PNG</button><button id="playBtn">▶ Repetir prévia</button></div>
+      <div class="tool wide-panel">
+        <div class="panel" id="panel">
+          <div class="btns grow tabs" role="tablist">
+            <button role="tab" aria-selected="true" data-tab="t1">✏️ Conteúdo</button>
+            <button role="tab" aria-selected="false" data-tab="t2">🎨 Visual</button>
+            <button role="tab" aria-selected="false" data-tab="t3">⭐ Modelos</button>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t1">
+            <div class="stack">
+              <label class="field"><span>Estrutura</span><textarea id="data" spellcheck="false"></textarea></label>
+              <p class="hint">Um item por linha. <b>Espaço no começo</b> = filho do item de cima (vira um galho). Ligação extra: <b>A -&gt; B</b> (com texto: <b>A -&gt; B : motivo</b>, sem seta: <b>A -- B</b>). Imagem: <b>[img1] Nome</b>. Cor: <b>#ff0000</b> no fim.</p>
+              <div class="btns"><button id="addImg">🖼️ Adicionar imagens</button><button id="tabBtn" title="Deixa a linha onde está o cursor como filha da de cima">→ Recuar linha</button></div>
+              <div class="imgs" id="imgs"></div>
+              <p class="hint">Dica: arraste os itens direto na prévia pra ajeitar a posição.</p>
+            </div>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t2" hidden>
+            <div class="stack">
+              <span class="lbl">Formato</span>
+              <div class="fx" id="layouts"></div>
+              <input type="hidden" id="layout" value="radial">
+              <span class="lbl">Estilo</span>
+              <div class="fx" id="styles"></div>
+              <input type="hidden" id="style" value="mind">
+              <div class="two">
+                <label class="field"><span>Linhas</span><select id="lines"><option value="curve">Curvas</option><option value="straight">Retas</option></select></label>
+                <label class="field"><span>Setas</span><select id="arrows"><option value="auto">Automático</option><option value="on">Sempre</option><option value="off">Nunca</option></select></label>
+                <label class="field"><span>Fonte</span><select id="font"><option value="auto">Do estilo</option></select></label>
+                <label class="field"><span>Cor de destaque</span><input type="color" id="accent" value="#7c5cff"></label>
+              </div>
+              <label class="field"><span>Tamanho dos itens <output data-suffix="%"></output></span><input type="range" id="size" min="50" max="180" value="100"></label>
+              <label class="field"><span>Espaçamento <output data-suffix="%"></output></span><input type="range" id="spread" min="40" max="140" value="100"></label>
+              <div class="field-row"><input type="checkbox" id="anim" checked><label for="anim">Animar a montagem (itens aparecendo um a um)</label></div>
+              <div class="two">
+                <label class="field"><span>Duração da montagem (s)</span><input type="number" id="dur" value="5" min="1" max="60" step="0.5"></label>
+                <label class="field"><span>Segurar no fim (s)</span><input type="number" id="hold" value="2" min="0" max="30" step="0.5"></label>
+              </div>
+              <div class="field-row"><input type="checkbox" id="ownBg"><label for="ownBg">Usar minha cor de fundo</label><input type="color" id="bg" value="#101018"></div>
+            </div>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t3" hidden><div class="presets" id="presets"></div></div>
+          <div id="exp"></div>
+        </div>
+        <div id="pv" class="preview"><canvas id="cv"></canvas><span class="pvhint">arraste os itens pra mover</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="ajuda.txt" data-icon="📝">
+    <div class="window-body">
+      <ul>
+        <li>Escreva um item por linha. Quem tem <b>espaço no começo</b> fica ligado ao item de cima com menos espaço, igual a um índice.</li>
+        <li>Pra ligar dois itens quaisquer, escreva <b>A -&gt; B</b>. Dá pra pôr um texto na linha: <b>A -&gt; B : é primo de</b>.</li>
+        <li>Clique em <b>Adicionar imagens</b>: cada foto entra como <b>[img1]</b>, <b>[img2]</b>… e já vira um item.</li>
+        <li>Troque o <b>Formato</b> (mapa mental, árvore, cadeia, teia, círculo, linha do tempo) e o <b>Estilo</b> (quadro de investigação, constelação, neon…) quando quiser: o conteúdo é o mesmo.</li>
+        <li>Arraste os itens na prévia pra ajeitar. <b>Reorganizar</b> volta tudo pro lugar automático.</li>
+        <li>Exporte em vídeo (com a teia se montando) ou em PNG. Fundo transparente funciona em WEBM e PNG.</li>
+      </ul>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">OK</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const { EASE, clamp, rnd } = EXPORT;
+const cv = $('cv'), ctx = cv.getContext('2d');
+$('font').insertAdjacentHTML('beforeend', EXPORT.fontOptions(''));
+
+const LAYOUTS = {
+  radial: ['🧠', 'Mapa mental'], tree: ['🌳', 'Árvore'], chain: ['⛓️', 'Cadeia'],
+  web: ['🕸️', 'Teia'], circle: ['⭕', 'Círculo'], timeline: ['📅', 'Linha do tempo'],
+};
+const STYLES = {
+  mind: ['🎨', 'Mapa colorido', 'Poppins'], conspiracy: ['📌', 'Quadro de investigação', 'Permanent Marker'], galaxy: ['✨', 'Constelação', 'Montserrat'],
+  neon: ['💡', 'Neon', 'Montserrat'], board: ['🖍️', 'Quadro branco', 'Permanent Marker'], net: ['👥', 'Rede social', 'Inter'],
+  blueprint: ['📐', 'Planta', 'Roboto Mono'], retro: ['🪟', 'Janelinhas 98', 'Arial'], minimal: ['◻️', 'Minimalista', 'Inter'],
+};
+function fxGrid(box, hidden, list) {
+  for (const [k, [i, n]] of Object.entries(list)) box.insertAdjacentHTML('beforeend', `<button data-fx="${k}" aria-pressed="false"><span>${i}</span>${n}</button>`);
+  const set = (k) => { $(hidden).value = k; box.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.fx === k)); fontsReady().then(restart); };
+  box.onclick = (e) => { const b = e.target.closest('[data-fx]'); if (b) set(b.dataset.fx); };
+  return set;
+}
+const setLayout = fxGrid($('layouts'), 'layout', LAYOUTS);
+const setStyle = fxGrid($('styles'), 'style', STYLES);
+
+// ---------- imagens ----------
+const IMGS = [];
+function renderImgs() {
+  $('imgs').innerHTML = IMGS.map((m, i) => m ? `<figure><img src="${m.url}" alt=""><figcaption>img${i + 1}</figcaption><button data-rm="${i}" title="Tirar">✕</button></figure>` : '').join('');
+}
+$('imgs').onclick = (e) => { const b = e.target.closest('[data-rm]'); if (!b) return; IMGS[+b.dataset.rm] = null; renderImgs(); };
+function addImage(file) {
+  const url = URL.createObjectURL(file), img = new Image();
+  img.onload = () => {
+    IMGS.push({ img, url });
+    const n = IMGS.length, name = file.name.replace(/\.[^.]+$/, '').slice(0, 24) || OS.T('Foto') + ' ' + n;
+    // a foto já entra como item: filha do primeiro item, se tiver um
+    const ta = $('data'), lines = ta.value.split('\n').filter((l) => l.trim());
+    ta.value = (lines.length ? ta.value.replace(/\s*$/, '') + `\n  [img${n}] ${name}` : `[img${n}] ${name}`);
+    renderImgs(); restart();
+  };
+  img.src = url;
+}
+$('addImg').onclick = () => {
+  const i = Object.assign(document.createElement('input'), { type: 'file', accept: 'image/*', multiple: true });
+  i.onchange = () => [...i.files].forEach(addImage);
+  i.click();
+};
+OS.dropZone($('pv'), addImage, /^image\//);
+$('tabBtn').onclick = () => {
+  const ta = $('data'), p = ta.selectionStart, st = ta.value.lastIndexOf('\n', p - 1) + 1;
+  ta.value = ta.value.slice(0, st) + '  ' + ta.value.slice(st); ta.focus(); ta.selectionStart = ta.selectionEnd = p + 2; restart();
+};
+// Tab dentro do texto recua a linha em vez de sair do campo
+$('data').addEventListener('keydown', (e) => { if (e.key === 'Tab') { e.preventDefault(); e.shiftKey ? unindent() : $('tabBtn').click(); } });
+function unindent() {
+  const ta = $('data'), p = ta.selectionStart, st = ta.value.lastIndexOf('\n', p - 1) + 1, m = ta.value.slice(st).match(/^ {1,2}/);
+  if (!m) return; ta.value = ta.value.slice(0, st) + ta.value.slice(st + m[0].length); ta.selectionStart = ta.selectionEnd = Math.max(st, p - m[0].length); restart();
+}
+
+// ---------- modelos ----------
+const PRESETS = [
+  { n: '🧠 Mapa mental', d: 'tema no meio, galhos coloridos', layout: 'radial', style: 'mind', data: `Edição de vídeo\n  Roteiro\n    Ideia\n    Gancho\n  Gravação\n    Luz\n    Áudio\n  Edição\n    Cortes\n    Legenda\n    Cor\n  Publicação\n    Thumbnail\n    Título` },
+  { n: '📌 Quadro de investigação', d: 'fio vermelho e tachinhas', layout: 'web', style: 'conspiracy', data: `O SUSPEITO\n  Testemunha\n  Cafeteria\n    Recibo das 3h\n  Carro preto\n    Placa ABC-1234\nTestemunha -> Carro preto : viu\nRecibo das 3h -> Placa ABC-1234 : ???\nCafeteria -- Carro preto` },
+  { n: '⛓️ Cadeia de processo', d: 'passo a passo com setas', layout: 'chain', style: 'neon', data: `Ideia\nRoteiro\nGravação\nEdição\nRevisão\nPublicação\nResultados` },
+  { n: '🌳 Árvore da família', d: 'de cima pra baixo', layout: 'tree', style: 'net', data: `Vovó Rosa\n  Mãe\n    Eu\n    Irmã\n  Tio João\n    Primo Léo\n    Prima Bia` },
+  { n: '✨ Constelação de amigos', d: 'céu estrelado', layout: 'web', style: 'galaxy', data: `Eu\n  Ana\n  Bruno\n  Carla\n  Davi\n  Eva\nAna -- Bruno\nCarla -- Davi\nEva -- Ana` },
+  { n: '📅 Linha do tempo', d: 'datas em sequência', layout: 'timeline', style: 'minimal', data: `2019 · Primeiro vídeo\n2020 · 1 mil inscritos\n2021 · Canal monetizado\n2022 · Primeira collab\n2023 · 100 mil inscritos\n2024 · Placa de prata` },
+  { n: '🖍️ Brainstorm', d: 'quadro branco de reunião', layout: 'radial', style: 'board', data: `Ideias de vídeo\n  Desafio de 24h\n  Reagindo a comentários\n  Tutorial rápido\n  Bastidores\n  Collab\nDesafio de 24h -> Collab : juntar` },
+  { n: '📐 Organograma', d: 'equipe em planta azul', layout: 'tree', style: 'blueprint', data: `Diretor\n  Produção\n    Roteirista\n    Câmera\n  Pós\n    Editor\n    Motion\n    Som` },
+  { n: '🪟 Rede retrô', d: 'janelinhas do Windows 98', layout: 'circle', style: 'retro', data: `meu_pc.exe\n  internet.exe\n  jogos.exe\n  musicas.exe\n  fotos.exe\n  trabalho.exe\ninternet.exe -> jogos.exe` },
+];
+EXPORT.presets($('presets'), PRESETS, (p) => {
+  $('data').value = p.data; offsets = {};
+  EXPORT.setValues({ lines: 'curve', arrows: 'auto', font: 'auto', size: 100, spread: 100, anim: true, ownBg: false });
+  setLayout(p.layout); setStyle(p.style); OS.showTab('t1');
+});
+
+const IDS = ['data', 'layout', 'style', 'lines', 'arrows', 'font', 'accent', 'size', 'spread', 'anim', 'dur', 'hold', 'ownBg', 'bg'];
+const S = () => EXPORT.values(IDS);
+const fontOf = (s) => (s.font === 'auto' ? STYLES[s.style][2] : s.font);
+const fontsReady = () => Promise.all([400, 700, 900].map((w) => EXPORT.loadFont(w, fontOf(S()))));
+
+// ---------- estrutura ----------
+function parse(text) {
+  const nodes = [], byName = new Map(), edges = [], stack = [];
+  const LINK = /^(.+?)\s*(<->|->|--|—)\s*(.+?)(?:\s+:\s*(.+))?$/;
+  const node = (raw) => {
+    let label = raw.trim(), img = -1, color = null;
+    const c = label.match(/\s#([0-9a-f]{6}|[0-9a-f]{3})$/i); if (c) { color = '#' + c[1]; label = label.slice(0, c.index).trim(); }
+    const m = label.match(/\[img(\d+)\]/i); if (m) { img = +m[1] - 1; label = label.replace(m[0], '').trim(); }
+    const key = label.toLowerCase() || '[img' + img + ']';
+    let n = byName.get(key);
+    if (!n) { n = { id: nodes.length, label, img, color, parent: null, children: [], depth: 0 }; nodes.push(n); byName.set(key, n); }
+    else { if (img >= 0) n.img = img; if (color) n.color = color; }
+    return n;
+  };
+  const links = [];
+  for (const line of text.split('\n')) {
+    if (!line.trim() || line.trim().startsWith('#') && !/^#[0-9a-f]{3,6}\b/i.test(line.trim())) continue;
+    const lm = line.trim().match(LINK);
+    if (lm) { links.push(lm); continue; }
+    const ind = line.match(/^[ \t]*/)[0].replace(/\t/g, '  ').length;
+    while (stack.length && stack[stack.length - 1].ind >= ind) stack.pop();
+    const n = node(line), par = stack.length ? stack[stack.length - 1].n : null;
+    if (par && n !== par) {
+      if (n.parent == null && !isAncestor(n, par)) { n.parent = par; par.children.push(n); edges.push({ a: par, b: n, kind: 'tree' }); }
+      else edges.push({ a: par, b: n, kind: 'extra' });
+    }
+    stack.push({ ind, n });
+  }
+  for (const [, A, op, B, lbl] of links) {
+    const a = node(A), b = node(B);
+    if (a !== b) edges.push({ a, b, kind: 'extra', label: lbl || '', dir: op === '->' ? 1 : op === '<->' ? 2 : 0 });
+  }
+  const roots = nodes.filter((n) => n.parent == null);
+  const setDepth = (n, d) => { n.depth = d; n.children.forEach((c) => setDepth(c, d + 1)); };
+  roots.forEach((r) => setDepth(r, 0));
+  // ordem de montagem: do centro pra fora (por profundidade)
+  const order = [], q = [...roots];
+  while (q.length) { const n = q.shift(); order.push(n); q.push(...n.children); }
+  order.forEach((n, i) => (n.rank = i));
+  const pre = []; const walk = (n) => { pre.push(n); n.children.forEach(walk); }; roots.forEach(walk);
+  // galho (filho do item principal) define a cor no mapa colorido
+  for (const n of nodes) { let a = n; while (a.parent && a.parent.parent) a = a.parent; n.branch = a.parent ? a.parent.children.indexOf(a) : -1; }
+  return { nodes, edges, roots, order, pre };
+  function isAncestor(a, b) { for (let x = b; x; x = x.parent) if (x === a) return true; return false; }
+}
+
+// ---------- formatos (posições abstratas, depois cabem na tela) ----------
+function layout(G, kind) {
+  const { nodes, roots } = G;
+  const leaves = (n) => (n.children.length ? n.children.reduce((s, c) => s + leaves(c), 0) : 1);
+  const P = new Map();
+  if (kind === 'radial' || kind === 'web') {
+    const top = roots.length === 1 ? roots[0] : { children: roots, virtual: true };
+    const place = (n, a0, a1, r) => {
+      if (!n.virtual) P.set(n, [Math.cos((a0 + a1) / 2) * r, Math.sin((a0 + a1) / 2) * r]);
+      const tot = n.children.reduce((s, c) => s + leaves(c), 0) || 1;
+      let a = a0;
+      for (const c of n.children) { const da = (a1 - a0) * leaves(c) / tot; place(c, a, a + da, r + (r === 0 && n.virtual ? 1.1 : 1)); a += da; }
+    };
+    place(top, -Math.PI / 2, Math.PI * 1.5, 0);
+    if (top.virtual && roots.length === 1) P.set(roots[0], [0, 0]);
+    if (kind === 'web') relax(G, P);
+  } else if (kind === 'tree') {
+    let slot = 0;
+    const place = (n) => { if (!n.children.length) { P.set(n, [slot++, n.depth]); return; } n.children.forEach(place); const xs = n.children.map((c) => P.get(c)[0]); P.set(n, [(Math.min(...xs) + Math.max(...xs)) / 2, n.depth]); };
+    roots.forEach((r) => { place(r); slot += .6; });
+    for (const [n, p] of P) P.set(n, [p[0], p[1] * 1.25]);
+  } else if (kind === 'chain') {
+    const L = G.pre, n = L.length, cols = Math.max(1, Math.min(n, Math.ceil(Math.sqrt(n * 2.2))));
+    L.forEach((nd, i) => { const r = Math.floor(i / cols), c = i % cols; P.set(nd, [(r % 2 ? cols - 1 - c : c) * 1.5, r * 1.3]); });
+  } else if (kind === 'circle') {
+    const center = roots.length === 1 && roots[0].children.length ? roots[0] : null;
+    const ring = G.pre.filter((x) => x !== center);
+    if (center) P.set(center, [0, 0]);
+    ring.forEach((nd, i) => { const a = -Math.PI / 2 + i / ring.length * Math.PI * 2; P.set(nd, [Math.cos(a) * 2, Math.sin(a) * 2]); });
+  } else if (kind === 'timeline') {
+    G.pre.forEach((nd, i) => P.set(nd, [i * 1.4, i % 2 ? 1 : -1]));
+  }
+  for (const nd of nodes) if (!P.has(nd)) P.set(nd, [0, 0]);
+  return P;
+}
+/** Teia: molas nas ligações e itens se empurrando. Sempre igual pra mesma estrutura (começa do mapa mental). */
+function relax(G, P) {
+  const N = G.nodes, pos = N.map((n) => [...P.get(n)]);
+  N.forEach((n, i) => { pos[i][0] += (rnd(i, 3) - .5) * .3; pos[i][1] += (rnd(i, 4) - .5) * .3; });
+  const E = G.edges.map((e) => [e.a.id, e.b.id]);
+  for (let it = 0; it < 260; it++) {
+    const f = N.map(() => [0, 0]), cool = 1 - it / 300;
+    for (let i = 0; i < N.length; i++) for (let j = i + 1; j < N.length; j++) {
+      let dx = pos[i][0] - pos[j][0], dy = pos[i][1] - pos[j][1], d2 = dx * dx + dy * dy + .01;
+      const r = 1.1 / d2; f[i][0] += dx * r; f[i][1] += dy * r; f[j][0] -= dx * r; f[j][1] -= dy * r;
+    }
+    for (const [a, b] of E) {
+      const dx = pos[b][0] - pos[a][0], dy = pos[b][1] - pos[a][1], d = Math.hypot(dx, dy) || .01, k = (d - 1.3) * .12;
+      f[a][0] += dx / d * k; f[a][1] += dy / d * k; f[b][0] -= dx / d * k; f[b][1] -= dy / d * k;
+    }
+    for (let i = 0; i < N.length; i++) {
+      f[i][0] -= pos[i][0] * .02; f[i][1] -= pos[i][1] * .02;
+      const m = Math.hypot(f[i][0], f[i][1]), lim = .25 * cool;
+      pos[i][0] += f[i][0] / Math.max(1, m / lim); pos[i][1] += f[i][1] / Math.max(1, m / lim);
+    }
+  }
+  N.forEach((n, i) => P.set(n, pos[i]));
+}
+
+// ---------- desenho ----------
+const BRANCH = ['#ff6b6b', '#ffa94d', '#fcc419', '#51cf66', '#339af0', '#845ef7', '#f06595', '#20c997'];
+const hexA = (h, a) => { const n = parseInt(h.slice(1).replace(/^(.)(.)(.)$/, '$1$1$2$2$3$3'), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; };
+let offsets = {}, lastPos = [], bgCache = { key: '' };
+
+function background(s, W, H, k, transp) {
+  if (transp) return;
+  if (s.ownBg) { ctx.fillStyle = s.bg; ctx.fillRect(0, 0, W, H); return; }
+  const key = s.style + W + 'x' + H;
+  if (bgCache.key !== key) {
+    const c = Object.assign(document.createElement('canvas'), { width: W, height: H }), x = c.getContext('2d');
+    const BG = { mind: '#f6f7fb', conspiracy: '#a8784c', galaxy: '#070b1d', neon: '#06060c', board: '#fbfbf7', net: '#f3f5f9', blueprint: '#123a73', retro: '#008080', minimal: '#ffffff' };
+    x.fillStyle = BG[s.style]; x.fillRect(0, 0, W, H);
+    if (s.style === 'conspiracy') {
+      for (let i = 0; i < 9000; i++) { x.fillStyle = rnd(i, 1) > .5 ? 'rgba(60,30,10,.25)' : 'rgba(255,220,170,.18)'; x.fillRect(rnd(i, 2) * W, rnd(i, 3) * H, (1 + rnd(i, 4) * 3) * k, (1 + rnd(i, 5) * 3) * k); }
+      const g = x.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .3, W / 2, H / 2, Math.hypot(W, H) * .6); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(40,15,0,.45)'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+    } else if (s.style === 'galaxy') {
+      const g = x.createRadialGradient(W * .3, H * .3, 0, W * .3, H * .3, W); g.addColorStop(0, '#1b1f4d'); g.addColorStop(1, 'rgba(7,11,29,0)'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+      for (let i = 0; i < 600; i++) { x.fillStyle = `rgba(255,255,255,${.2 + rnd(i, 6) * .8})`; x.beginPath(); x.arc(rnd(i, 7) * W, rnd(i, 8) * H, (.4 + rnd(i, 9) * 1.4) * k, 0, 7); x.fill(); }
+    } else if (s.style === 'blueprint' || s.style === 'board') {
+      const st = (s.style === 'board' ? 40 : 54) * k;
+      x.strokeStyle = s.style === 'board' ? 'rgba(0,0,0,.05)' : 'rgba(255,255,255,.12)'; x.lineWidth = Math.max(1, k);
+      for (let gx = 0; gx < W; gx += st) { x.beginPath(); x.moveTo(gx, 0); x.lineTo(gx, H); x.stroke(); }
+      for (let gy = 0; gy < H; gy += st) { x.beginPath(); x.moveTo(0, gy); x.lineTo(W, gy); x.stroke(); }
+    } else if (s.style === 'neon') {
+      const g = x.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, W * .7); g.addColorStop(0, hexA(s.accent, .14)); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+    }
+    bgCache = { key, c };
+  }
+  ctx.drawImage(bgCache.c, 0, 0);
+}
+
+/** Tamanho de cada item (caixa) no estilo atual. */
+function measure(n, s, k, F) {
+  const big = n.depth === 0 && s.layout !== 'chain' && s.layout !== 'timeline' && s.layout !== 'circle' ? 1.3 : n.depth === 0 && s.layout === 'circle' ? 1.2 : 1;
+  const z = s.size / 100 * k * big, fs = 30 * z, img = n.img >= 0 && IMGS[n.img];
+  ctx.font = `700 ${fs}px "${F}"`;
+  const words = (n.label || '').split(/\s+/), lines = [], maxW = 300 * z;
+  let cur = '';
+  for (const w of words) { const t = cur ? cur + ' ' + w : w; if (ctx.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t; }
+  if (cur) lines.push(cur);
+  const tw = Math.max(0, ...lines.map((l) => ctx.measureText(l).width)), lh = fs * 1.2;
+  const round = ['galaxy', 'net'].includes(s.style);
+  if (img) { const S0 = 150 * z; return { z, fs, lines, lh, img: img.img, round, w: round ? S0 : Math.max(S0, tw) + 24 * z, h: round ? S0 : S0 + (lines.length ? lines.length * lh + 24 * z : 0), S0 }; }
+  if (round) { const r = 46 * z; return { z, fs, lines, lh, w: r * 2, h: r * 2, r, round }; }
+  return { z, fs, lines, lh, w: tw + 48 * z, h: lines.length * lh + 34 * z };
+}
+
+function edgePts(a, b, s, sag) {
+  const pts = [], N = 24;
+  if (s.lines === 'straight' && !sag) { for (let i = 0; i <= N; i++) pts.push([a[0] + (b[0] - a[0]) * i / N, a[1] + (b[1] - a[1]) * i / N]); return pts; }
+  let c1, c2;
+  if (sag) { const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2 + Math.hypot(b[0] - a[0], b[1] - a[1]) * sag; c1 = c2 = [mx, my]; }
+  else if (s.layout === 'tree') { const my = (a[1] + b[1]) / 2; c1 = [a[0], my]; c2 = [b[0], my]; }
+  else { const dx = b[0] - a[0], dy = b[1] - a[1]; c1 = [a[0] + dx * .5 - dy * .12, a[1] + dy * .5 + dx * .12]; c2 = c1; }
+  for (let i = 0; i <= N; i++) { const u = i / N, v = 1 - u; pts.push([v * v * v * a[0] + 3 * v * v * u * c1[0] + 3 * v * u * u * c2[0] + u * u * u * b[0], v * v * v * a[1] + 3 * v * v * u * c1[1] + 3 * v * u * u * c2[1] + u * u * u * b[1]]); }
+  return pts;
+}
+function strokeUpTo(pts, p, taper) {
+  const n = Math.max(1, Math.floor((pts.length - 1) * p));
+  if (taper) { const w0 = ctx.lineWidth; for (let i = 0; i < n; i++) { ctx.lineWidth = w0 * (1 - i / (pts.length - 1) * .6); ctx.beginPath(); ctx.moveTo(...pts[i]); ctx.lineTo(...pts[i + 1]); ctx.stroke(); } ctx.lineWidth = w0; return pts[n]; }
+  ctx.beginPath(); ctx.moveTo(...pts[0]); for (let i = 1; i <= n; i++) ctx.lineTo(...pts[i]); ctx.stroke();
+  return pts[n];
+}
+function arrowHead(pts, upto, size, color) {
+  const i = Math.max(1, Math.floor((pts.length - 1) * upto)), a = pts[i - 1], b = pts[i], ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
+  ctx.save(); ctx.fillStyle = color; ctx.translate(b[0], b[1]); ctx.rotate(ang);
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-size, -size * .55); ctx.lineTo(-size * .75, 0); ctx.lineTo(-size, size * .55); ctx.closePath(); ctx.fill(); ctx.restore();
+}
+/** Ponto da borda da caixa na direção de outro ponto (a linha para na borda, não no meio). */
+function edgeOf(c, m, to) {
+  const dx = to[0] - c[0], dy = to[1] - c[1];
+  if (!dx && !dy) return c;
+  if (m.round && dy > Math.abs(dx) * .8 && m.lines.length) return [c[0], c[1] + m.w / 2 + m.fs * 1.3 + 10 * m.z];
+  if (m.round) { const r = (m.r || m.w / 2) + 4 * m.z, d = Math.hypot(dx, dy); return [c[0] + dx / d * r, c[1] + dy / d * r]; }
+  const sx = (m.w / 2 + 4 * m.z) / Math.abs(dx || 1e-9), sy = (m.h / 2 + 4 * m.z) / Math.abs(dy || 1e-9), sc = Math.min(sx, sy);
+  return [c[0] + dx * sc, c[1] + dy * sc];
+}
+
+function drawNode(n, m, x, y, a, s, F, i) {
+  const st = s.style, z = m.z, pop = EASE.back(a);
+  ctx.save(); ctx.globalAlpha = clamp(a * 2); ctx.translate(x, y); ctx.scale(pop, pop);
+  const col = n.color || (st === 'mind' ? (n.branch < 0 ? s.accent : BRANCH[n.branch % BRANCH.length]) : s.accent);
+  const textLines = (color, yy = 0, w = 700) => {
+    ctx.fillStyle = color; ctx.font = `${w} ${m.fs}px "${F}"`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    m.lines.forEach((l, j) => ctx.fillText(l, 0, yy + (j - (m.lines.length - 1) / 2) * m.lh));
+  };
+  const cover = (img, x0, y0, w, h) => { const r = Math.max(w / img.naturalWidth, h / img.naturalHeight), iw = img.naturalWidth * r, ih = img.naturalHeight * r; ctx.drawImage(img, x0 + (w - iw) / 2, y0 + (h - ih) / 2, iw, ih); };
+  const rr = (x0, y0, w, h, r) => { ctx.beginPath(); ctx.roundRect(x0, y0, w, h, r); };
+  const { w, h } = m;
+  if (st === 'conspiracy') {
+    ctx.rotate((rnd(i, 11) - .5) * .16);
+    ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 14 * z; ctx.shadowOffsetY = 6 * z;
+    if (m.img) {
+      // polaroid
+      const pad = 14 * z, ph = m.S0 + pad * 2 + (m.lines.length ? m.lines.length * m.lh + 10 * z : 30 * z);
+      ctx.fillStyle = '#fbfaf5'; ctx.fillRect(-m.w / 2, -ph / 2, m.w, ph); ctx.shadowColor = 'transparent';
+      ctx.save(); ctx.beginPath(); ctx.rect(-m.w / 2 + pad, -ph / 2 + pad, m.w - pad * 2, m.S0); ctx.clip(); cover(m.img, -m.w / 2 + pad, -ph / 2 + pad, m.w - pad * 2, m.S0); ctx.restore();
+      ctx.fillStyle = '#222'; ctx.font = `400 ${m.fs}px "${F}"`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      m.lines.forEach((l, j) => ctx.fillText(l, 0, -ph / 2 + pad * 2 + m.S0 + m.lh * (j + .4)));
+    } else {
+      const notes = ['#fff59d', '#ffd0dc', '#c7ecff', '#f4f1e6'], c = n.depth === 0 ? '#f4f1e6' : notes[i % notes.length];
+      ctx.fillStyle = c; ctx.fillRect(-w / 2, -h / 2, w, h); ctx.shadowColor = 'transparent';
+      textLines('#1d1d1d', 0, 400);
+    }
+    // tachinha
+    ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 6 * z; ctx.shadowOffsetY = 3 * z;
+    ctx.fillStyle = '#d62828'; ctx.beginPath(); ctx.arc(0, -(m.img ? (m.S0 + 28 * z + (m.lines.length ? m.lines.length * m.lh + 10 * z : 30 * z)) / 2 : h / 2) + 6 * z, 11 * z, 0, 7); ctx.fill();
+    ctx.shadowColor = 'transparent'; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(-3 * z, -(m.img ? (m.S0 + 28 * z + (m.lines.length ? m.lines.length * m.lh + 10 * z : 30 * z)) / 2 : h / 2) + 3 * z, 3.5 * z, 0, 7); ctx.fill();
+  } else if (st === 'galaxy' || st === 'net') {
+    const r = m.w / 2, gal = st === 'galaxy';
+    if (gal) { ctx.shadowColor = col; ctx.shadowBlur = 40 * z; }
+    ctx.fillStyle = gal ? '#0d1233' : col; ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.fill();
+    ctx.shadowBlur = 0;
+    if (m.img) { ctx.save(); ctx.beginPath(); ctx.arc(0, 0, r - 4 * z, 0, 7); ctx.clip(); cover(m.img, -r, -r, r * 2, r * 2); ctx.restore(); }
+    else if (gal) { ctx.fillStyle = '#fff'; ctx.shadowColor = col; ctx.shadowBlur = 24 * z; ctx.beginPath(); ctx.arc(0, 0, r * .35, 0, 7); ctx.fill(); ctx.shadowBlur = 0; }
+    else { ctx.fillStyle = '#fff'; ctx.font = `800 ${r * .8}px "${F}"`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText((n.label.match(/[\p{L}\p{N}]/u) || ['•'])[0].toUpperCase(), 0, 2 * z); }
+    ctx.strokeStyle = gal ? hexA(col, .9) : '#fff'; ctx.lineWidth = 4 * z; ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.stroke();
+    // nome embaixo
+    ctx.font = `700 ${m.fs * .85}px "${F}"`; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    const lab = n.label, ly = r + 12 * z;
+    if (lab) {
+      if (!gal) { const lw = ctx.measureText(lab).width + 20 * z; ctx.fillStyle = 'rgba(255,255,255,.9)'; rr(-lw / 2, ly - 4 * z, lw, m.fs * .85 + 12 * z, 10 * z); ctx.fill(); }
+      ctx.fillStyle = gal ? '#e9ecff' : '#1d2433'; ctx.fillText(lab, 0, ly);
+    }
+  } else if (st === 'retro') {
+    const tb = 26 * z, ww = Math.max(w, m.img ? m.S0 + 16 * z : 0) + 12 * z, wh = (m.img ? m.S0 + 16 * z : h) + tb + 10 * z;
+    ctx.fillStyle = '#c0c0c0'; ctx.fillRect(-ww / 2, -wh / 2, ww, wh);
+    ctx.fillStyle = '#fff'; ctx.fillRect(-ww / 2, -wh / 2, ww, 2 * z); ctx.fillRect(-ww / 2, -wh / 2, 2 * z, wh);
+    ctx.fillStyle = '#404040'; ctx.fillRect(-ww / 2, wh / 2 - 2 * z, ww, 2 * z); ctx.fillRect(ww / 2 - 2 * z, -wh / 2, 2 * z, wh);
+    const g = ctx.createLinearGradient(-ww / 2, 0, ww / 2, 0); g.addColorStop(0, '#000080'); g.addColorStop(1, '#1084d0');
+    ctx.fillStyle = g; ctx.fillRect(-ww / 2 + 4 * z, -wh / 2 + 4 * z, ww - 8 * z, tb);
+    ctx.fillStyle = '#fff'; ctx.font = `700 ${tb * .55}px "${F}"`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    const ttl = /\.exe$/i.test(n.label) ? n.label : OS.slug(n.label || 'imagem') + '.exe';
+    ctx.fillText(ttl.slice(0, 24), -ww / 2 + 10 * z, -wh / 2 + 4 * z + tb / 2);
+    ctx.fillStyle = '#c0c0c0'; ctx.fillRect(ww / 2 - 26 * z, -wh / 2 + 7 * z, 19 * z, tb - 6 * z); ctx.fillStyle = '#000'; ctx.font = `700 ${tb * .5}px Arial`; ctx.textAlign = 'center'; ctx.fillText('×', ww / 2 - 16.5 * z, -wh / 2 + 4 * z + tb / 2);
+    const by = -wh / 2 + tb + 6 * z;
+    if (m.img) { ctx.save(); ctx.beginPath(); ctx.rect(-m.S0 / 2, by + 4 * z, m.S0, m.S0); ctx.clip(); cover(m.img, -m.S0 / 2, by + 4 * z, m.S0, m.S0); ctx.restore(); }
+    else { ctx.fillStyle = '#fff'; ctx.fillRect(-ww / 2 + 6 * z, by, ww - 12 * z, wh / 2 - by - 6 * z); ctx.font = `400 ${m.fs * 1.2}px "${F}"`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#000'; ctx.fillText(/\.exe$/i.test(n.label) ? '📁' : (m.lines[0] || ''), 0, (by + wh / 2) / 2 - 3 * z); }
+  } else {
+    // caixas: mapa colorido, neon, quadro branco, planta, minimalista
+    const r = st === 'mind' ? h / 2 : st === 'blueprint' ? 2 * z : st === 'minimal' ? 12 * z : 14 * z;
+    const iw = m.img ? m.w : w, ih = m.img ? m.h : h;
+    if (st === 'mind') { ctx.shadowColor = 'rgba(20,30,60,.18)'; ctx.shadowBlur = 18 * z; ctx.shadowOffsetY = 6 * z; ctx.fillStyle = n.depth === 0 ? '#1d2433' : n.depth === 1 ? col : '#fff'; }
+    else if (st === 'neon') { ctx.fillStyle = 'rgba(10,10,20,.85)'; }
+    else if (st === 'board') { ctx.fillStyle = 'rgba(255,255,255,.9)'; }
+    else if (st === 'blueprint') { ctx.fillStyle = 'rgba(18,58,115,.9)'; }
+    else { ctx.fillStyle = '#fff'; ctx.shadowColor = 'rgba(0,0,0,.08)'; ctx.shadowBlur = 20 * z; ctx.shadowOffsetY = 6 * z; }
+    rr(-iw / 2, -ih / 2, iw, ih, m.img ? Math.min(r, 18 * z) : r); ctx.fill(); ctx.shadowColor = 'transparent';
+    ctx.lineWidth = (st === 'neon' ? 4 : st === 'board' ? 4 : st === 'mind' ? (n.depth > 1 ? 4 : 0) : 2) * z;
+    if (ctx.lineWidth) {
+      ctx.strokeStyle = st === 'neon' ? col : st === 'board' ? ['#1c7ed6', '#e03131', '#2f9e44', '#212529'][i % 4] : st === 'blueprint' ? '#e8f1ff' : st === 'mind' ? col : '#d9dde5';
+      if (st === 'neon') { ctx.shadowColor = col; ctx.shadowBlur = 22 * z; }
+      if (st === 'board') { ctx.beginPath(); for (let j = 0; j < 2; j++) { const o = (rnd(i, 20 + j) - .5) * 5 * z; ctx.rect(-iw / 2 + o, -ih / 2 - o, iw, ih); } ctx.stroke(); }
+      else { rr(-iw / 2, -ih / 2, iw, ih, m.img ? Math.min(r, 18 * z) : r); ctx.stroke(); }
+      ctx.shadowBlur = 0;
+    }
+    const ink = st === 'mind' ? (n.depth <= 1 ? '#fff' : '#1d2433') : st === 'neon' ? '#fff' : st === 'blueprint' ? '#e8f1ff' : '#1d2433';
+    if (m.img) {
+      const pad = 12 * z;
+      ctx.save(); rr(-iw / 2 + pad, -ih / 2 + pad, iw - pad * 2, m.S0 - pad, 10 * z); ctx.clip(); cover(m.img, -iw / 2 + pad, -ih / 2 + pad, iw - pad * 2, m.S0 - pad); ctx.restore();
+      textLines(ink, ih / 2 - (m.lines.length * m.lh) / 2 - 12 * z, st === 'board' ? 400 : 700);
+    } else textLines(ink, 0, st === 'board' ? 400 : 700);
+  }
+  ctx.restore();
+}
+
+function drawAt(t, transp, frame, exporting) {
+  const s = S(), { W, H } = ex.settings();
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  const k = Math.min(W, H) / 1080, F = fontOf(s);
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, W, H);
+  background(s, W, H, k, transp);
+  const G = parse(s.data);
+  if (!G.nodes.length) { ctx.fillStyle = '#888'; ctx.font = `700 ${40 * k}px Arial`; ctx.textAlign = 'center'; ctx.fillText(OS.T('Escreva os itens na aba Conteúdo'), W / 2, H / 2); lastPos = []; return; }
+  const P = layout(G, s.layout), M = new Map(G.nodes.map((n) => [n, measure(n, s, k, F)]));
+  // cabe na tela: escala separada em x e y (no máximo 1,8× de diferença)
+  const xs = [...P.values()].map((p) => p[0]), ys = [...P.values()].map((p) => p[1]);
+  const maxW = Math.max(...[...M.values()].map((m) => m.w)), maxH = Math.max(...[...M.values()].map((m) => m.h + (s.style === 'galaxy' || s.style === 'net' ? m.fs * 1.6 : 0)));
+  const mx = maxW / 2 + 40 * k, my = maxH / 2 + 40 * k;
+  const bw = Math.max(...xs) - Math.min(...xs) || 1, bh = Math.max(...ys) - Math.min(...ys) || 1;
+  let sx = (W - mx * 2) / bw, sy = (H - my * 2) / bh;
+  if (Math.max(...xs) === Math.min(...xs)) sx = sy; if (Math.max(...ys) === Math.min(...ys)) sy = sx;
+  const lim = s.layout === 'chain' ? 1.1 : 1.8; if (sx > sy * lim) sx = sy * lim; if (sy > sx * lim) sy = sx * lim;
+  const spread = s.spread / 100;
+  sx *= spread; sy *= spread;
+  const cx0 = (Math.max(...xs) + Math.min(...xs)) / 2, cy0 = (Math.max(...ys) + Math.min(...ys)) / 2;
+  const pos = new Map();
+  for (const n of G.nodes) {
+    const p = P.get(n), off = offsets[n.label.toLowerCase() || n.id] || [0, 0], u = Math.min(W, H);
+    pos.set(n, [W / 2 + (p[0] - cx0) * sx + off[0] * u, H / 2 + (p[1] - cy0) * sy + off[1] * u]);
+  }
+  lastPos = G.nodes.map((n) => ({ n, p: pos.get(n), m: M.get(n) }));
+  // tempos de entrada
+  const N = G.nodes.length, START = .3, gap = s.anim ? s.dur / Math.max(1, N) : 0;
+  const tIn = (n) => (s.anim ? START + n.rank * gap : -10);
+  const edgesFor = s.layout === 'chain' ? G.pre.slice(1).map((b, i) => ({ a: G.pre[i], b, kind: 'seq', dir: 1 })).concat(G.edges.filter((e) => e.kind === 'extra'))
+    : s.layout === 'timeline' ? G.edges.filter((e) => e.kind === 'extra') : G.edges;
+  const extraT0 = s.anim ? START + s.dur : -10;
+  const st = s.style;
+  const lineCol = (e) => st === 'conspiracy' ? '#c1121f' : st === 'galaxy' ? 'rgba(190,200,255,.6)' : st === 'neon' ? s.accent : st === 'board' ? '#343a40' : st === 'blueprint' ? 'rgba(232,241,255,.85)' : st === 'retro' ? '#000' : st === 'mind' ? (e.b.color || (e.b.branch < 0 ? s.accent : BRANCH[e.b.branch % BRANCH.length])) : st === 'net' ? '#b4bccb' : '#9aa3b2';
+  // linha do tempo: eixo e conectores
+  if (s.layout === 'timeline') {
+    const ord = G.pre, y0 = H / 2 + (0 - cy0) * sy, xa = pos.get(ord[0])[0] - maxW * .4, xb = pos.get(ord[ord.length - 1])[0] + maxW * .4;
+    const pa = s.anim ? clamp((t - START) / (s.dur + .3)) : 1;
+    ctx.strokeStyle = st === 'neon' ? s.accent : lineCol({ b: ord[0] }); ctx.lineWidth = 6 * k; ctx.lineCap = 'round';
+    if (st === 'neon') { ctx.shadowColor = s.accent; ctx.shadowBlur = 20 * k; }
+    ctx.beginPath(); ctx.moveTo(xa, y0); ctx.lineTo(xa + (xb - xa) * pa, y0); ctx.stroke(); ctx.shadowBlur = 0;
+    for (const n of ord) {
+      const a = clamp((t - tIn(n)) / .4), p = pos.get(n); if (a <= 0) continue;
+      ctx.globalAlpha = a; ctx.lineWidth = 3 * k; ctx.setLineDash([8 * k, 8 * k]);
+      ctx.beginPath(); ctx.moveTo(p[0], y0); ctx.lineTo(p[0], y0 + (p[1] - y0) * EASE.out(a)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = ctx.strokeStyle; ctx.beginPath(); ctx.arc(p[0], y0, 12 * k, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+    }
+  }
+  // ligações
+  let ei = 0;
+  for (const e of edgesFor) {
+    const extra = e.kind === 'extra';
+    const t0 = extra ? extraT0 + (ei++) * .25 : tIn(e.b) - .35, p = clamp((t - t0) / (extra ? .6 : .4));
+    if (p <= 0) continue;
+    const ma = M.get(e.a), mb = M.get(e.b), A = pos.get(e.a), B = pos.get(e.b);
+    const a = st === 'conspiracy' ? A : edgeOf(A, ma, B), b = st === 'conspiracy' ? B : edgeOf(B, mb, A);
+    // fio da investigação sai da tachinha
+    const pinOf = (c, m) => [c[0], c[1] - (m.img ? (m.S0 + 28 * m.z + (m.lines.length ? m.lines.length * m.lh + 10 * m.z : 30 * m.z)) / 2 : m.h / 2) + 6 * m.z];
+    const pa = st === 'conspiracy' ? pinOf(A, ma) : a, pb = st === 'conspiracy' ? pinOf(B, mb) : b;
+    const pts = edgePts(pa, pb, s, st === 'conspiracy' ? .12 : 0);
+    ctx.save();
+    ctx.strokeStyle = lineCol(e); ctx.lineCap = 'round';
+    ctx.lineWidth = (st === 'mind' ? (e.a.depth === 0 ? 10 : 6) : st === 'conspiracy' ? 4 : st === 'galaxy' ? 2.5 : st === 'neon' ? 4 : st === 'board' ? 4 : 3) * k * s.size / 100;
+    if (extra && st !== 'conspiracy') ctx.setLineDash([12 * k, 10 * k]);
+    if (st === 'neon' || st === 'galaxy') { ctx.shadowColor = lineCol(e); ctx.shadowBlur = 16 * k; }
+    if (st === 'conspiracy') { ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 4 * k; ctx.shadowOffsetY = 3 * k; }
+    if (st === 'retro') ctx.setLineDash([4 * k, 6 * k]);
+    const head = strokeUpTo(pts, p, st === 'mind' && !extra);
+    ctx.setLineDash([]); ctx.shadowBlur = 0;
+    const wantArrow = s.arrows === 'on' || (s.arrows === 'auto' && (e.dir || s.layout === 'chain'));
+    if (wantArrow && p > .05) arrowHead(pts, p, 22 * k * s.size / 100, ctx.strokeStyle);
+    if (e.dir === 2 && p >= 1 && s.arrows !== 'off') arrowHead([...pts].reverse(), 1, 22 * k * s.size / 100, ctx.strokeStyle);
+    if (e.label && p >= 1) {
+      const mid = pts[Math.floor(pts.length / 2)];
+      ctx.font = `700 ${22 * k * s.size / 100}px "${F}"`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const lw = ctx.measureText(e.label).width + 18 * k, lh = 34 * k * s.size / 100;
+      ctx.fillStyle = st === 'galaxy' || st === 'neon' || st === 'blueprint' ? 'rgba(0,0,0,.7)' : st === 'conspiracy' ? '#fff59d' : '#fff';
+      ctx.beginPath(); ctx.roundRect(mid[0] - lw / 2, mid[1] - lh / 2, lw, lh, 8 * k); ctx.fill();
+      ctx.fillStyle = st === 'galaxy' || st === 'neon' || st === 'blueprint' ? '#fff' : '#1d1d1d'; ctx.fillText(e.label, mid[0], mid[1] + 1 * k);
+    }
+    ctx.restore();
+    void head;
+  }
+  // itens
+  for (const n of G.order) {
+    const a = clamp((t - tIn(n)) / .45);
+    if (a <= 0) continue;
+    const p = pos.get(n);
+    drawNode(n, M.get(n), p[0], p[1], s.anim ? a : 1, s, F, n.id);
+  }
+}
+
+// ---------- arrastar itens na prévia ----------
+let drag = null;
+const toCanvas = (e) => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * cv.width, (e.clientY - r.top) / r.height * cv.height]; };
+cv.addEventListener('pointerdown', (e) => {
+  const [x, y] = toCanvas(e);
+  const hit = [...lastPos].reverse().find(({ p, m }) => Math.abs(x - p[0]) < m.w / 2 + 10 && Math.abs(y - p[1]) < m.h / 2 + 10);
+  if (!hit) return;
+  const key = hit.n.label.toLowerCase() || hit.n.id, o = offsets[key] || [0, 0];
+  drag = { key, x, y, o: [...o] }; cv.setPointerCapture(e.pointerId); cv.classList.add('drag'); showAll = true;
+});
+cv.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  const [x, y] = toCanvas(e), u = Math.min(cv.width, cv.height);
+  offsets[drag.key] = [drag.o[0] + (x - drag.x) / u, drag.o[1] + (y - drag.y) / u];
+});
+const endDrag = () => { if (drag) { drag = null; cv.classList.remove('drag'); } };
+cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+$('resetPos').onclick = () => { offsets = {}; };
+
+// ---------- prévia e exportação ----------
+let t0 = performance.now(), showAll = false;
+const restart = () => { t0 = performance.now(); showAll = false; };
+$('playBtn').onclick = restart;
+$('panel').addEventListener('input', (e) => { if (['data', 'layout', 'anim', 'dur'].includes(e.target.id)) restart(); });
+$('font').addEventListener('change', () => fontsReady().then(restart));
+const total = () => { const s = S(), extras = parse(s.data).edges.filter((e) => e.kind === 'extra').length; return s.anim ? .3 + s.dur + extras * .25 + .6 + s.hold : 2; };
+const ex = EXPORT.mount($('exp'), {
+  canvas: cv, draw: drawAt, seconds: total, name: () => 'teia-' + S().style, defaultRes: '1920x1080',
+  prepare: () => fontsReady(),
+  onSettings: (s) => $('pv').classList.toggle('chk', s.transp),
+});
+$('pngBtn').onclick = async () => {
+  await fontsReady();
+  ex.busy = true;
+  drawAt(1e4, ex.settings().transp);
+  const b = await OS.canvasBlob(cv);
+  ex.busy = false;
+  OS.download(b, 'teia-' + S().style + '.png');
+};
+(function loop() {
+  if (!ex.busy) {
+    const t = (performance.now() - t0) / 1000;
+    // enquanto arrasta, mostra tudo montado
+    drawAt(showAll ? 1e4 : t, ex.settings().transp);
+    if (!showAll && t > total() + .8) restart();
+  }
+  requestAnimationFrame(loop);
+})();
+$('data').value = PRESETS[0].data;
+setLayout('radial'); setStyle('mind');
+</script>
+</body>
+</html>

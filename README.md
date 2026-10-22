@@ -64,6 +64,7 @@ Legenda automática com IA, removedor de fundo, conversa animada, terminal, thum
 | | Ferramenta | O que faz |
 |:-:|---|---|
 | 🔤 | **Animação de texto** | 15 efeitos: máquina de escrever, pop, quique, onda, glitch, embaralhar, desfoque, neon, arco-íris, explosão… |
+| 🕸️ | **Criador de teia** | Textos e imagens ligados entre si: mapa mental, árvore, cadeia, teia, círculo e linha do tempo, em 9 estilos (quadro de investigação com fio vermelho, constelação, neon, quadro branco, rede, planta, janelinhas 98…). Monta animado em vídeo ou sai em PNG |
 | 📊 | **Gráfico animado** | Colunas, barras, linha, área, pizza, rosca e corrida de barras; números contando, vários períodos e fundo transparente |
 | 🌡️ | **Termômetro** | 6 estilos (clássico, meta de live, deitado, medidor com ponteiro, carinha que reage e visor digital), cor de frio pra quente, bolhas, fervura no topo e gelo, neve e tremedeira de frio quando chega embaixo |
 | ⏳ | **Barra de progresso** | 9 estilos (blocos retrô, janela de cópia, anel, bateria, pixel…) com "travadinhas" de carregamento de verdade |
