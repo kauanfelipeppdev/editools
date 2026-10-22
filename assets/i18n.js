@@ -175,6 +175,13 @@
     'Não consegui falar com o servidor. Ele está ligado? O endereço está certo?': "Couldn't reach the server. Is it running? Is the address right?", 'O servidor respondeu de um jeito que eu não conheço. Atualize o cobalt pra versão 10 ou mais nova.': 'The server answered in a way I don\'t know. Update cobalt to version 10 or newer.',
     'Não deu pra baixar esse link': "Couldn't download that link", 'Não deu pra baixar': "Couldn't download",
 
+    // ---------- visual moderno ----------
+    'EdiTools (moderno escuro)': 'EdiTools (modern dark)', 'Ferramentas': 'Tools', 'ferramentas': 'tools', 'grátis e sem cadastro': 'free, no sign-up', 'Ferramentas grátis pra quem': 'Free tools for people who', 'edita vídeo': 'edit video',
+    'Legendas com IA, gráficos e textos animados, mockups, efeitos retrô e muito mais. Tudo roda no seu navegador: seus arquivos não saem do computador.': "AI captions, animated charts and text, mockups, retro effects and much more. Everything runs in your browser: your files never leave your computer.",
+    '✨ Todas': '✨ All', '🎬 Vídeo': '🎬 Video', '🖼️ Imagem': '🖼️ Image', '🔤 Texto e animação': '🔤 Text & animation', '🎧 Áudio': '🎧 Audio', '🧰 Outros': '🧰 Other', '⭐ Favoritos': '⭐ Favorites', '🕘 Usadas recentemente': '🕘 Recently used',
+    'Todas as ferramentas': 'All tools', 'Links e conversor MP3': 'Links & MP3 converter', 'Ctrl K': 'Ctrl K', 'Aparência': 'Appearance',
+    'O visual padrão é o EdiTools escuro. Os temas retrô (Windows, macOS e Linux) continuam no 🎨 da barra.': 'The default look is the dark EdiTools one. The retro themes (Windows, macOS and Linux) are still under 🎨 on the bar.',
+
     // ---------- criador de teia ----------
     'Conteúdo': 'Content', 'Estrutura': 'Structure', 'Reorganizar': 'Auto arrange', 'Baixar PNG': 'Download PNG', 'Um item por linha.': 'One item per line.', 'Espaço no começo': 'Space at the start',
     '= filho do item de cima (vira um galho). Ligação extra:': '= child of the item above (becomes a branch). Extra link:', '(com texto:': '(with text:', ', sem seta:': ', no arrow:', 'sem seta:': 'no arrow:', '). Imagem:': '). Image:', '. Cor:': '. Color:', 'no fim.': 'at the end.',

@@ -440,3 +440,112 @@ html[data-dark] #drop.over { background: rgba(80, 140, 255, .18) !important; }
 html[data-dark] #fileName, html[data-dark] .meta, html[data-dark] .empty, html[data-dark] #edName, html[data-dark] .card code,
 html[data-dark] #list .name small, html[data-dark] #list .status { color: var(--m-sub) !important; }
 html[data-dark] .pp .av { background: #3a3a3e !important; }
+
+/* ======================================================================
+   Visual padrão "EdiTools" (moderno escuro): cabeçalho no topo, cartões
+   ====================================================================== */
+.tb-search, .nm-modern { display: none; }
+html[data-theme='studio'] {
+  --desk: #0b0c11;
+  --desk-img: radial-gradient(60% 50% at 12% -10%, rgba(124, 92, 255, .22), transparent 70%),
+    radial-gradient(50% 45% at 100% 0%, rgba(64, 140, 255, .16), transparent 70%),
+    radial-gradient(70% 60% at 50% 120%, rgba(124, 92, 255, .10), transparent 70%);
+  --tb-h: 0px;
+  --mb-h: 60px;
+  --muted: #9a9db0;
+}
+html[data-theme='studio'] .nm-retro { display: none; }
+html[data-theme='studio'] .nm-modern { display: inline; }
+html[data-theme='studio'] body.os { padding-top: var(--mb-h); padding-bottom: 32px; background-attachment: fixed; }
+html[data-theme='studio'] .desk { max-width: 1440px; margin: 0 auto; padding: 22px 24px 40px; gap: 20px; }
+html[data-theme='studio'] .window.max { inset: var(--mb-h) 0 0 0 !important; }
+html[data-theme='studio'] .dock { display: none !important; }
+
+/* cabeçalho */
+html[data-theme='studio'] .taskbar {
+  top: 0; bottom: auto; height: var(--mb-h); padding: 0 20px; gap: 10px; color: var(--m-text);
+  background: rgba(11, 12, 17, .78); backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  border-bottom: 1px solid rgba(255, 255, 255, .07); font: 500 13px Inter, 'Segoe UI', sans-serif;
+}
+html[data-theme='studio'] .taskbar button { background: none; box-shadow: none; color: inherit; min-height: 0; }
+html[data-theme='studio'] .taskbar .start { flex: none; height: 40px; padding: 0 12px 0 6px; gap: 10px; border-radius: 12px; font-weight: 800; font-size: 16px; letter-spacing: -.02em; }
+html[data-theme='studio'] .taskbar .start b { display: none; }
+html[data-theme='studio'] .taskbar .orb { flex: none; width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(135deg, #8b6bff, #4a8cff); box-shadow: 0 4px 14px rgba(124, 92, 255, .45); display: grid; place-items: center; }
+html[data-theme='studio'] .taskbar .orb::before { content: '✦'; color: #fff; font-size: 15px; }
+html[data-theme='studio'] .taskbar .start::after { content: 'EdiTools'; }
+html[data-theme='studio'] .taskbar .start:hover, html[data-theme='studio'] .taskbar .start.on { background: rgba(255, 255, 255, .06); }
+html[data-theme='studio'] .tb-search {
+  display: flex; align-items: center; gap: 10px; flex: 0 1 420px; height: 40px; margin: 0 auto 0 12px; padding: 0 12px !important;
+  border-radius: 12px !important; background: rgba(255, 255, 255, .05) !important; box-shadow: 0 0 0 1px rgba(255, 255, 255, .08) inset !important;
+  color: var(--m-sub) !important; cursor: text; font-weight: 500;
+}
+html[data-theme='studio'] .tb-search em { font-style: normal; flex: 1; text-align: left; }
+html[data-theme='studio'] .tb-search kbd { font-size: 11px; padding: 1px 6px; }
+html[data-theme='studio'] .tb-search:hover { background: rgba(255, 255, 255, .08) !important; }
+html[data-theme='studio'] .quick { display: flex; gap: 4px; }
+html[data-theme='studio'] .quick a { width: 36px; height: 36px; border-radius: 10px; font-size: 18px; }
+html[data-theme='studio'] .quick a:hover { background: rgba(255, 255, 255, .07); }
+html[data-theme='studio'] .taskbar .tasks { display: none; }
+html[data-theme='studio'] .taskbar .tray { gap: 6px; padding: 0; }
+html[data-theme='studio'] .taskbar .tray > * { display: grid; place-items: center; min-width: 34px; height: 34px; border-radius: 10px; cursor: pointer; }
+html[data-theme='studio'] .taskbar .tray > [hidden] { display: none; }
+html[data-theme='studio'] .taskbar .tray > *:hover { background: rgba(255, 255, 255, .07); }
+html[data-theme='studio'] .taskbar .tray-lang { font: 700 11px Inter, sans-serif !important; border: 1px solid rgba(255, 255, 255, .18) !important; border-radius: 8px !important; height: 26px !important; min-width: 34px; }
+html[data-theme='studio'] .taskbar time { color: var(--m-sub); font-variant-numeric: tabular-nums; padding: 0 6px; cursor: default !important; }
+
+/* menu de ferramentas (abre pelo logo ou pela busca) */
+html[data-theme='studio'] .startmenu {
+  top: calc(var(--mb-h) + 8px); left: 20px; bottom: auto; width: min(420px, calc(100vw - 24px)); max-height: calc(100vh - var(--mb-h) - 24px); padding: 8px 0;
+  background: #15161d; border: 1px solid rgba(255, 255, 255, .09); border-radius: 16px; box-shadow: 0 24px 60px rgba(0, 0, 0, .6);
+  backdrop-filter: none;
+}
+html[data-theme='studio'] .sm-find { padding: 4px 12px 8px; }
+html[data-theme='studio'] .sm-item { border-radius: 10px !important; padding: 7px 10px !important; }
+html[data-theme='studio'] .sm-item:hover, html[data-theme='studio'] .sm-item:focus-visible { background: rgba(124, 92, 255, .2) !important; color: #fff; }
+html[data-theme='studio'] .sm-label { text-transform: uppercase; letter-spacing: .06em; font-size: 10.5px; font-weight: 700; padding: 8px 16px 4px; }
+
+/* peças das ferramentas */
+html[data-theme='studio'] .toolbar { gap: 8px; margin-bottom: 14px; }
+html[data-theme='studio'] a.btn { border-radius: 10px; min-height: 32px; padding: 6px 14px; font-weight: 600; background: var(--m-btn); box-shadow: 0 0 0 1px var(--m-btn-ring) inset; }
+html[data-theme='studio'] a.btn:hover { background: var(--m-btn-hover); }
+html[data-theme='studio'] .tool { gap: 18px; }
+html[data-theme='studio'] .tool.wide-panel { grid-template-columns: 380px minmax(0, 1fr); }
+html[data-theme='studio'] .panel { gap: 12px; }
+html[data-theme='studio'] .stack { gap: 9px; }
+html[data-theme='studio'] .two { gap: 9px 12px; }
+html[data-theme='studio'] .tabs { padding: 4px; gap: 4px; background: #0f1016; border-radius: 12px; box-shadow: 0 0 0 1px var(--m-line) inset; }
+html[data-theme='studio'] .tabs button { border-radius: 9px; min-height: 32px; }
+html[data-theme='studio'] .tabs [aria-selected=true] { background: #262735; box-shadow: 0 2px 8px rgba(0, 0, 0, .35); color: #fff; }
+html[data-theme='studio'] .tabpanel { border-radius: 14px; border: 1px solid var(--m-line); background: rgba(255, 255, 255, .02); padding: 14px; }
+html[data-theme='studio'] .preview { border-radius: 16px; border: 1px solid var(--m-line); background: #08080c; box-shadow: 0 10px 40px rgba(0, 0, 0, .4); }
+html[data-theme='studio'] .preview.chk, html[data-theme='studio'] .chk { --chk-a: #1b1c24; --chk-b: #23242e; }
+html[data-theme='studio'] .status-line { border-radius: 10px; background: #08080c; color: #8f7bff; border: 1px solid var(--m-line); padding: 7px 10px; }
+html[data-theme='studio'] .hint { color: var(--m-sub); font-size: 11.5px; }
+html[data-theme='studio'] .presets { gap: 8px; }
+html[data-theme='studio'] .presets button { border-radius: 12px; padding: 10px 12px; text-align: left; }
+html[data-theme='studio'] .presets small { color: var(--m-sub); font-weight: 500; }
+html[data-theme='studio'] .fx button, html[data-theme='studio'] .modes button { border-radius: 12px; padding: 8px 4px; }
+html[data-theme='studio'] .help { width: min(380px, 100%); }
+html[data-theme='studio'] .toast, html[data-theme='studio'] .os-keys, html[data-theme='studio'] .os-proj, html[data-theme='studio'] .os-settings { border-radius: 16px; }
+html[data-theme='studio'] .toast { bottom: 16px; }
+html[data-theme='studio'] .helper { bottom: 14px; }
+html[data-theme='studio'] .helper-bubble { background: #1b1c25; color: var(--m-text); border-color: rgba(255, 255, 255, .12); }
+html[data-theme='studio'] .helper-bubble::after { border-top-color: #1b1c25; }
+html[data-theme='studio'] .veil { background: rgba(0, 0, 0, .55); backdrop-filter: blur(4px); }
+html[data-theme='studio'] .proj-row { border-radius: 12px; border-color: var(--m-line); }
+
+@media (max-width: 900px) {
+  html[data-theme='studio'] .tool.wide-panel { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  html[data-theme='studio'] { --mb-h: 56px; }
+  html[data-theme='studio'] .desk { padding: 12px 10px 30px; }
+  html[data-theme='studio'] .taskbar { padding: 0 10px; gap: 6px; }
+  html[data-theme='studio'] .taskbar .start::after { display: none; }
+  html[data-theme='studio'] .tb-search { margin-left: 4px; }
+  html[data-theme='studio'] .tb-search kbd, html[data-theme='studio'] .taskbar time, html[data-theme='studio'] .quick { display: none !important; }
+  html[data-theme='studio'] .window.app > .title-bar { height: 50px; padding-left: 16px; }
+  html[data-theme='studio'] .window.app > .title-bar .title-bar-text { font-size: 17px; }
+  html[data-theme='studio'] .window-body { padding: 12px; }
+  html[data-theme='studio'] .startmenu { left: 12px; }
+}

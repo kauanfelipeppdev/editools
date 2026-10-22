@@ -65,6 +65,7 @@
 
     .prog .txt { flex: 1; min-width: 0; }
 
+
     .prog[hidden], .dicon[hidden] { display: none; }
 
     .fav { font-size: 17px; color: #b58900; opacity: .35; cursor: pointer; padding: 2px 4px; align-self: flex-start; }
@@ -151,6 +152,52 @@
         display: none;
       }
     }
+
+    .hero, .cats, .shelf, .all-h { display: none; }
+
+    /* ---------- Home no visual moderno ---------- */
+    html[data-theme='studio'] .home { display: block; padding: 0; }
+    html[data-theme='studio'] .home .icons, html[data-theme='studio'] #dicas, html[data-theme='studio'] .home-main .menubar, html[data-theme='studio'] .home-main .window-body > p:not(.hint) { display: none; }
+    html[data-theme='studio'] .wins { display: block; max-width: 1240px; margin: 0 auto; padding: 8px 24px 40px; }
+    html[data-theme='studio'] .home-main { width: 100% !important; background: none; border: 0; box-shadow: none; overflow: visible; }
+    html[data-theme='studio'] .home-main > .title-bar { display: none; }
+    html[data-theme='studio'] .home-main > .window-body { padding: 0; }
+    html[data-theme='studio'] .hero { display: block; text-align: center; padding: 46px 10px 26px; }
+    html[data-theme='studio'] .hero-badge { display: inline-block; padding: 6px 14px; border-radius: 99px; background: rgba(124, 92, 255, .14); border: 1px solid rgba(124, 92, 255, .35); color: #c9bcff; font-size: 12.5px; font-weight: 600; }
+    html[data-theme='studio'] .hero h1 { font-size: clamp(30px, 5vw, 54px); line-height: 1.05; letter-spacing: -.035em; margin: 18px auto 14px; max-width: 820px; font-weight: 800; }
+    html[data-theme='studio'] .hero h1 span { background: linear-gradient(90deg, #a48bff, #5ea2ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    html[data-theme='studio'] .hero p { color: #a3a6b8; font-size: 16px; max-width: 640px; margin: 0 auto; line-height: 1.55; }
+    html[data-theme='studio'] .find-tool { display: block; width: min(640px, 100%); margin: 0 auto 22px; min-height: 52px; font-size: 15px; border-radius: 14px; padding: 0 18px; background: #14151c; box-shadow: 0 10px 30px rgba(0, 0, 0, .35); }
+    html[data-theme='studio'] .cats { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 0 0 28px; }
+    html[data-theme='studio'] .cats button { border-radius: 99px; padding: 7px 14px; display: inline-flex; gap: 8px; align-items: center; }
+    html[data-theme='studio'] .cats small { font-size: 11px; opacity: .7; font-weight: 700; }
+    html[data-theme='studio'] .shelf { display: block; margin: 0 0 22px; }
+    html[data-theme='studio'] .shelf[hidden] { display: none; }
+    html[data-theme='studio'] .shelf h2, html[data-theme='studio'] .all-h { display: block; font-size: 15px; font-weight: 700; margin: 0 0 10px; color: #d9dbe6; }
+    html[data-theme='studio'] .shelf-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+    html[data-theme='studio'] .mini { flex: none; display: flex; align-items: center; gap: 10px; padding: 9px 14px 9px 10px; border-radius: 12px; background: #15161d; border: 1px solid rgba(255, 255, 255, .07); color: inherit; text-decoration: none; font-weight: 600; }
+    html[data-theme='studio'] .mini:hover { border-color: rgba(124, 92, 255, .5); background: #1a1b24; }
+    html[data-theme='studio'] .mini .ico { font-size: 20px; }
+    html[data-theme='studio'] .progs { grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 12px; }
+    html[data-theme='studio'] .prog { position: relative; padding: 16px; gap: 14px; align-items: flex-start; border-radius: 16px; background: #15161d; border: 1px solid rgba(255, 255, 255, .07); transition: transform .15s, border-color .15s, background .15s; }
+    html[data-theme='studio'] .prog:hover, html[data-theme='studio'] .prog:focus-visible { transform: translateY(-2px); background: #191a23; border-color: rgba(124, 92, 255, .55); box-shadow: 0 12px 30px rgba(0, 0, 0, .35); }
+    html[data-theme='studio'] .prog.new { background: #15161d; border-color: rgba(255, 255, 255, .07); }
+    html[data-theme='studio'] .prog.new:hover { border-color: rgba(124, 92, 255, .55); }
+    html[data-theme='studio'] .prog .ico { flex: none; width: 46px; height: 46px; display: grid; place-items: center; font-size: 24px; border-radius: 12px; background: linear-gradient(135deg, rgba(124, 92, 255, .22), rgba(74, 140, 255, .12)); border: 1px solid rgba(124, 92, 255, .25); }
+    html[data-theme='studio'] .prog b { font-size: 14.5px; font-weight: 700; color: #f1f2f7; margin-bottom: 3px; padding-right: 22px; }
+    html[data-theme='studio'] .prog small { color: #9a9db0; font-size: 12.5px; line-height: 1.4; }
+    html[data-theme='studio'] .tag { background: rgba(124, 92, 255, .2); color: #c9bcff; border-radius: 6px; padding: 2px 6px; font-size: 9.5px; font-weight: 800; letter-spacing: .04em; }
+    html[data-theme='studio'] .fav { position: absolute; top: 12px; right: 12px; color: #ffc94d; }
+    html[data-theme='studio'] #noTool { text-align: center; padding: 30px; }
+    html[data-theme='studio'] .wins > div[style] { width: 100% !important; margin-top: 30px; }
+    html[data-theme='studio'] #temas { max-width: 420px; }
+    @media (max-width: 760px) {
+      html[data-theme='studio'] .wins { padding: 4px 12px 30px; }
+      html[data-theme='studio'] .hero { padding: 26px 4px 18px; }
+      html[data-theme='studio'] .hero p { font-size: 14px; }
+      html[data-theme='studio'] .progs { grid-template-columns: 1fr; }
+    }
+    html[data-theme='studio'] body:has(.home) .tb-search { visibility: hidden; }
   </style>
 </head>
 
@@ -159,13 +206,22 @@
     <nav class="icons" id="icons" aria-label="Atalhos da área de trabalho"></nav>
 
     <div class="wins">
-      <section class="window app" data-title="ferramentas.exe" data-icon="🗂️" style="width:min(780px,100%)">
+      <section class="window app home-main" data-title="ferramentas.exe" data-title-modern="Ferramentas" data-icon="🗂️" style="width:min(780px,100%)">
         <div class="window-body">
+          <div class="hero">
+            <span class="hero-badge" id="heroBadge"></span>
+            <h1>Ferramentas grátis pra quem <span>edita vídeo</span></h1>
+            <p>Legendas com IA, gráficos e textos animados, mockups, efeitos retrô e muito mais. Tudo roda no seu navegador: seus arquivos não saem do computador.</p>
+          </div>
           <div class="menubar" aria-hidden="true">
             <span>Arquivo</span><span>Editar</span><span>Exibir</span><span>Ajuda</span></div>
           <p style="margin:0 0 10px">Ferramentas gratuitas pra quem edita vídeo. Tudo roda no seu navegador: suas
             imagens não saem do computador.</p>
           <input type="search" id="findTool" class="find-tool" placeholder="🔎 Buscar ferramenta… (Ctrl+K)" aria-label="Buscar ferramenta" autocomplete="off">
+          <div class="cats" id="cats"></div>
+          <section class="shelf" id="shelfFav" hidden><h2>⭐ Favoritos</h2><div class="shelf-row"></div></section>
+          <section class="shelf" id="shelfRecent" hidden><h2>🕘 Usadas recentemente</h2><div class="shelf-row"></div></section>
+          <h2 class="all-h" id="allH">Todas as ferramentas</h2>
           <div class="progs" id="progs"></div>
           <p class="hint" id="noTool" hidden>Nenhuma ferramenta encontrada.</p>
         </div>
@@ -213,21 +269,40 @@ Menu Iniciar: todas as ferramentas, os programas da Adobe, papel de parede e idi
     const progs = document.getElementById('progs');
     OS.TOOLS.forEach((t) => {
       icons.insertAdjacentHTML('beforeend', `<a class="dicon" href="${t.file}" data-file="${t.file}"><span class="ico">${t.icon}</span>${t.name}</a>`);
-      progs.insertAdjacentHTML('beforeend', `<a class="prog${t.isNew ? ' new' : ''}" href="${t.file}" data-file="${t.file}"><span class="ico">${t.icon}</span><span class="txt"><b>${t.name}${t.isNew ? '<span class="tag">NOVO</span>' : ''}</b><small>${t.desc}</small></span><span class="fav" data-fav="${t.file}" title="Favoritar"></span></a>`);
+      progs.insertAdjacentHTML('beforeend', `<a class="prog${t.isNew ? ' new' : ''}" href="${t.file}" data-file="${t.file}" data-cat="${t.cat}"><span class="ico">${t.icon}</span><span class="txt"><b><span class="nm-retro">${t.name}</span><span class="nm-modern">${t.title}</span>${t.isNew ? '<span class="tag">NOVO</span>' : ''}</b><small>${t.desc}</small></span><span class="fav" data-fav="${t.file}" title="Favoritar"></span></a>`);
     });
     // ☆ favorita sem abrir a ferramenta; favoritos vão pra barra de tarefas e pro Dock
     const syncFavs = () => progs.querySelectorAll('[data-fav]').forEach((b) => { const on = OS.favs.has(b.dataset.fav); b.textContent = on ? '★' : '☆'; b.classList.toggle('on', on); b.title = OS.T(on ? 'Tirar dos favoritos' : 'Favoritar'); });
     progs.addEventListener('click', (e) => { const b = e.target.closest('[data-fav]'); if (!b) return; e.preventDefault(); e.stopPropagation(); OS.favs.toggle(b.dataset.fav); });
     document.addEventListener('favchange', syncFavs);
     syncFavs();
-    // busca
+    // categorias, favoritos e recentes (aparecem no visual moderno)
+    const CATS = [['all', '✨ Todas'], ['video', '🎬 Vídeo'], ['imagem', '🖼️ Imagem'], ['anim', '🔤 Texto e animação'], ['audio', '🎧 Áudio'], ['outros', '🧰 Outros']];
+    const cats = document.getElementById('cats');
+    let cat = 'all';
+    cats.innerHTML = CATS.map(([k, n]) => `<button data-cat="${k}" aria-pressed="${k === 'all'}">${n}<small>${k === 'all' ? OS.TOOLS.length : OS.TOOLS.filter((t) => t.cat === k).length}</small></button>`).join('');
+    cats.onclick = (e) => { const b = e.target.closest('[data-cat]'); if (!b) return; cat = b.dataset.cat; cats.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b)); filter(); };
+    document.getElementById('heroBadge').textContent = `✦ ${OS.TOOLS.length} ${OS.T('ferramentas')} · ${OS.T('grátis e sem cadastro')}`;
+    const mini = (t) => `<a class="mini" href="${t.file}"><span class="ico">${t.icon}</span><span>${t.title}</span></a>`;
     const find = document.getElementById('findTool');
-    find.addEventListener('input', () => {
-      const hits = new Set(OS.searchTools(find.value).map((t) => t.file));
+    function shelves() {
+      const f = OS.favs.list().map((x) => OS.TOOLS.find((t) => t.file === x)), r = OS.recent.list().map((x) => OS.TOOLS.find((t) => t.file === x));
+      const sf = document.getElementById('shelfFav'), sr = document.getElementById('shelfRecent');
+      sf.querySelector('.shelf-row').innerHTML = f.map(mini).join(''); sr.querySelector('.shelf-row').innerHTML = r.map(mini).join('');
+      const busy = find.value.trim() || cat !== 'all';
+      sf.hidden = !f.length || busy; sr.hidden = !r.length || busy;
+    }
+    document.addEventListener('favchange', shelves);
+    // busca
+    function filter() {
+      const hits = new Set(OS.searchTools(find.value).filter((t) => cat === 'all' || t.cat === cat).map((t) => t.file));
       progs.querySelectorAll('.prog').forEach((a) => (a.hidden = !hits.has(a.dataset.file)));
       icons.querySelectorAll('.dicon[data-file]').forEach((a) => (a.hidden = !hits.has(a.dataset.file)));
       document.getElementById('noTool').hidden = hits.size > 0;
-    });
+      shelves();
+    }
+    find.addEventListener('input', filter);
+    shelves();
     find.addEventListener('keydown', (e) => { if (e.key === 'Enter') { const a = progs.querySelector('.prog:not([hidden])'); if (a) location.href = a.getAttribute('href'); } });
     // atalhos pros programas da Adobe
     OS.ADOBE.forEach((a) => icons.insertAdjacentHTML('beforeend', `<a class="dicon" href="${a.url}" target="_blank" rel="noopener" title="Abre o site da Adobe"><span class="ico">${OS.adobeIcon(a, 36)}</span>${a.name}</a>`));

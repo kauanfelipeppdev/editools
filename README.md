@@ -22,7 +22,8 @@ Legenda automática com IA, removedor de fundo, conversa animada, terminal, thum
 ## ✨ Por que é legal
 
 - 🔒 **Privado:** tudo roda no seu navegador, até as IAs. Seus vídeos, imagens e áudios não vão pra servidor nenhum.
-- 🪟 **Nostálgico:** janelas que você arrasta, menu Iniciar, barra de tarefas, 6 temas (Windows 98, XP, 7 Aero e 11, macOS e Linux), modo escuro nos temas modernos, busca de ferramentas (Ctrl+K), favoritos na barra e no Dock, projetos salvos e atalhos de teclado, papel de parede e proteção de tela.
+- 🌙 **Visual moderno e escuro** por padrão: cabeçalho com busca (Ctrl+K), Home com categorias, favoritos e ferramentas usadas recentemente, e nomes normais em vez de `.exe`.
+- 🪟 **Nostálgico (opcional):** janelas que você arrasta, menu Iniciar, barra de tarefas, 6 temas (Windows 98, XP, 7 Aero e 11, macOS e Linux), modo escuro nos temas modernos, busca de ferramentas (Ctrl+K), favoritos na barra e no Dock, projetos salvos e atalhos de teclado, papel de parede e proteção de tela.
 - 🔗 **Tudo conversa:** baixou algo? Clique em **➡️ Enviar para…** e abra o resultado em outra ferramenta. Ou solte um arquivo em cima de um ícone da área de trabalho.
 - 📂 **Meus arquivos:** tudo que você exporta fica guardado no navegador pra baixar de novo.
 - 📲 **Vira aplicativo:** dá pra instalar (Menu Iniciar › Instalar) e usar até sem internet.

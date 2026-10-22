@@ -1,6 +1,7 @@
 /* EdiTools OS — base compartilhada: temas, janelas arrastáveis, barra de tarefas e utilitários. */
 (function () {
   const THEMES = {
+    studio: { name: 'EdiTools (moderno escuro)', css: 'assets/studio.css' },
     '98': { name: 'Windows 98', css: 'https://unpkg.com/98.css@0.1.21/dist/98.css' },
     xp: { name: 'Windows XP', css: 'https://unpkg.com/xp.css@0.2.6/dist/XP.css' },
     '7': { name: 'Windows 7 (Aero)', css: 'https://unpkg.com/7.css@0.16.0/dist/7.css' },
@@ -12,40 +13,40 @@
   // accept: tipos de arquivo que a ferramenta abre (usado no "Enviar para…" e ao soltar no ícone)
   const IMG = '^image/', MEDIA = '^(image|video)/', AV = '^(audio|video)/';
   const TOOLS = [
-    { file: 'removedor.html', icon: '✂️', name: 'removedor_de_fundo.exe', desc: 'tira o fundo de imagens com IA, direto no navegador', accept: IMG },
-    { file: 'legenda.html', icon: '💬', name: 'legenda_automatica.exe', desc: 'legendas automáticas com IA, estilo TikTok', accept: AV, isNew: true },
-    { file: 'botoes.html', icon: '🔘', name: 'criador_de_botoes.exe', desc: 'monte um botão do seu jeito e baixe em PNG' },
-    { file: 'chat.html', icon: '📱', name: 'conversa_animada.exe', desc: 'vídeo de conversa de chat, mensagem por mensagem', isNew: true },
-    { file: 'scroll.html', icon: '🖱️', name: 'gravador_de_scroll.exe', desc: 'vídeo de uma página inteira sendo rolada', accept: IMG, isNew: true },
-    { file: 'baixador.html', icon: '⬇️', name: 'baixador_de_video.exe', desc: 'baixa vídeo ou só o áudio a partir de um link', isNew: true },
-    { file: 'terminal.html', icon: '⌨️', name: 'terminal.exe', desc: 'janela de terminal bonita em PNG, SVG ou vídeo', isNew: true },
-    { file: 'thumbnail.html', icon: '🖼️', name: 'thumbnail.exe', desc: 'monte thumbnails e veja como ficam no feed', accept: IMG, isNew: true },
-    { file: 'mockup.html', icon: '💻', name: 'mockups.exe', desc: 'prints e vídeos dentro de celular, notebook e navegador', accept: MEDIA, isNew: true },
-    { file: 'audiograma.html', icon: '🎧', name: 'audiograma.exe', desc: 'áudio vira vídeo com onda sonora animada', accept: AV, isNew: true },
-    { file: 'textoanim.html', icon: '🔤', name: 'animacao_de_texto.exe', desc: 'máquina de escrever, glitch, onda, quique e mais', isNew: true },
-    { file: 'teia.html', icon: '🕸️', name: 'criador_de_teia.exe', desc: 'mapa mental, teia, cadeia e quadro de investigação', isNew: true },
-    { file: 'grafico.html', icon: '📊', name: 'grafico_animado.exe', desc: 'colunas, linha, pizza e corrida de barras animadas', isNew: true },
-    { file: 'termometro.html', icon: '🌡️', name: 'termometro.exe', desc: 'termômetro, meta de live e medidor animados', isNew: true },
-    { file: 'progresso.html', icon: '⏳', name: 'barra_de_progresso.exe', desc: 'barras de carregamento animadas', isNew: true },
-    { file: 'inscreva.html', icon: '🔔', name: 'botao_inscreva_se.exe', desc: 'botão de inscreva-se animado com cursor', accept: IMG, isNew: true },
-    { file: 'cronometro.html', icon: '⏱️', name: 'cronometro.exe', desc: 'contagem regressiva e cronômetro em overlay', isNew: true },
-    { file: 'letras.html', icon: '✉️', name: 'gerador_de_letras.exe', desc: 'escreva com letras recortadas de revista' },
-    { file: 'dvdficar.html', icon: '📀', name: 'dvdficar.exe', desc: 'sua logo quicando na tela de descanso do DVD', accept: IMG },
-    { file: 'vhs.html', icon: '📼', name: 'modulador_vhs.exe', desc: 'efeito de fita VHS em foto e vídeo', accept: MEDIA },
-    { file: 'texto3d.html', icon: '🧊', name: 'texto_3d.exe', desc: 'textos em 3D com vários materiais' },
-    { file: 'peixe.html', icon: '🐟', name: 'olho_de_peixe.exe', desc: 'lente olho de peixe anos 90/2000', accept: MEDIA },
-    { file: 'camera.html', icon: '📷', name: 'camera_digital.exe', desc: 'simula 8 câmeras digitais antigas', accept: MEDIA },
-    { file: 'audio.html', icon: '🎙️', name: 'audio_analogico.exe', desc: 'deixa seu áudio com cara de rádio, fita e VHS', accept: AV },
-    { file: 'pixelador.html', icon: '👾', name: 'pixelador.exe', desc: 'transforma imagens e vídeos em pixel art', accept: MEDIA },
-    { file: 'popup.html', icon: '🪟', name: 'criador_de_popup.exe', desc: 'pop-ups estilo Windows antigo em PNG' },
-    { file: 'petpet.html', icon: '🫳', name: 'petpet.exe', desc: 'GIF de uma mãozinha fazendo carinho na sua imagem', accept: IMG },
-    { file: 'contador.html', icon: '🔢', name: 'contador_de_numeros.exe', desc: 'vídeo de número subindo, com fundo transparente' },
-    { file: 'gradiente.html', icon: '🌈', name: 'gradientes_animados.exe', desc: 'gradientes que se mexem, exporta em vídeo' },
-    { file: 'texturas.html', icon: '📜', name: 'texturas_de_papel.exe', desc: 'texturas de papel animadas em stop motion' },
-    { file: 'tv.html', icon: '📺', name: 'tv_de_tubo.exe', desc: 'sua mídia passando numa TV de tubo', accept: MEDIA },
-    { file: 'scripts.html', icon: '⚙️', name: 'scripts.exe', desc: 'scripts para After Effects' },
-    { file: 'arquivos.html', icon: '📂', name: 'meus_arquivos.exe', desc: 'tudo que você exportou fica guardado aqui', isNew: true },
-    { file: 'links.html', icon: '🔗', name: 'links.exe', desc: 'links, conversor MP4 → MP3 e mais' },
+    { file: 'removedor.html', icon: '✂️', title: 'Removedor de fundo', cat: 'imagem', name: 'removedor_de_fundo.exe', desc: 'tira o fundo de imagens com IA, direto no navegador', accept: IMG },
+    { file: 'legenda.html', icon: '💬', title: 'Legenda automática', cat: 'video', name: 'legenda_automatica.exe', desc: 'legendas automáticas com IA, estilo TikTok', accept: AV, isNew: true },
+    { file: 'botoes.html', icon: '🔘', title: 'Criador de botões', cat: 'imagem', name: 'criador_de_botoes.exe', desc: 'monte um botão do seu jeito e baixe em PNG' },
+    { file: 'chat.html', icon: '📱', title: 'Conversa animada', cat: 'video', name: 'conversa_animada.exe', desc: 'vídeo de conversa de chat, mensagem por mensagem', isNew: true },
+    { file: 'scroll.html', icon: '🖱️', title: 'Gravador de scroll', cat: 'video', name: 'gravador_de_scroll.exe', desc: 'vídeo de uma página inteira sendo rolada', accept: IMG, isNew: true },
+    { file: 'baixador.html', icon: '⬇️', title: 'Baixador de vídeo', cat: 'video', name: 'baixador_de_video.exe', desc: 'baixa vídeo ou só o áudio a partir de um link', isNew: true },
+    { file: 'terminal.html', icon: '⌨️', title: 'Terminal', cat: 'video', name: 'terminal.exe', desc: 'janela de terminal bonita em PNG, SVG ou vídeo', isNew: true },
+    { file: 'thumbnail.html', icon: '🖼️', title: 'Thumbnail', cat: 'imagem', name: 'thumbnail.exe', desc: 'monte thumbnails e veja como ficam no feed', accept: IMG, isNew: true },
+    { file: 'mockup.html', icon: '💻', title: 'Mockups', cat: 'imagem', name: 'mockups.exe', desc: 'prints e vídeos dentro de celular, notebook e navegador', accept: MEDIA, isNew: true },
+    { file: 'audiograma.html', icon: '🎧', title: 'Audiograma', cat: 'audio', name: 'audiograma.exe', desc: 'áudio vira vídeo com onda sonora animada', accept: AV, isNew: true },
+    { file: 'textoanim.html', icon: '🔤', title: 'Animação de texto', cat: 'anim', name: 'animacao_de_texto.exe', desc: 'máquina de escrever, glitch, onda, quique e mais', isNew: true },
+    { file: 'teia.html', icon: '🕸️', title: 'Criador de teia', cat: 'anim', name: 'criador_de_teia.exe', desc: 'mapa mental, teia, cadeia e quadro de investigação', isNew: true },
+    { file: 'grafico.html', icon: '📊', title: 'Gráfico animado', cat: 'anim', name: 'grafico_animado.exe', desc: 'colunas, linha, pizza e corrida de barras animadas', isNew: true },
+    { file: 'termometro.html', icon: '🌡️', title: 'Termômetro', cat: 'anim', name: 'termometro.exe', desc: 'termômetro, meta de live e medidor animados', isNew: true },
+    { file: 'progresso.html', icon: '⏳', title: 'Barra de progresso', cat: 'anim', name: 'barra_de_progresso.exe', desc: 'barras de carregamento animadas', isNew: true },
+    { file: 'inscreva.html', icon: '🔔', title: 'Botão de inscreva-se', cat: 'anim', name: 'botao_inscreva_se.exe', desc: 'botão de inscreva-se animado com cursor', accept: IMG, isNew: true },
+    { file: 'cronometro.html', icon: '⏱️', title: 'Cronômetro', cat: 'anim', name: 'cronometro.exe', desc: 'contagem regressiva e cronômetro em overlay', isNew: true },
+    { file: 'letras.html', icon: '✉️', title: 'Letras recortadas', cat: 'anim', name: 'gerador_de_letras.exe', desc: 'escreva com letras recortadas de revista' },
+    { file: 'dvdficar.html', icon: '📀', title: 'DVDficar', cat: 'video', name: 'dvdficar.exe', desc: 'sua logo quicando na tela de descanso do DVD', accept: IMG },
+    { file: 'vhs.html', icon: '📼', title: 'Modulador VHS', cat: 'video', name: 'modulador_vhs.exe', desc: 'efeito de fita VHS em foto e vídeo', accept: MEDIA },
+    { file: 'texto3d.html', icon: '🧊', title: 'Texto 3D', cat: 'anim', name: 'texto_3d.exe', desc: 'textos em 3D com vários materiais' },
+    { file: 'peixe.html', icon: '🐟', title: 'Olho de peixe', cat: 'video', name: 'olho_de_peixe.exe', desc: 'lente olho de peixe anos 90/2000', accept: MEDIA },
+    { file: 'camera.html', icon: '📷', title: 'Câmera digital', cat: 'video', name: 'camera_digital.exe', desc: 'simula 8 câmeras digitais antigas', accept: MEDIA },
+    { file: 'audio.html', icon: '🎙️', title: 'Áudio analógico', cat: 'audio', name: 'audio_analogico.exe', desc: 'deixa seu áudio com cara de rádio, fita e VHS', accept: AV },
+    { file: 'pixelador.html', icon: '👾', title: 'Pixelador', cat: 'imagem', name: 'pixelador.exe', desc: 'transforma imagens e vídeos em pixel art', accept: MEDIA },
+    { file: 'popup.html', icon: '🪟', title: 'Criador de pop-up', cat: 'imagem', name: 'criador_de_popup.exe', desc: 'pop-ups estilo Windows antigo em PNG' },
+    { file: 'petpet.html', icon: '🫳', title: 'Petpet', cat: 'imagem', name: 'petpet.exe', desc: 'GIF de uma mãozinha fazendo carinho na sua imagem', accept: IMG },
+    { file: 'contador.html', icon: '🔢', title: 'Contador de números', cat: 'anim', name: 'contador_de_numeros.exe', desc: 'vídeo de número subindo, com fundo transparente' },
+    { file: 'gradiente.html', icon: '🌈', title: 'Gradientes animados', cat: 'imagem', name: 'gradientes_animados.exe', desc: 'gradientes que se mexem, exporta em vídeo' },
+    { file: 'texturas.html', icon: '📜', title: 'Texturas de papel', cat: 'imagem', name: 'texturas_de_papel.exe', desc: 'texturas de papel animadas em stop motion' },
+    { file: 'tv.html', icon: '📺', title: 'TV de tubo', cat: 'video', name: 'tv_de_tubo.exe', desc: 'sua mídia passando numa TV de tubo', accept: MEDIA },
+    { file: 'scripts.html', icon: '⚙️', title: 'Scripts para After Effects', cat: 'outros', name: 'scripts.exe', desc: 'scripts para After Effects' },
+    { file: 'arquivos.html', icon: '📂', title: 'Meus arquivos', cat: 'outros', name: 'meus_arquivos.exe', desc: 'tudo que você exportou fica guardado aqui', isNew: true },
+    { file: 'links.html', icon: '🔗', title: 'Links e conversor MP3', cat: 'outros', name: 'links.exe', desc: 'links, conversor MP4 → MP3 e mais' },
   ];
 
   // Atalhos pros programas da Adobe (abrem o site oficial)
@@ -112,9 +113,10 @@
   };
 
   // temas modernos: mesma base de componentes e podem ficar escuros
-  const MODERN = ['mac', 'win11', 'linux'];
+  const MODERN = ['studio', 'mac', 'win11', 'linux'];
   const isDark = () => store.get('dark', 'off') === 'on';
-  const applyDark = () => document.documentElement.toggleAttribute('data-dark', isDark() && MODERN.includes(document.documentElement.dataset.theme));
+  // o visual padrão é sempre escuro; nos outros modernos o escuro é opcional
+  const applyDark = () => { const th = document.documentElement.dataset.theme; document.documentElement.toggleAttribute('data-dark', th === 'studio' || (isDark() && MODERN.includes(th))); };
   function setDark(on) { store.set('dark', on ? 'on' : 'off'); applyDark(); document.dispatchEvent(new CustomEvent('themechange', { detail: document.documentElement.dataset.theme })); }
   function setTheme(t) {
     if (!THEMES[t]) t = 'xp';
@@ -126,7 +128,12 @@
     store.set('theme', t);
     document.dispatchEvent(new CustomEvent('themechange', { detail: t }));
   }
-  setTheme(store.get('theme', 'xp'));
+  // visual novo: quem já usava o site passa uma vez pro tema moderno (os outros continuam no menu)
+  if (store.get('look', '') !== '2') { store.set('look', '2'); store.set('theme', 'studio'); }
+  setTheme(store.get('theme', 'studio'));
+  // ferramentas usadas por último (aparecem na área de trabalho)
+  const recent = { list() { try { return JSON.parse(store.get('recent', '[]')).filter((f) => TOOLS.some((t) => t.file === f)); } catch { return []; } } };
+  if (TOOLS.some((t) => t.file === here())) store.set('recent', JSON.stringify([here(), ...recent.list().filter((f) => f !== here())].slice(0, 8)));
 
   // ---------- Papel de parede ----------
   const WALLS = {
@@ -171,6 +178,15 @@
     renderTasks();
   }
 
+  /** Título da janela: nome de programa (.exe) nos temas retrô, nome normal no visual moderno. */
+  const pretty = (t) => { t = (t || '').replace(/\s+-\s+Bloco de Notas$/i, '').replace(/\.(exe|txt)$/i, '').replace(/_/g, ' ').trim(); return t.charAt(0).toUpperCase() + t.slice(1); };
+  function setWinTitle(win) {
+    if (!win._titleEl) return;
+    const studio = document.documentElement.dataset.theme === 'studio';
+    const t = !studio ? win.dataset.title || '' : win.dataset.titleModern || (win.classList.contains('app') && document.title.includes(' · ') ? document.title.split(' · ')[0] : pretty(win.dataset.title));
+    win._titleEl.textContent = (win.dataset.icon ? win.dataset.icon + ' ' : '') + t;
+  }
+  document.addEventListener('themechange', () => document.querySelectorAll('.window').forEach(setWinTitle));
   function buildWindow(win) {
     if (win.dataset.built) return;
     win.dataset.built = '1';
@@ -179,7 +195,8 @@
     bar.className = 'title-bar';
     bar.innerHTML = `<div class="title-bar-text"></div><div class="title-bar-controls">
       <button aria-label="Minimize" title="Minimizar"></button><button aria-label="Maximize" title="Maximizar"></button><button aria-label="Close" title="Fechar"></button></div>`;
-    bar.firstElementChild.textContent = (win.dataset.icon ? win.dataset.icon + ' ' : '') + title;
+    win._titleEl = bar.firstElementChild;
+    setWinTitle(win);
     win.prepend(bar);
     const [bMin, bMax, bClose] = bar.querySelectorAll('button');
     bMin.onclick = () => { win.classList.add('min'); renderTasks(); };
@@ -250,9 +267,10 @@
   function buildTaskbar() {
     const bar = document.createElement('nav');
     bar.className = 'taskbar';
-    const item = (t) => `<a href="${t.file}" class="sm-item sm-tool" role="menuitem" data-file="${t.file}"><span>${t.icon}</span><i>${t.name}</i><span class="sm-star" data-star="${t.file}" title="Favoritar" aria-label="Favoritar"></span></a>`;
+    const item = (t) => `<a href="${t.file}" class="sm-item sm-tool" role="menuitem" data-file="${t.file}"><span>${t.icon}</span><i class="nm-retro">${t.name}</i><i class="nm-modern">${t.title}</i><span class="sm-star" data-star="${t.file}" title="Favoritar" aria-label="Favoritar"></span></a>`;
     bar.innerHTML = `
       <button class="start" aria-haspopup="menu" aria-expanded="false"><span class="orb"></span><b>Iniciar</b></button>
+      <button class="tb-search" type="button"><span>🔎</span><em>Buscar ferramenta…</em><kbd>Ctrl K</kbd></button>
       <div class="quick"></div>
       <div class="tasks"></div>
       <div class="tray"><button class="tray-lang" title="Idioma / Language">${LANG === 'en' ? 'EN' : 'PT'}</button><span class="tray-files" title="Meus arquivos">📂</span><span class="tray-dark" title="Modo escuro">🌙</span><span class="tray-theme" title="Trocar tema">🎨</span><time></time></div>
@@ -289,10 +307,10 @@
     dock.setAttribute('aria-label', 'Dock');
     document.body.appendChild(dock);
     const quick = bar.querySelector('.quick'), favBox = bar.querySelector('.sm-favs');
-    const dockLink = (t) => `<a href="${t.file}" title="${T(t.name)}"${t.file === here() ? ' class="on"' : ''}>${t.icon}</a>`;
+    const dockLink = (t) => `<a href="${t.file}" title="${T(t.title)}"${t.file === here() ? ' class="on"' : ''}>${t.icon}</a>`;
     const renderFavs = () => {
       const fl = favs.list().map((f) => TOOLS.find((t) => t.file === f));
-      quick.innerHTML = fl.map((t) => `<a href="${t.file}" title="${T(t.name)}">${t.icon}</a>`).join('');
+      quick.innerHTML = fl.map((t) => `<a href="${t.file}" title="${T(t.title)}">${t.icon}</a>`).join('');
       favBox.innerHTML = fl.length ? `<div class="sm-sep"></div><div class="sm-label">${T('Favoritos')}</div>` + fl.map(item).join('') : '';
       dock.innerHTML = `<a href="index.html" title="${T('Área de trabalho')}"${here() === 'index.html' ? ' class="on"' : ''}>🏠</a>`
         + (fl.length ? '<span class="dock-sep"></span>' + fl.map(dockLink).join('') : '')
@@ -340,7 +358,8 @@
     bar.querySelector('.tray-dark').onclick = () => setDark(!isDark());
     const order = Object.keys(THEMES);
     bar.querySelector('.tray-theme').onclick = () => setTheme(order[(order.indexOf(document.documentElement.dataset.theme) + 1) % order.length]);
-    const syncDark = () => { const m = MODERN.includes(document.documentElement.dataset.theme); sm('dark').hidden = !m; bar.querySelector('.tray-dark').hidden = !m; bar.querySelector('.tray-dark').textContent = isDark() ? '☀️' : '🌙'; };
+    bar.querySelector('.tb-search').onclick = (e) => { e.stopPropagation(); toggle(true); };
+    const syncDark = () => { const m = MODERN.includes(document.documentElement.dataset.theme) && document.documentElement.dataset.theme !== 'studio'; sm('dark').hidden = !m; bar.querySelector('.tray-dark').hidden = !m; bar.querySelector('.tray-dark').textContent = isDark() ? '☀️' : '🌙'; };
     syncDark();
     document.addEventListener('themechange', syncDark);
     const clock = bar.querySelector('time');
@@ -874,7 +893,7 @@
       'Tudo que você baixa fica guardado em 📂 Meus arquivos. De lá dá pra mandar pra outra ferramenta.',
       'Depois de baixar, use "➡️ Enviar para…" pra abrir o resultado em outra ferramenta sem baixar de novo.',
       'Na área de trabalho, solte um arquivo em cima de um ícone pra abrir a ferramenta já com ele.',
-      'Troque o tema no 🎨 da barra de tarefas: Windows 98, XP, 7, 11, macOS ou Linux.',
+      'O visual padrão é o EdiTools escuro. Os temas retrô (Windows, macOS e Linux) continuam no 🎨 da barra.',
       'Ctrl+K abre a busca de ferramentas. No menu, a ☆ ao lado de cada uma deixa ela nos favoritos.',
       'O botão 💾 Salvar guarda as opções da ferramenta como projeto, pra abrir depois em 📂 Projetos.',
       'Menu Iniciar › Papel de parede e proteção de tela pra deixar a área de trabalho com a sua cara.',
@@ -943,7 +962,7 @@
     if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 
-  window.OS = { THEMES, MODERN, setDark, isDark, favs, searchTools, saveProject, openProjects, showKeys, TOOLS, ADOBE, adobeIcon, setTheme, store, download, canvasBlob, pickFile, loadMedia, dropZone, onInbox, sendTo, sendMenu, targetsFor, files, kv, recordCanvas, videoMime, dialog, showTab, bindOutputs, openWin, focusWin, slug, openSettings, saver, helper, LANG, setLang, T, here };
+  window.OS = { THEMES, MODERN, recent, setDark, isDark, favs, searchTools, saveProject, openProjects, showKeys, TOOLS, ADOBE, adobeIcon, setTheme, store, download, canvasBlob, pickFile, loadMedia, dropZone, onInbox, sendTo, sendMenu, targetsFor, files, kv, recordCanvas, videoMime, dialog, showTab, bindOutputs, openWin, focusWin, slug, openSettings, saver, helper, LANG, setLang, T, here };
 
   document.addEventListener('DOMContentLoaded', () => {
     pwa();
