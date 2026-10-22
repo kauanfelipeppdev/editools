@@ -1,30 +1,68 @@
-/* EdiTools — tema "macOS": componentes no lugar do 98.css / XP.css / 7.css (janelas, botões, campos). */
+/* EdiTools — base dos temas modernos (macOS, Windows 11, Linux): janelas, botões e campos.
+   As cores ficam em variáveis pra o modo escuro (html[data-dark]) trocar tudo de uma vez. */
+:root {
+  --m-text: #1d1d1f;
+  --m-sub: #6e6e73;
+  --m-win: rgba(246, 246, 248, .94);
+  --m-bar: linear-gradient(rgba(236, 236, 238, .96), rgba(226, 226, 230, .96));
+  --m-bar-text: #3a3a3c;
+  --m-line: rgba(0, 0, 0, .14);
+  --m-btn: linear-gradient(#fff, #f7f7f7);
+  --m-btn-hover: linear-gradient(#fff, #f0f0f2);
+  --m-btn-active: #e3e3e6;
+  --m-btn-ring: rgba(0, 0, 0, .22);
+  --m-field: #fff;
+  --m-field-line: rgba(0, 0, 0, .25);
+  --m-soft: rgba(0, 0, 0, .025);
+  --m-accent: #0a74ff;
+  --m-accent-2: #3b97ff;
+  --m-radius: 12px;
+  --m-font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
+}
+html[data-dark] {
+  color-scheme: dark;
+  --m-text: #f2f2f7;
+  --m-sub: #a1a1a6;
+  --m-win: rgba(40, 40, 44, .94);
+  --m-bar: linear-gradient(rgba(54, 54, 58, .97), rgba(46, 46, 50, .97));
+  --m-bar-text: #d8d8dc;
+  --m-line: rgba(255, 255, 255, .12);
+  --m-btn: linear-gradient(#5a5a5f, #4f4f54);
+  --m-btn-hover: linear-gradient(#636368, #58585d);
+  --m-btn-active: #6c6c71;
+  --m-btn-ring: rgba(0, 0, 0, .5);
+  --m-field: #1e1e21;
+  --m-field-line: rgba(255, 255, 255, .16);
+  --m-soft: rgba(255, 255, 255, .04);
+}
 body {
-  font: 13px/1.4 -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
-  color: #1d1d1f;
+  font: 13px/1.4 var(--m-font);
+  color: var(--m-text);
   -webkit-font-smoothing: antialiased;
 }
 button, input, select, textarea { font: inherit; color: inherit; }
 
 /* ---------- janela ---------- */
 .window {
-  background: rgba(246, 246, 248, .94);
+  background: var(--m-win);
   backdrop-filter: blur(24px) saturate(1.6);
   -webkit-backdrop-filter: blur(24px) saturate(1.6);
   border: .5px solid rgba(0, 0, 0, .22);
-  border-radius: 12px;
+  border-radius: var(--m-radius);
   box-shadow: 0 0 0 .5px rgba(255, 255, 255, .5) inset, 0 22px 50px rgba(0, 0, 0, .28), 0 4px 12px rgba(0, 0, 0, .12);
   overflow: hidden;
+  color: var(--m-text);
 }
+html[data-dark] .window { box-shadow: 0 0 0 .5px rgba(255, 255, 255, .14) inset, 0 22px 50px rgba(0, 0, 0, .5); }
 .window.max { border-radius: 0; }
 .title-bar {
   position: relative; display: flex; align-items: center; height: 34px; padding: 0 12px;
-  background: linear-gradient(rgba(236, 236, 238, .96), rgba(226, 226, 230, .96));
-  border-bottom: .5px solid rgba(0, 0, 0, .14);
+  background: var(--m-bar);
+  border-bottom: .5px solid var(--m-line);
 }
 .title-bar-text {
   position: absolute; left: 80px; right: 80px; text-align: center;
-  font-weight: 600; font-size: 13px; color: #3a3a3c; pointer-events: none;
+  font-weight: 600; font-size: 13px; color: var(--m-bar-text); pointer-events: none;
 }
 .title-bar-controls { display: flex; gap: 8px; position: relative; z-index: 1; }
 .title-bar-controls button {
@@ -47,41 +85,42 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* ---------- botões ---------- */
 button {
   min-height: 24px; padding: 3px 12px; border: 0; border-radius: 6px; cursor: pointer;
-  background: linear-gradient(#fff, #f7f7f7); color: #1d1d1f;
-  box-shadow: 0 0 0 .5px rgba(0, 0, 0, .22), 0 1px 1.5px rgba(0, 0, 0, .1);
+  background: var(--m-btn); color: var(--m-text);
+  box-shadow: 0 0 0 .5px var(--m-btn-ring), 0 1px 1.5px rgba(0, 0, 0, .1);
 }
-button:hover { background: linear-gradient(#fff, #f0f0f2); }
-button:active { background: #e3e3e6; }
-button:focus-visible { outline: 3px solid rgba(0, 122, 255, .45); outline-offset: 1px; }
+button:hover { background: var(--m-btn-hover); }
+button:active { background: var(--m-btn-active); }
+button:focus-visible { outline: 3px solid color-mix(in srgb, var(--m-accent) 45%, transparent); outline-offset: 1px; }
 button:disabled { opacity: .45; cursor: default; }
 button.default, button[aria-pressed=true] {
-  background: linear-gradient(#3b97ff, #0a74ff); color: #fff;
+  background: linear-gradient(var(--m-accent-2), var(--m-accent)); color: #fff;
   box-shadow: 0 0 0 .5px rgba(0, 60, 160, .5), 0 1px 1.5px rgba(0, 0, 0, .15);
 }
 
 /* ---------- campos ---------- */
 input[type=text], input[type=number], input[type=search], input[type=url], input[type=password], input:not([type]), textarea, select {
-  background: #fff; border: .5px solid rgba(0, 0, 0, .25); border-radius: 6px; padding: 4px 8px; min-height: 24px;
-  box-shadow: inset 0 .5px 1px rgba(0, 0, 0, .08);
+  background: var(--m-field); border: .5px solid var(--m-field-line); border-radius: 6px; padding: 4px 8px; min-height: 24px;
+  box-shadow: inset 0 .5px 1px rgba(0, 0, 0, .08); color: var(--m-text);
 }
-input:focus, textarea:focus, select:focus { outline: 3px solid rgba(0, 122, 255, .4); outline-offset: 0; border-color: #0a74ff; }
+input:focus, textarea:focus, select:focus { outline: 3px solid color-mix(in srgb, var(--m-accent) 40%, transparent); outline-offset: 0; border-color: var(--m-accent); }
 select {
   appearance: none; -webkit-appearance: none; padding-right: 26px; cursor: pointer;
-  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Crect width='16' height='16' rx='4' fill='%230a74ff'/%3E%3Cpath d='M5 6.5 8 4l3 2.5M5 9.5 8 12l3-2.5' fill='none' stroke='%23fff' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 4px center;
+  background: var(--m-field) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Crect width='16' height='16' rx='4' fill='%230a74ff'/%3E%3Cpath d='M5 6.5 8 4l3 2.5M5 9.5 8 12l3-2.5' fill='none' stroke='%23fff' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 4px center;
 }
-input[type=checkbox], input[type=radio], input[type=range], progress { accent-color: #0a74ff; }
+input[type=checkbox], input[type=radio], input[type=range], progress { accent-color: var(--m-accent); }
 input[type=checkbox], input[type=radio] { width: 14px; height: 14px; margin: 0; cursor: pointer; }
 .field-row { display: flex; align-items: center; gap: 6px; }
 .field-row + .field-row { margin-top: 2px; }
 label { cursor: default; }
-fieldset { border: .5px solid rgba(0, 0, 0, .14); border-radius: 10px; background: rgba(0, 0, 0, .025); padding: 10px; }
-legend { font-weight: 600; font-size: 12px; color: #6e6e73; padding: 0 4px; }
+fieldset { border: .5px solid var(--m-line); border-radius: 10px; background: var(--m-soft); padding: 10px; }
+legend { font-weight: 600; font-size: 12px; color: var(--m-sub); padding: 0 4px; }
 details > summary { cursor: pointer; font-weight: 600; }
-progress { appearance: none; -webkit-appearance: none; height: 6px; border: 0; border-radius: 3px; background: rgba(0, 0, 0, .1); overflow: hidden; }
-progress::-webkit-progress-bar { background: rgba(0, 0, 0, .1); border-radius: 3px; }
-progress::-webkit-progress-value { background: #0a74ff; border-radius: 3px; }
-progress::-moz-progress-bar { background: #0a74ff; }
+progress { appearance: none; -webkit-appearance: none; height: 6px; border: 0; border-radius: 3px; background: var(--m-line); overflow: hidden; }
+progress::-webkit-progress-bar { background: var(--m-line); border-radius: 3px; }
+progress::-webkit-progress-value { background: var(--m-accent); border-radius: 3px; }
+progress::-moz-progress-bar { background: var(--m-accent); }
 pre { font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+a { color: var(--m-accent); }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, .25); border-radius: 5px; border: 2px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, .45); border-radius: 5px; border: 2px solid transparent; background-clip: content-box; }
 ::-webkit-scrollbar-track { background: transparent; }

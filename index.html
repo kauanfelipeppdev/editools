@@ -63,6 +63,26 @@
       outline: none;
     }
 
+    .prog .txt { flex: 1; min-width: 0; }
+
+    .prog[hidden], .dicon[hidden] { display: none; }
+
+    .fav { font-size: 17px; color: #b58900; opacity: .35; cursor: pointer; padding: 2px 4px; align-self: flex-start; }
+
+    .prog:hover .fav, .fav.on { opacity: 1; }
+
+    .find-tool { width: 100%; box-sizing: border-box; margin: 0 0 10px; }
+
+    html[data-dark] .prog { background: rgba(255, 255, 255, .05); border-color: rgba(255, 255, 255, .12); }
+
+    html[data-dark] .prog:hover, html[data-dark] .prog:focus-visible { background: rgba(80, 140, 255, .18); }
+
+    html[data-dark] .prog.new { background: rgba(226, 164, 0, .12); border-color: rgba(226, 164, 0, .5); }
+
+    html[data-dark] .prog small { color: #aaa; }
+
+    html.modern .prog { border-radius: 10px; }
+
     .prog .ico {
       font-size: 28px;
       width: 36px;
@@ -144,7 +164,9 @@
             <span>Arquivo</span><span>Editar</span><span>Exibir</span><span>Ajuda</span></div>
           <p style="margin:0 0 10px">Ferramentas gratuitas pra quem edita vídeo. Tudo roda no seu navegador: suas
             imagens não saem do computador.</p>
+          <input type="search" id="findTool" class="find-tool" placeholder="🔎 Buscar ferramenta… (Ctrl+K)" aria-label="Buscar ferramenta" autocomplete="off">
           <div class="progs" id="progs"></div>
+          <p class="hint" id="noTool" hidden>Nenhuma ferramenta encontrada.</p>
         </div>
       </section>
 
@@ -190,8 +212,22 @@ Menu Iniciar: todas as ferramentas, os programas da Adobe, papel de parede e idi
     const progs = document.getElementById('progs');
     OS.TOOLS.forEach((t) => {
       icons.insertAdjacentHTML('beforeend', `<a class="dicon" href="${t.file}" data-file="${t.file}"><span class="ico">${t.icon}</span>${t.name}</a>`);
-      progs.insertAdjacentHTML('beforeend', `<a class="prog${t.isNew ? ' new' : ''}" href="${t.file}" data-file="${t.file}"><span class="ico">${t.icon}</span><span><b>${t.name}${t.isNew ? '<span class="tag">NOVO</span>' : ''}</b><small>${t.desc}</small></span></a>`);
+      progs.insertAdjacentHTML('beforeend', `<a class="prog${t.isNew ? ' new' : ''}" href="${t.file}" data-file="${t.file}"><span class="ico">${t.icon}</span><span class="txt"><b>${t.name}${t.isNew ? '<span class="tag">NOVO</span>' : ''}</b><small>${t.desc}</small></span><span class="fav" role="button" data-fav="${t.file}" title="Favoritar"></span></a>`);
     });
+    // ☆ favorita sem abrir a ferramenta; favoritos vão pra barra de tarefas e pro Dock
+    const syncFavs = () => progs.querySelectorAll('[data-fav]').forEach((b) => { const on = OS.favs.has(b.dataset.fav); b.textContent = on ? '★' : '☆'; b.classList.toggle('on', on); b.title = OS.T(on ? 'Tirar dos favoritos' : 'Favoritar'); });
+    progs.addEventListener('click', (e) => { const b = e.target.closest('[data-fav]'); if (!b) return; e.preventDefault(); e.stopPropagation(); OS.favs.toggle(b.dataset.fav); });
+    document.addEventListener('favchange', syncFavs);
+    syncFavs();
+    // busca
+    const find = document.getElementById('findTool');
+    find.addEventListener('input', () => {
+      const hits = new Set(OS.searchTools(find.value).map((t) => t.file));
+      progs.querySelectorAll('.prog').forEach((a) => (a.hidden = !hits.has(a.dataset.file)));
+      icons.querySelectorAll('.dicon[data-file]').forEach((a) => (a.hidden = !hits.has(a.dataset.file)));
+      document.getElementById('noTool').hidden = hits.size > 0;
+    });
+    find.addEventListener('keydown', (e) => { if (e.key === 'Enter') { const a = progs.querySelector('.prog:not([hidden])'); if (a) location.href = a.getAttribute('href'); } });
     // atalhos pros programas da Adobe
     OS.ADOBE.forEach((a) => icons.insertAdjacentHTML('beforeend', `<a class="dicon" href="${a.url}" target="_blank" rel="noopener" title="Abre o site da Adobe"><span class="ico">${OS.adobeIcon(a, 36)}</span>${a.name}</a>`));
 
@@ -219,8 +255,13 @@ Menu Iniciar: todas as ferramentas, os programas da Adobe, papel de parede e idi
     for (const [k, v] of Object.entries(OS.THEMES)) {
       pick.insertAdjacentHTML('beforeend', `<div class="field-row"><input type="radio" name="th" id="th${k}" value="${k}"><label for="th${k}">${v.name}</label></div>`);
     }
-    const sync = () => pick.querySelectorAll('input').forEach((r) => (r.checked = r.value === document.documentElement.dataset.theme));
-    pick.addEventListener('change', (e) => OS.setTheme(e.target.value));
+    pick.insertAdjacentHTML('beforeend', `<div class="field-row dark-row"><input type="checkbox" id="darkPick"><label for="darkPick">🌙 Modo escuro (temas 11, macOS e Linux)</label></div>`);
+    const dark = document.getElementById('darkPick');
+    const sync = () => {
+      pick.querySelectorAll('input[name=th]').forEach((r) => (r.checked = r.value === document.documentElement.dataset.theme));
+      dark.checked = OS.isDark(); dark.closest('.field-row').hidden = !OS.MODERN.includes(document.documentElement.dataset.theme);
+    };
+    pick.addEventListener('change', (e) => (e.target === dark ? OS.setDark(dark.checked) : OS.setTheme(e.target.value)));
     document.addEventListener('themechange', sync);
     sync();
     document.querySelector('[data-close-self]').onclick = (e) => e.target.closest('.window').querySelector('[aria-label=Close]').click();

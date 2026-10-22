@@ -38,6 +38,25 @@ html[data-theme='mac'] {
   --mb-h: 28px;
   --muted: #6e6e73;
 }
+html[data-theme='win11'] {
+  --desk: #1b4fa8;
+  --desk-img: radial-gradient(55% 60% at 50% 62%, rgba(140, 200, 255, .95) 0, rgba(60, 130, 230, .55) 35%, rgba(20, 60, 160, 0) 70%),
+    conic-gradient(from 200deg at 50% 70%, rgba(255, 255, 255, 0) 0deg, rgba(150, 210, 255, .35) 40deg, rgba(255, 255, 255, 0) 90deg, rgba(110, 170, 255, .3) 160deg, rgba(255, 255, 255, 0) 220deg),
+    linear-gradient(160deg, #0a2a6e 0%, #1f5fc8 55%, #5aa3f0 100%);
+  --tb-h: 48px;
+  --muted: #5f5f5f;
+}
+html[data-theme='linux'] {
+  --desk: #5e2750;
+  --desk-img: radial-gradient(80% 70% at 85% 110%, rgba(233, 84, 32, .95) 0, rgba(233, 84, 32, 0) 60%),
+    radial-gradient(60% 60% at 10% 0%, rgba(119, 33, 111, .9) 0, rgba(119, 33, 111, 0) 70%),
+    linear-gradient(135deg, #2c001e 0%, #5e2750 55%, #b8442b 100%);
+  --tb-h: 12px;
+  --mb-h: 30px;
+  --dock-w: 64px;
+  --muted: #666;
+}
+html[data-dark] { --muted: #a1a1a6; color-scheme: dark; }
 
 * { box-sizing: border-box; }
 [hidden], .is-hidden { display: none !important; }
@@ -76,7 +95,8 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 html[data-theme='98'] a.btn { background: silver; box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #fff, inset -2px -2px grey, inset 2px 2px #dfdfdf; padding: 4px 12px; min-height: 23px; font-size: 11px; }
 html[data-theme='xp'] a.btn { background: linear-gradient(180deg, #fff, #ecebe6 86%, #d6d0c5); border: 1px solid #003c74; border-radius: 3px; padding: 3px 12px; min-height: 23px; font-size: 11px; }
 html[data-theme='7'] a.btn { background: linear-gradient(#f2f2f2 45%, #ebebeb 45%, #cfcfcf); border: 1px solid #707070; border-radius: 3px; padding: 3px 12px; min-height: 23px; font-size: 12px; }
-html[data-theme='mac'] a.btn { background: linear-gradient(#fff, #f7f7f7); border-radius: 6px; padding: 3px 12px; min-height: 24px; box-shadow: 0 0 0 .5px rgba(0, 0, 0, .22), 0 1px 1.5px rgba(0, 0, 0, .1); }
+html.modern a.btn { background: var(--m-btn); color: var(--m-text); border-radius: 6px; padding: 3px 12px; min-height: 24px; box-shadow: 0 0 0 .5px var(--m-btn-ring), 0 1px 1.5px rgba(0, 0, 0, .1); }
+html[data-theme='win11'] a.btn { border-radius: 4px; }
 
 .tool { display: grid; grid-template-columns: 310px minmax(0, 1fr); gap: 12px; align-items: start; }
 .tool.wide-panel { grid-template-columns: 360px minmax(0, 1fr); }
@@ -209,6 +229,63 @@ html[data-theme='mac'] .dock::-webkit-scrollbar { display: none; }
 .dock a:hover + a, .dock a:has(+ a:hover) { transform: scale(1.12); }
 .dock a.on::after { content: ''; position: absolute; bottom: -3px; left: 50%; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: rgba(0, 0, 0, .7); }
 .dock .dock-sep { flex: none; width: 1px; align-self: stretch; margin: 4px 4px; background: rgba(0, 0, 0, .2); }
+html[data-dark][data-theme='mac'] .taskbar { background: rgba(30, 30, 34, .72); color: #f2f2f7; border-bottom-color: rgba(255, 255, 255, .1); }
+html[data-dark][data-theme='mac'] .taskbar .tray-lang { border-color: rgba(255, 255, 255, .6) !important; }
+html[data-dark][data-theme='mac'] .taskbar .start.on, html[data-dark][data-theme='mac'] .taskbar .task:hover, html[data-dark][data-theme='mac'] .taskbar .start:hover { background: rgba(255, 255, 255, .14); }
+html[data-dark] .dock { background: rgba(40, 40, 44, .45); border-color: rgba(255, 255, 255, .15); }
+html[data-dark] .dock a.on::after { background: rgba(255, 255, 255, .8); }
+html[data-dark] .dock .dock-sep { background: rgba(255, 255, 255, .25); }
+
+/* barra rápida (favoritos) ao lado do Iniciar nos temas Windows */
+.quick { display: flex; align-items: center; gap: 2px; }
+.quick:empty { display: none; }
+.quick a { display: grid; place-items: center; width: 28px; height: 26px; font-size: 17px; text-decoration: none; border-radius: 3px; }
+.quick a:hover { background: rgba(255, 255, 255, .25); }
+html[data-theme='mac'] .quick { display: none; }
+html[data-theme='linux'] .quick { display: none; }
+
+/* Windows 11: barra embaixo com tudo no meio */
+html[data-theme='win11'] .taskbar {
+  height: var(--tb-h); padding: 0 8px; gap: 4px; color: #1a1a1a; font: 12px 'Segoe UI Variable Text', 'Segoe UI', sans-serif;
+  background: rgba(238, 241, 246, .86); backdrop-filter: blur(28px) saturate(1.6); -webkit-backdrop-filter: blur(28px) saturate(1.6); border-top: 1px solid rgba(0, 0, 0, .08);
+}
+html[data-dark][data-theme='win11'] .taskbar { background: rgba(28, 28, 30, .86); color: #f3f3f3; border-top-color: rgba(255, 255, 255, .08); }
+html[data-theme='win11'] .taskbar button { background: none; box-shadow: none; color: inherit; border-radius: 4px; }
+html[data-theme='win11'] .taskbar .start { margin-left: auto; width: 40px; height: 40px; padding: 0; justify-content: center; }
+html[data-theme='win11'] .taskbar .start b { display: none; }
+html[data-theme='win11'] .taskbar .orb { width: 20px; height: 20px; background: linear-gradient(#2aa6f5, #2aa6f5) 0 0 / 9px 9px no-repeat, linear-gradient(#1a8fe6, #1a8fe6) 11px 0 / 9px 9px no-repeat, linear-gradient(#1a8fe6, #1a8fe6) 0 11px / 9px 9px no-repeat, linear-gradient(#0a74d6, #0a74d6) 11px 11px / 9px 9px no-repeat; }
+html[data-theme='win11'] .taskbar .start:hover, html[data-theme='win11'] .taskbar .start.on, html[data-theme='win11'] .taskbar .task:hover, html[data-theme='win11'] .quick a:hover { background: rgba(0, 0, 0, .05); }
+html[data-dark][data-theme='win11'] .taskbar .start:hover, html[data-dark][data-theme='win11'] .taskbar .start.on, html[data-dark][data-theme='win11'] .taskbar .task:hover, html[data-dark][data-theme='win11'] .quick a:hover { background: rgba(255, 255, 255, .08); }
+html[data-theme='win11'] .quick a { width: 40px; height: 40px; font-size: 22px; border-radius: 4px; }
+html[data-theme='win11'] .taskbar .tasks { flex: 0 1 auto; }
+html[data-theme='win11'] .taskbar .task { position: relative; height: 40px; max-width: 170px; padding: 0 10px; }
+html[data-theme='win11'] .taskbar .task.on { background: rgba(0, 0, 0, .04); }
+html[data-theme='win11'] .taskbar .task.on::after { content: ''; position: absolute; left: 35%; right: 35%; bottom: 2px; height: 3px; border-radius: 2px; background: #005fb8; }
+html[data-theme='win11'] .taskbar .tray { margin-left: auto; gap: 10px; }
+html[data-theme='win11'] .taskbar .tray-lang { border: 0 !important; font: 600 11px 'Segoe UI', sans-serif !important; }
+
+/* Linux: barra preta no topo e Dock na esquerda */
+html[data-theme='linux'] body.os { padding-top: var(--mb-h); padding-left: var(--dock-w); }
+html[data-theme='linux'] .window.max { inset: var(--mb-h) 0 0 var(--dock-w) !important; }
+html[data-theme='linux'] .taskbar { top: 0; bottom: auto; height: var(--mb-h); padding: 0 8px; gap: 4px; background: #111; color: #f2f2f2; font: 13px Ubuntu, Cantarell, 'Noto Sans', 'Segoe UI', sans-serif; }
+html[data-theme='linux'] .taskbar button { background: none; box-shadow: none; color: inherit; border-radius: 14px; }
+html[data-theme='linux'] .taskbar .start { height: 22px; padding: 0 12px; font-weight: 700; }
+html[data-theme='linux'] .taskbar .start b { display: none; }
+html[data-theme='linux'] .taskbar .orb::before { content: '⠿'; font-size: 15px; margin-right: 6px; }
+html[data-theme='linux'] .taskbar .orb::after { content: 'EdiTools'; }
+html[data-theme='linux'] .taskbar .task { height: 22px; flex: 0 1 auto; max-width: 220px; padding: 0 12px; }
+html[data-theme='linux'] .taskbar .task.on { font-weight: 700; }
+html[data-theme='linux'] .taskbar .start:hover, html[data-theme='linux'] .taskbar .start.on, html[data-theme='linux'] .taskbar .task:hover { background: rgba(255, 255, 255, .16); }
+html[data-theme='linux'] .taskbar .tray-lang { border: 1px solid rgba(255, 255, 255, .6) !important; border-radius: 4px !important; font: 600 11px Ubuntu, sans-serif !important; }
+html[data-theme='linux'] .dock {
+  position: fixed; left: 0; top: var(--mb-h); bottom: 0; width: var(--dock-w); z-index: 1500; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 8px 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; background: rgba(20, 20, 20, .82); backdrop-filter: blur(16px);
+}
+html[data-theme='linux'] .dock::-webkit-scrollbar { display: none; }
+html[data-theme='linux'] .dock a { width: 48px; height: 48px; font-size: 29px; transform: none !important; }
+html[data-theme='linux'] .dock a:hover { background: rgba(255, 255, 255, .14); }
+html[data-theme='linux'] .dock a.on::after { left: 1px; top: 50%; bottom: auto; margin: -3px 0 0; width: 5px; height: 5px; background: #e95420; }
+html[data-theme='linux'] .dock .dock-sep { width: 36px; height: 1px; align-self: center; margin: 4px 0; background: rgba(255, 255, 255, .2); }
 
 /* menu iniciar */
 .startmenu {
@@ -232,24 +309,52 @@ html[data-theme='xp'] .sm-head { background: linear-gradient(#1868ce, #0e60cb 12
 html[data-theme='7'] .startmenu { background: rgba(240, 246, 252, .96); border-radius: 6px; border: 1px solid rgba(0, 0, 0, .4); backdrop-filter: blur(10px); bottom: calc(var(--tb-h) + 2px); }
 html[data-theme='7'] .sm-head { background: linear-gradient(#2a5d97, #173b66); border-radius: 5px 5px 0 0; }
 html[data-theme='7'] .sm-item:hover { background: linear-gradient(#dcebfc, #c1dcfc) !important; color: #000; }
-html[data-theme='mac'] .startmenu {
-  top: calc(var(--mb-h) + 2px); bottom: auto; left: 6px; width: 280px; max-height: calc(100vh - var(--mb-h) - var(--tb-h) - 8px); padding: 5px 0;
-  background: rgba(246, 246, 250, .97); backdrop-filter: blur(24px) saturate(1.8); -webkit-backdrop-filter: blur(24px) saturate(1.8);
+html.modern .startmenu {
+  top: calc(var(--mb-h, 0px) + 2px); bottom: auto; left: 6px; width: 290px; max-height: calc(100vh - var(--mb-h, 0px) - var(--tb-h) - 8px); padding: 5px 0;
+  background: color-mix(in srgb, var(--m-win) 100%, transparent); color: var(--m-text); backdrop-filter: blur(24px) saturate(1.8); -webkit-backdrop-filter: blur(24px) saturate(1.8);
   border: .5px solid rgba(0, 0, 0, .2); border-radius: 10px; box-shadow: 0 12px 34px rgba(0, 0, 0, .3);
 }
-html[data-theme='mac'] .sm-head { display: none; }
-html[data-theme='mac'] .sm-item { font: 13px -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Segoe UI', sans-serif !important; padding: 3px 10px !important; margin: 0 5px; width: calc(100% - 10px); border-radius: 5px !important; }
-html[data-theme='mac'] .sm-item:hover, html[data-theme='mac'] .sm-item:focus-visible { background: #0a74ff !important; color: #fff; }
-html[data-theme='mac'] .sm-sep { background: rgba(0, 0, 0, .12); margin: 5px 10px; }
-html[data-theme='mac'] .tabs { gap: 0; padding: 2px; background: rgba(0, 0, 0, .07); border-radius: 8px; }
-html[data-theme='mac'] .tabs button { box-shadow: none; background: none; border-radius: 6px; }
-html[data-theme='mac'] .tabs [aria-selected=true] { background: #fff; box-shadow: 0 0 0 .5px rgba(0, 0, 0, .12), 0 1px 3px rgba(0, 0, 0, .15); font-weight: 600; }
-html[data-theme='mac'] .tabpanel { border: .5px solid rgba(0, 0, 0, .12); border-radius: 10px; background: rgba(255, 255, 255, .6); }
-html[data-theme='mac'] .preview { border-radius: 10px; border-color: rgba(0, 0, 0, .2); }
-html[data-theme='mac'] .status-line { border-radius: 6px; }
-html[data-theme='mac'] .dicon { border-radius: 8px; }
-html[data-theme='mac'] .dicon:hover, html[data-theme='mac'] .dicon:focus-visible { background: rgba(255, 255, 255, .22); border-color: transparent; }
-html[data-theme='mac'] .helper-bubble { border-radius: 12px; border-color: rgba(0, 0, 0, .25); font-family: -apple-system, 'Helvetica Neue', 'Segoe UI', sans-serif; }
+html[data-theme='win11'] .startmenu { max-height: min(640px, calc(100vh - var(--tb-h) - 20px)); top: auto; bottom: calc(var(--tb-h) + 10px); left: 50%; transform: translateX(-50%); width: min(460px, calc(100vw - 16px)); border-radius: 8px; padding: 8px 0; }
+html.modern .sm-head { display: none; }
+html.modern .sm-item { font: 13px var(--m-font) !important; padding: 3px 10px !important; margin: 0 5px; width: calc(100% - 10px); border-radius: 5px !important; color: inherit; }
+html.modern .sm-item:hover, html.modern .sm-item:focus-visible { background: var(--m-accent) !important; color: #fff; }
+html.modern .sm-sep { background: var(--m-line); margin: 5px 10px; }
+html.modern .sm-label { color: var(--m-sub); }
+html.modern .tabs { gap: 0; padding: 2px; background: rgba(128, 128, 128, .14); border-radius: 8px; }
+html.modern .tabs button { box-shadow: none; background: none; border-radius: 6px; }
+html.modern .tabs [aria-selected=true] { background: var(--m-field); box-shadow: 0 0 0 .5px rgba(0, 0, 0, .12), 0 1px 3px rgba(0, 0, 0, .15); font-weight: 600; }
+html.modern .tabpanel { border: .5px solid var(--m-line); border-radius: 10px; background: color-mix(in srgb, var(--m-field) 60%, transparent); }
+html.modern .preview { border-radius: 10px; border-color: rgba(0, 0, 0, .2); }
+html.modern .status-line { border-radius: 6px; }
+html.modern .dicon { border-radius: 8px; }
+html.modern .dicon:hover, html.modern .dicon:focus-visible { background: rgba(255, 255, 255, .22); border-color: transparent; }
+html.modern .helper-bubble { border-radius: 12px; border-color: rgba(0, 0, 0, .25); font-family: var(--m-font); }
+html.modern .presets small, html[data-dark] .hint { color: var(--m-sub); }
+html[data-dark] kbd { background: #3a3a3e; border-color: #666; color: #eee; }
+html[data-dark] input[type=color] { background: #2a2a2e; border-color: #555; }
+html[data-dark] .tabs [aria-selected=true] { box-shadow: 0 0 0 .5px rgba(255, 255, 255, .15), 0 1px 3px rgba(0, 0, 0, .4); }
+
+/* busca e favoritos no menu */
+.sm-find { padding: 6px 10px 2px; }
+.sm-search { width: 100%; box-sizing: border-box; }
+.sm-item[hidden], .sm-tool[hidden] { display: none !important; }
+.sm-item i { font-style: normal; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sm-item .sm-star { width: 20px !important; font-size: 14px !important; opacity: 0; color: #e2a400; cursor: pointer; text-align: center; }
+.sm-item:hover .sm-star, .sm-item:focus-visible .sm-star, .sm-star.on { opacity: 1; }
+.sm-item:hover .sm-star { color: inherit; }
+.sm-favs .sm-star { opacity: 1; }
+.os-keys { position: fixed !important; z-index: 1700; top: 60px; left: 50%; margin-left: max(-170px, -50vw + 8px); width: min(340px, calc(100vw - 16px)); }
+.os-keys .keys { border-collapse: collapse; width: 100%; font-size: 12px; }
+.os-keys .keys td { padding: 4px 6px; border-bottom: 1px solid rgba(128, 128, 128, .25); }
+.os-keys .keys td:first-child { white-space: nowrap; }
+.os-proj { position: fixed !important; z-index: 1700; top: 60px; left: 50%; margin-left: max(-200px, -50vw + 8px); width: min(400px, calc(100vw - 16px)); }
+.proj-list { display: flex; flex-direction: column; gap: 4px; max-height: 50vh; overflow: auto; }
+.proj-row { display: flex; gap: 6px; align-items: center; padding: 4px 6px; border: 1px solid rgba(128, 128, 128, .3); }
+.proj-row > span { flex: 1; min-width: 0; }
+.proj-row b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.proj-row small { font-size: 10px; opacity: .7; }
+html.modern .proj-row { border-radius: 8px; }
+html.modern .toast-txt small { color: var(--m-sub); }
 
 /* ---------- Peças comuns das ferramentas novas ---------- */
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
@@ -306,9 +411,22 @@ html[data-theme='mac'] .helper-bubble { border-radius: 12px; border-color: rgba(
   .window { translate: none !important; }
   .taskbar .task { display: none; }
   html[data-theme='mac'] { --tb-h: 62px; }
+  html[data-theme='linux'] { --tb-h: 62px; --dock-w: 0px; }
+  html[data-theme='linux'] .dock { top: auto; bottom: 8px; left: 50%; right: auto; width: auto; max-width: calc(100vw - 24px); height: auto; transform: translateX(-50%); flex-direction: row; padding: 6px 8px; border-radius: 18px; overflow-x: auto; overflow-y: hidden; }
+  html[data-theme='linux'] .dock a { width: 38px; height: 38px; font-size: 25px; }
+  html[data-theme='linux'] .dock .dock-sep { width: 1px; height: auto; align-self: stretch; margin: 4px; }
+  html[data-theme='win11'] .taskbar .tasks { display: none; }
+  .quick { display: none; }
   .dock a { width: 38px; height: 38px; font-size: 25px; }
   .dock a:hover, .dock a:focus-visible, .dock a:hover + a, .dock a:has(+ a:hover) { transform: none; }
   .icons { grid-template-columns: repeat(auto-fill, 76px); }
   .helper-bubble { width: min(230px, calc(100vw - 30px)); }
 }
 @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+/* ---------- Modo escuro: peças das ferramentas que vinham com fundo claro fixo ---------- */
+html[data-dark] #drop, html[data-dark] .card, html[data-dark] .layers { background: rgba(255, 255, 255, .05) !important; border-color: rgba(255, 255, 255, .2) !important; }
+html[data-dark] #drop.over { background: rgba(80, 140, 255, .18) !important; }
+html[data-dark] #fileName, html[data-dark] .meta, html[data-dark] .empty, html[data-dark] #edName, html[data-dark] .card code,
+html[data-dark] #list .name small, html[data-dark] #list .status { color: var(--m-sub) !important; }
+html[data-dark] .pp .av { background: #3a3a3e !important; }

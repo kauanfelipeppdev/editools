@@ -67,6 +67,7 @@
     'audiograma.exe': 'audiogram.exe', 'áudio vira vídeo com onda sonora animada': 'audio becomes a video with an animated waveform',
     'animacao_de_texto.exe': 'text_animation.exe', 'máquina de escrever, glitch, onda, quique e mais': 'typewriter, glitch, wave, bounce and more',
     'baixador_de_video.exe': 'video_downloader.exe', 'baixa vídeo ou só o áudio a partir de um link': 'downloads video or just the audio from a link',
+    'termometro.exe': 'thermometer.exe', 'termômetro, meta de live e medidor animados': 'animated thermometer, stream goal and gauge',
     'grafico_animado.exe': 'animated_chart.exe', 'colunas, linha, pizza e corrida de barras animadas': 'animated columns, lines, pies and bar races',
     'barra_de_progresso.exe': 'progress_bar.exe', 'barras de carregamento animadas': 'animated loading bars',
     'botao_inscreva_se.exe': 'subscribe_button.exe', 'botão de inscreva-se animado com cursor': 'animated subscribe button with cursor',
@@ -92,7 +93,7 @@
     'conversor_mp4_mp3.exe': 'mp4_to_mp3.exe', 'conversor_mp4_to_mp3.exe': 'mp4_to_mp3.exe',
 
     // ---------- títulos das páginas ----------
-    'Animação de texto': 'Text animation', 'Gráfico animado': 'Animated chart', 'Baixador de vídeo': 'Video downloader', 'Barra de progresso': 'Progress bar', 'Cronômetro': 'Timer', 'Botão de inscreva-se': 'Subscribe button', 'Terminal': 'Terminal',
+    'Animação de texto': 'Text animation', 'Gráfico animado': 'Animated chart', 'Termômetro': 'Thermometer', 'Baixador de vídeo': 'Video downloader', 'Barra de progresso': 'Progress bar', 'Cronômetro': 'Timer', 'Botão de inscreva-se': 'Subscribe button', 'Terminal': 'Terminal',
     'Conversa animada': 'Animated chat', 'Gravador de scroll': 'Scroll recorder', 'Mockups': 'Mockups', 'Thumbnail': 'Thumbnail', 'Audiograma': 'Audiogram', 'Legenda automática': 'Auto captions',
     'Removedor de fundo': 'Background remover', 'Criador de botões': 'Button maker', 'Letras recortadas': 'Ransom letters', 'DVDficar': 'DVD bounce', 'Modulador VHS': 'VHS modulator',
     'Texto 3D': '3D text', 'Olho de peixe': 'Fisheye', 'Câmera digital': 'Digital camera', 'Áudio analógico': 'Analog audio', 'Pixelador': 'Pixelator', 'Criador de pop-up': 'Pop-up maker',
@@ -172,6 +173,29 @@
     'esse link precisa de um servidor (clique em "Configurar servidor"). Tentando baixar direto…': 'this link needs a server (click "Set up server"). Trying a direct download…', 'pedindo o vídeo pro servidor…': 'asking the server for the video…',
     'Não consegui falar com o servidor. Ele está ligado? O endereço está certo?': "Couldn't reach the server. Is it running? Is the address right?", 'O servidor respondeu de um jeito que eu não conheço. Atualize o cobalt pra versão 10 ou mais nova.': 'The server answered in a way I don\'t know. Update cobalt to version 10 or newer.',
     'Não deu pra baixar esse link': "Couldn't download that link", 'Não deu pra baixar': "Couldn't download",
+
+    // ---------- termômetro ----------
+    'Clássico': 'Classic', 'Meta': 'Goal', 'Deitado': 'Horizontal', 'Medidor': 'Gauge', 'Carinha': 'Face', 'Digital': 'Digital', 'Escala de': 'Scale from', 'até': 'to', 'Começa em': 'Starts at', 'Termina em': 'Ends at',
+    'Unidade (depois)': 'Unit (after)', 'Hoje': 'Today', 'Texto da meta (em cima)': 'Goal text (on top)', 'Ícone / emoji (meta e carinha)': 'Icon / emoji (goal and face)', 'Mostrar o número': 'Show the number', 'Mostrar a régua': 'Show the ruler',
+    'Cor muda de frio pra quente': 'Color goes from cold to hot', 'Bolhinhas subindo': 'Rising bubbles', 'Ferver e tremer quando chega no topo': 'Boil and shake when it hits the top', 'Frio → quente': 'Cold → hot', 'Vidro': 'Glass', 'Tamanho': 'Size', 'Esquerda': 'Left', 'Direita': 'Right',
+    'Calor de 40 graus': '104 °F heat', 'sobe até ferver': 'rises until it boils', 'Febre': 'Fever', 'termômetro de febre': 'fever thermometer', 'Febre!': 'Fever!', 'Frio extremo': 'Extreme cold', 'desce até congelar': 'drops until it freezes',
+    'Meta da live': 'Stream goal', 'campanha com meta em cima': 'campaign with the goal on top', 'META: 1.000 INSCRITOS': 'GOAL: 1,000 SUBSCRIBERS', ' inscritos': ' subscribers', 'Vaquinha': 'Fundraiser', 'meta de arrecadação': 'fundraising goal', 'META: R$ 5.000': 'GOAL: $5,000',
+    'Medidor de hype': 'Hype meter', 'ponteiro até o máximo': 'needle all the way up', 'NÍVEL DE HYPE': 'HYPE LEVEL', 'Vergonhômetro': 'Cringe meter', 'carinha que muda': 'face that changes', 'VERGONHA': 'CRINGE', 'Digital retrô': 'Retro digital', 'visor de LCD': 'LCD display',
+    'Barra deitada': 'Horizontal bar', 'termômetro horizontal': 'horizontal thermometer', 'Temperatura': 'Temperature',
+    'Escolha o estilo, a escala (de quanto até quanto) e de onde até onde o termômetro sobe ou desce.': 'Pick the style, the scale (from how much to how much) and where the thermometer rises or drops from and to.',
+    'Pra': 'To', 'descer': 'go down', ', é só colocar "Termina em" menor que "Começa em".': ', just set "Ends at" lower than "Starts at".', 'O estilo': 'The', 'serve pra live e campanha: escreva a meta em cima e use a unidade "inscritos", "R$" etc.': 'style is for streams and campaigns: write the goal on top and use a unit like "subscribers", "$" etc.',
+    'Exporte com fundo transparente (WEBM ou PNG) pra colocar o termômetro por cima do vídeo.': 'Export with a transparent background (WEBM or PNG) to put the thermometer over your video.',
+
+    // ---------- site: busca, favoritos, projetos, atalhos, temas ----------
+    'Buscar ferramenta…': 'Search tools…', 'Buscar ferramenta': 'Search tools', '🔎 Buscar ferramenta… (Ctrl+K)': '🔎 Search tools… (Ctrl+K)', 'Nenhuma ferramenta encontrada.': 'No tool found.', 'Favoritos': 'Favorites', 'Favoritar': 'Add to favorites', 'Tirar dos favoritos': 'Remove from favorites',
+    'Modo escuro': 'Dark mode', '🌙 Modo escuro (temas 11, macOS e Linux)': '🌙 Dark mode (11, macOS and Linux themes)', 'Atalhos de teclado': 'Keyboard shortcuts', 'Repetir a prévia': 'Replay the preview', 'Exportar / gerar': 'Export / generate', 'Salvar projeto': 'Save project',
+    'Abrir projetos salvos': 'Open saved projects', 'Ajuda da ferramenta': 'Tool help', 'Fechar menu ou janela': 'Close menu or window', 'Espaço': 'Space', 'Salvar': 'Save', 'Projetos': 'Projects', 'Projetos salvos': 'Saved projects', 'Nome do projeto': 'Project name', 'Projeto': 'Project',
+    'Projeto salvo': 'Project saved', 'Projeto aberto': 'Project opened', 'Abrir': 'Open', 'Apagar': 'Delete', 'Nenhum projeto salvo nesta ferramenta ainda.': 'No saved projects in this tool yet.', '💾 Salvar o atual': '💾 Save current', '⬇️ Exportar (.json)': '⬇️ Export (.json)', '⬆️ Importar': '⬆️ Import',
+    'Guarda os textos, cores e opções da ferramenta neste navegador. Imagens e vídeos não entram: escolha de novo depois de abrir.': "Keeps the tool's texts, colors and options in this browser. Images and videos aren't included: pick them again after opening.",
+    'Projeto de outra ferramenta': "Another tool's project", 'Esse arquivo é de outra ferramenta': 'That file belongs to another tool', 'Arquivo inválido': 'Invalid file', 'Não consegui ler esse arquivo de projeto.': "Couldn't read that project file.", 'Salvar projeto (Ctrl+S)': 'Save project (Ctrl+S)', 'Projetos salvos (Ctrl+O)': 'Saved projects (Ctrl+O)',
+    'Troque o tema no 🎨 da barra de tarefas: Windows 98, XP, 7, 11, macOS ou Linux.': 'Change the theme with 🎨 on the taskbar: Windows 98, XP, 7, 11, macOS or Linux.', 'Ctrl+K abre a busca de ferramentas. No menu, a ☆ ao lado de cada uma deixa ela nos favoritos.': 'Ctrl+K opens the tool search. In the menu, the ☆ next to each one adds it to your favorites.',
+    'O botão 💾 Salvar guarda as opções da ferramenta como projeto, pra abrir depois em 📂 Projetos.': 'The 💾 Save button keeps the tool options as a project, to open later in 📂 Projects.',
+    'O estilo Meta é ótimo pra live: mostra quanto falta pra bater a meta.': 'The Goal style is great for streams: it shows how far you are from the goal.', 'Coloque "Termina em" menor que "Começa em" pra o termômetro descer.': 'Set "Ends at" lower than "Starts at" to make the thermometer go down.',
 
     // ---------- gráfico animado ----------
     'Colunas': 'Columns', 'Barras deitadas': 'Horizontal bars', 'Linha': 'Line', 'Área': 'Area', 'Pizza': 'Pie', 'Rosca': 'Donut', 'Corrida': 'Race', 'Dados': 'Data',

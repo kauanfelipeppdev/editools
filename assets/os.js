@@ -5,6 +5,8 @@
     xp: { name: 'Windows XP', css: 'https://unpkg.com/xp.css@0.2.6/dist/XP.css' },
     '7': { name: 'Windows 7 (Aero)', css: 'https://unpkg.com/7.css@0.16.0/dist/7.css' },
     mac: { name: 'macOS', css: 'assets/macos.css' },
+    win11: { name: 'Windows 11', css: 'assets/win11.css' },
+    linux: { name: 'Linux', css: 'assets/linux.css' },
   };
 
   // accept: tipos de arquivo que a ferramenta abre (usado no "Enviar para…" e ao soltar no ícone)
@@ -22,6 +24,7 @@
     { file: 'audiograma.html', icon: '🎧', name: 'audiograma.exe', desc: 'áudio vira vídeo com onda sonora animada', accept: AV, isNew: true },
     { file: 'textoanim.html', icon: '🔤', name: 'animacao_de_texto.exe', desc: 'máquina de escrever, glitch, onda, quique e mais', isNew: true },
     { file: 'grafico.html', icon: '📊', name: 'grafico_animado.exe', desc: 'colunas, linha, pizza e corrida de barras animadas', isNew: true },
+    { file: 'termometro.html', icon: '🌡️', name: 'termometro.exe', desc: 'termômetro, meta de live e medidor animados', isNew: true },
     { file: 'progresso.html', icon: '⏳', name: 'barra_de_progresso.exe', desc: 'barras de carregamento animadas', isNew: true },
     { file: 'inscreva.html', icon: '🔔', name: 'botao_inscreva_se.exe', desc: 'botão de inscreva-se animado com cursor', accept: IMG, isNew: true },
     { file: 'cronometro.html', icon: '⏱️', name: 'cronometro.exe', desc: 'contagem regressiva e cronômetro em overlay', isNew: true },
@@ -107,9 +110,16 @@
     clear: () => idb('files', 'readwrite', (s) => s.clear()),
   };
 
+  // temas modernos: mesma base de componentes e podem ficar escuros
+  const MODERN = ['mac', 'win11', 'linux'];
+  const isDark = () => store.get('dark', 'off') === 'on';
+  const applyDark = () => document.documentElement.toggleAttribute('data-dark', isDark() && MODERN.includes(document.documentElement.dataset.theme));
+  function setDark(on) { store.set('dark', on ? 'on' : 'off'); applyDark(); document.dispatchEvent(new CustomEvent('themechange', { detail: document.documentElement.dataset.theme })); }
   function setTheme(t) {
     if (!THEMES[t]) t = 'xp';
     document.documentElement.dataset.theme = t;
+    document.documentElement.classList.toggle('modern', MODERN.includes(t));
+    applyDark();
     const link = document.getElementById('theme-css');
     if (link && link.getAttribute('href') !== THEMES[t].css) link.setAttribute('href', THEMES[t].css);
     store.set('theme', t);
@@ -222,49 +232,103 @@
     });
   }
 
+  // ---------- Favoritos (ficam na barra de tarefas, no Dock e no topo do menu) ----------
+  const favs = {
+    list() { try { const l = JSON.parse(store.get('favs', '[]')); return l.filter((f) => TOOLS.some((t) => t.file === f)); } catch { return []; } },
+    has: (f) => favs.list().includes(f),
+    toggle(f) {
+      const l = favs.list();
+      store.set('favs', JSON.stringify(l.includes(f) ? l.filter((x) => x !== f) : [...l, f]));
+      document.dispatchEvent(new CustomEvent('favchange'));
+    },
+  };
+  const norm = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  /** Ferramentas que combinam com a busca (nome, descrição ou nome traduzido). */
+  const searchTools = (q) => { const n = norm(q).trim(); return !n ? TOOLS : TOOLS.filter((t) => norm(`${t.name} ${t.desc} ${T(t.name)} ${T(t.desc)} ${t.file}`).includes(n)); };
+
   function buildTaskbar() {
     const bar = document.createElement('nav');
     bar.className = 'taskbar';
+    const item = (t) => `<a href="${t.file}" class="sm-item sm-tool" role="menuitem" data-file="${t.file}"><span>${t.icon}</span><i>${t.name}</i><span class="sm-star" data-star="${t.file}" role="button" title="Favoritar" aria-label="Favoritar"></span></a>`;
     bar.innerHTML = `
       <button class="start" aria-haspopup="menu" aria-expanded="false"><span class="orb"></span><b>Iniciar</b></button>
+      <div class="quick"></div>
       <div class="tasks"></div>
-      <div class="tray"><button class="tray-lang" title="Idioma / Language">${LANG === 'en' ? 'EN' : 'PT'}</button><span class="tray-files" title="Meus arquivos">📂</span><span class="tray-theme" title="Trocar tema">🎨</span><time></time></div>
+      <div class="tray"><button class="tray-lang" title="Idioma / Language">${LANG === 'en' ? 'EN' : 'PT'}</button><span class="tray-files" title="Meus arquivos">📂</span><span class="tray-dark" title="Modo escuro">🌙</span><span class="tray-theme" title="Trocar tema">🎨</span><time></time></div>
       <div class="startmenu" role="menu" hidden>
         <div class="sm-head"><span class="sm-avatar">🖼️</span><b>EdiTools</b></div>
+        <div class="sm-find"><input type="search" class="sm-search" placeholder="Buscar ferramenta…" aria-label="Buscar ferramenta" autocomplete="off"></div>
         <div class="sm-body">
           <a href="index.html" class="sm-item" role="menuitem"><span>🏠</span>Área de trabalho</a>
+          <div class="sm-favs"></div>
           <div class="sm-sep"></div>
-          ${TOOLS.map((t) => `<a href="${t.file}" class="sm-item" role="menuitem"><span>${t.icon}</span>${t.name}</a>`).join('')}
+          <div class="sm-tools">${TOOLS.map(item).join('')}</div>
+          <div class="sm-empty sm-label" hidden>Nenhuma ferramenta encontrada.</div>
+          <div class="sm-rest">
           <div class="sm-sep"></div>
           <div class="sm-label">Programas Adobe</div>
           ${ADOBE.map((a) => `<a href="${a.url}" target="_blank" rel="noopener" class="sm-item" role="menuitem"><span>${adobeIcon(a, 18)}</span>${a.name}</a>`).join('')}
           <div class="sm-sep"></div>
           <div class="sm-label">Tema</div>
           ${Object.entries(THEMES).map(([k, v]) => `<button class="sm-item" data-theme-pick="${k}" role="menuitem"><span>🎨</span>${v.name}</button>`).join('')}
+          <button class="sm-item" data-sm="dark" role="menuitem"><span>🌙</span>Modo escuro</button>
           <div class="sm-sep"></div>
           <button class="sm-item" data-sm="settings" role="menuitem"><span>🖥️</span>Papel de parede e proteção de tela</button>
+          <button class="sm-item" data-sm="keys" role="menuitem"><span>⌨️</span>Atalhos de teclado</button>
           <button class="sm-item" data-sm="helper" role="menuitem"><span>💾</span>Chamar o Disquinho</button>
           <button class="sm-item" data-sm="lang" role="menuitem"><span>🌐</span>${LANG === 'en' ? 'Português' : 'English'}</button>
           <button class="sm-item" data-sm="install" role="menuitem" hidden><span>📲</span>Instalar como aplicativo</button>
+          </div>
         </div>
       </div>`;
     document.body.appendChild(bar);
-    // Dock (só aparece no tema macOS): todas as ferramentas, com a atual marcada
+    // Dock (temas macOS e Linux): favoritos primeiro, depois o resto, com a ferramenta atual marcada
     const dock = document.createElement('nav');
     dock.className = 'dock';
     dock.setAttribute('aria-label', 'Dock');
-    dock.innerHTML = `<a href="index.html" title="Área de trabalho"${here() === 'index.html' ? ' class="on"' : ''}>🏠</a><span class="dock-sep"></span>`
-      + TOOLS.map((t) => `<a href="${t.file}" title="${t.name}"${t.file === here() ? ' class="on"' : ''}>${t.icon}</a>`).join('');
     document.body.appendChild(dock);
+    const quick = bar.querySelector('.quick'), favBox = bar.querySelector('.sm-favs');
+    const dockLink = (t) => `<a href="${t.file}" title="${T(t.name)}"${t.file === here() ? ' class="on"' : ''}>${t.icon}</a>`;
+    const renderFavs = () => {
+      const fl = favs.list().map((f) => TOOLS.find((t) => t.file === f));
+      quick.innerHTML = fl.map((t) => `<a href="${t.file}" title="${T(t.name)}">${t.icon}</a>`).join('');
+      favBox.innerHTML = fl.length ? `<div class="sm-sep"></div><div class="sm-label">${T('Favoritos')}</div>` + fl.map(item).join('') : '';
+      dock.innerHTML = `<a href="index.html" title="${T('Área de trabalho')}"${here() === 'index.html' ? ' class="on"' : ''}>🏠</a>`
+        + (fl.length ? '<span class="dock-sep"></span>' + fl.map(dockLink).join('') : '')
+        + '<span class="dock-sep"></span>' + TOOLS.filter((t) => !fl.includes(t)).map(dockLink).join('');
+      bar.querySelectorAll('[data-star]').forEach((b) => { const on = favs.has(b.dataset.star); b.textContent = on ? '★' : '☆'; b.classList.toggle('on', on); b.title = T(on ? 'Tirar dos favoritos' : 'Favoritar'); });
+    };
+    renderFavs();
+    document.addEventListener('favchange', renderFavs);
     taskList = bar.querySelector('.tasks');
-    const start = bar.querySelector('.start'), menu = bar.querySelector('.startmenu');
-    const toggle = (open) => { menu.hidden = !open; start.setAttribute('aria-expanded', open); start.classList.toggle('on', open); };
+    const start = bar.querySelector('.start'), menu = bar.querySelector('.startmenu'), find = bar.querySelector('.sm-search');
+    const filter = () => {
+      const q = find.value, hits = new Set(searchTools(q).map((t) => t.file));
+      bar.querySelectorAll('.sm-tools .sm-tool').forEach((a) => (a.hidden = !hits.has(a.dataset.file)));
+      const searching = !!q.trim();
+      bar.querySelector('.sm-rest').hidden = searching; favBox.hidden = searching;
+      bar.querySelector('.sm-empty').hidden = !searching || hits.size > 0;
+    };
+    const toggle = (open) => {
+      menu.hidden = !open; start.setAttribute('aria-expanded', open); start.classList.toggle('on', open);
+      if (open) { find.value = ''; filter(); if (isDesktop()) setTimeout(() => find.focus(), 0); }
+    };
+    openMenu = () => toggle(true);
+    find.addEventListener('input', filter);
+    find.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { const a = bar.querySelector('.sm-tools .sm-tool:not([hidden])'); if (a) location.href = a.getAttribute('href'); }
+      if (e.key === 'ArrowDown') { e.preventDefault(); bar.querySelector('.sm-body a:not([hidden]), .sm-body button:not([hidden])')?.focus(); }
+    });
+    // ★ dentro do item do menu favorita sem abrir a ferramenta
+    menu.addEventListener('click', (e) => { const s = e.target.closest('[data-star]'); if (!s) return; e.preventDefault(); e.stopPropagation(); favs.toggle(s.dataset.star); });
     start.onclick = (e) => { e.stopPropagation(); toggle(menu.hidden); };
     document.addEventListener('click', (e) => { if (!e.target.closest('.startmenu')) toggle(false); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggle(false); });
     bar.querySelectorAll('[data-theme-pick]').forEach((b) => (b.onclick = () => { setTheme(b.dataset.themePick); toggle(false); }));
     const sm = (k) => bar.querySelector(`[data-sm=${k}]`);
     sm('settings').onclick = () => { toggle(false); openSettings(); };
+    sm('keys').onclick = () => { toggle(false); showKeys(); };
+    sm('dark').onclick = () => { setDark(!isDark()); toggle(false); };
     sm('helper').onclick = () => { toggle(false); store.set('helper', 'on'); helper.show(true); };
     sm('lang').onclick = () => setLang(LANG === 'en' ? 'pt' : 'en');
     sm('install').onclick = () => { toggle(false); installPrompt && installPrompt.prompt(); };
@@ -272,12 +336,189 @@
     window.addEventListener('beforeinstallprompt', () => (sm('install').hidden = false));
     bar.querySelector('.tray-lang').onclick = () => setLang(LANG === 'en' ? 'pt' : 'en');
     bar.querySelector('.tray-files').onclick = () => (location.href = 'arquivos.html');
+    bar.querySelector('.tray-dark').onclick = () => setDark(!isDark());
     const order = Object.keys(THEMES);
     bar.querySelector('.tray-theme').onclick = () => setTheme(order[(order.indexOf(document.documentElement.dataset.theme) + 1) % order.length]);
+    const syncDark = () => { const m = MODERN.includes(document.documentElement.dataset.theme); sm('dark').hidden = !m; bar.querySelector('.tray-dark').hidden = !m; bar.querySelector('.tray-dark').textContent = isDark() ? '☀️' : '🌙'; };
+    syncDark();
+    document.addEventListener('themechange', syncDark);
     const clock = bar.querySelector('time');
     const tick = () => (clock.textContent = new Date().toLocaleTimeString(LANG === 'en' ? 'en-US' : 'pt-BR', { hour: '2-digit', minute: '2-digit' }));
     tick(); setInterval(tick, 10000);
     renderTasks();
+  }
+  let openMenu = () => {};
+
+  // ---------- Atalhos de teclado ----------
+  const KEYS = [
+    ['Ctrl + K', 'Buscar ferramenta'], ['Espaço', 'Repetir a prévia'], ['Ctrl + Enter', 'Exportar / gerar'],
+    ['Ctrl + S', 'Salvar projeto'], ['Ctrl + O', 'Abrir projetos salvos'], ['F1', 'Ajuda da ferramenta'], ['Esc', 'Fechar menu ou janela'],
+  ];
+  function showKeys() {
+    let w = document.getElementById('os-keys');
+    if (!w) {
+      w = document.createElement('section');
+      w.className = 'window os-keys';
+      w.id = 'os-keys';
+      w.dataset.title = 'Atalhos de teclado';
+      w.dataset.icon = '⌨️';
+      w.innerHTML = `<div class="window-body"><table class="keys">${KEYS.map(([k, d]) => `<tr><td><kbd>${k.split(' + ').join('</kbd> + <kbd>')}</kbd></td><td>${d}</td></tr>`).join('')}</table>
+        <div class="btns end" style="margin-top:8px"><button data-x>OK</button></div></div>`;
+      document.body.appendChild(w);
+      buildWindow(w);
+      if (LANG === 'en' && window.I18N) window.I18N.apply(w);
+      w.querySelector('[data-x]').onclick = () => { w.classList.add('closed'); renderTasks(); };
+    }
+    openWin('os-keys');
+  }
+  const typing = (el) => el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) && !/^(checkbox|radio|range|button|color)$/.test(el.type || '');
+  const visible = (el) => el && !el.disabled && el.offsetParent !== null;
+  document.addEventListener('keydown', (e) => {
+    const k = e.key.toLowerCase(), mod = e.ctrlKey || e.metaKey;
+    if (mod && k === 'k') { e.preventDefault(); openMenu(); return; }
+    if (mod && k === 's' && projectsOn()) { e.preventDefault(); saveProject(); return; }
+    if (mod && k === 'o' && projectsOn()) { e.preventDefault(); openProjects(); return; }
+    if (mod && k === 'enter') {
+      const b = [...document.querySelectorAll('.window.app [data-x=go], .window.app #go, .window.app button.default, .window.app #genBtn, .window.app #exportBtn')].find(visible);
+      if (b) { e.preventDefault(); b.click(); }
+      return;
+    }
+    if (e.key === 'F1') { const h = document.getElementById('help'); if (h) { e.preventDefault(); openWin('help'); } return; }
+    if (e.key === 'Escape') {
+      const top = [...document.querySelectorAll('.veil .window, .window.help:not(.closed), .window.os-keys:not(.closed), .window.os-settings:not(.closed), .window.os-proj:not(.closed)')].pop();
+      if (top) top.querySelector('[aria-label=Close]')?.click();
+      return;
+    }
+    if (e.key === ' ' && !mod && !typing(document.activeElement) && document.activeElement?.tagName !== 'BUTTON') {
+      const b = document.getElementById('playBtn');
+      if (visible(b)) { e.preventDefault(); b.click(); }
+    }
+  });
+
+  // ---------- Projetos salvos: guarda os campos da ferramenta pra abrir depois ----------
+  const projectsOn = () => !!document.querySelector('.window.app .panel') && !['index.html', 'arquivos.html', 'links.html', 'scripts.html', 'baixador.html'].includes(here());
+  const fields = () => [...document.querySelectorAll('.window.app [id]')].filter((el) => /^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName) && !/^(file|button|submit|password)$/.test(el.type) && !el.closest('#exp, .no-save'));
+  function snapshot() {
+    const v = {};
+    for (const el of fields()) v[el.id] = el.type === 'checkbox' || el.type === 'radio' ? el.checked : el.value;
+    return v;
+  }
+  function restore(v) {
+    for (const el of fields()) {
+      if (!(el.id in v)) continue;
+      if (el.type === 'checkbox' || el.type === 'radio') el.checked = !!v[el.id]; else el.value = v[el.id];
+      // botões de estilo que guardam a escolha num campo escondido
+      if (el.type === 'hidden') { const b = document.querySelector(`.window.app [data-fx="${CSS.escape(v[el.id])}"], .window.app [data-d="${CSS.escape(v[el.id])}"]`); if (b) b.click(); }
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }
+  const projKey = () => 'proj:' + here();
+  const projList = async () => (await kv.get(projKey())) || [];
+  /** Janelinha com um campo de texto (sem o prompt do navegador). */
+  function ask(title, label, value) {
+    return new Promise((res) => {
+      const veil = document.createElement('div');
+      veil.className = 'veil';
+      veil.innerHTML = `<div class="window dialog" data-title=""><div class="window-body"><label class="field"><span></span><input type="text" maxlength="60"></label><div class="btns end" style="margin-top:10px"><button class="default" data-y>OK</button><button data-n>Cancelar</button></div></div></div>`;
+      const d = veil.firstElementChild;
+      d.dataset.title = T(title);
+      d.querySelector('span').textContent = T(label);
+      const inp = d.querySelector('input'); inp.value = value;
+      document.body.appendChild(veil);
+      buildWindow(d); focusWin(d);
+      if (LANG === 'en' && window.I18N) window.I18N.apply(d);
+      const done = (v) => { veil.remove(); renderTasks(); res(v); };
+      d.querySelector('[data-y]').onclick = () => done(inp.value.trim() || value);
+      d.querySelector('[data-n]').onclick = () => done(null);
+      d.querySelector('[aria-label=Close]').onclick = () => done(null);
+      inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') d.querySelector('[data-y]').click(); });
+      inp.select(); inp.focus();
+    });
+  }
+  async function saveProject() {
+    const list = await projList();
+    const name = await ask('Salvar projeto', 'Nome do projeto', `${T('Projeto')} ${list.length + 1}`);
+    if (!name) return;
+    const i = list.findIndex((p) => p.name === name);
+    const p = { name, at: Date.now(), v: snapshot() };
+    if (i >= 0) list[i] = p; else list.unshift(p);
+    await kv.set(projKey(), list.slice(0, 30));
+    toastMsg('💾', T('Projeto salvo') + ': ' + name);
+    renderProjects();
+  }
+  function toastMsg(icon, msg) {
+    document.querySelector('.toast')?.remove();
+    const t = document.createElement('div');
+    t.className = 'toast window';
+    t.innerHTML = `<div class="window-body"><div class="toast-row" style="margin:0"><span class="toast-ico">${icon}</span><span class="toast-txt"><b></b></span></div></div>`;
+    t.querySelector('b').textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+  async function renderProjects() {
+    const w = document.getElementById('os-proj');
+    if (!w) return;
+    const list = await projList(), box = w.querySelector('.proj-list');
+    box.innerHTML = list.length ? '' : `<p class="hint">${T('Nenhum projeto salvo nesta ferramenta ainda.')}</p>`;
+    list.forEach((p, i) => {
+      const r = document.createElement('div');
+      r.className = 'proj-row';
+      r.innerHTML = `<span><b></b><small>${new Date(p.at).toLocaleString(LANG === 'en' ? 'en-US' : 'pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</small></span><button data-o>${T('Abrir')}</button><button data-d title="${T('Apagar')}">🗑️</button>`;
+      r.querySelector('b').textContent = p.name;
+      r.querySelector('[data-o]').onclick = () => { restore(p.v); w.classList.add('closed'); renderTasks(); toastMsg('📂', T('Projeto aberto') + ': ' + p.name); };
+      r.querySelector('[data-d]').onclick = async () => { list.splice(i, 1); await kv.set(projKey(), list); renderProjects(); };
+      box.appendChild(r);
+    });
+  }
+  function openProjects() {
+    let w = document.getElementById('os-proj');
+    if (!w) {
+      w = document.createElement('section');
+      w.className = 'window os-proj';
+      w.id = 'os-proj';
+      w.dataset.title = 'Projetos salvos';
+      w.dataset.icon = '📂';
+      w.innerHTML = `<div class="window-body"><div class="stack">
+        <div class="proj-list"></div>
+        <div class="btns"><button data-s>💾 Salvar o atual</button><button data-e>⬇️ Exportar (.json)</button><button data-i>⬆️ Importar</button></div>
+        <p class="hint">Guarda os textos, cores e opções da ferramenta neste navegador. Imagens e vídeos não entram: escolha de novo depois de abrir.</p>
+        <div class="btns end"><button data-x>OK</button></div></div></div>`;
+      document.body.appendChild(w);
+      buildWindow(w);
+      if (LANG === 'en' && window.I18N) window.I18N.apply(w);
+      w.querySelector('[data-x]').onclick = () => { w.classList.add('closed'); renderTasks(); };
+      w.querySelector('[data-s]').onclick = saveProject;
+      w.querySelector('[data-e]').onclick = async () => {
+        const list = await projList();
+        const blob = new Blob([JSON.stringify({ editools: 1, tool: here(), projects: list.length ? list : [{ name: T('Projeto'), at: Date.now(), v: snapshot() }] }, null, 1)], { type: 'application/json' });
+        download(blob, here().replace('.html', '') + '-projetos.json', { keep: false });
+      };
+      w.querySelector('[data-i]').onclick = async () => {
+        const f = await pickFile('.json,application/json');
+        if (!f) return;
+        try {
+          const j = JSON.parse(await f.text());
+          if (j.tool && j.tool !== here()) return dialog(T('Projeto de outra ferramenta'), T('Esse arquivo é de outra ferramenta') + `: ${j.tool}`, '⚠️');
+          const list = await projList();
+          for (const p of j.projects || []) if (p && p.v) list.unshift(p);
+          await kv.set(projKey(), list.slice(0, 30));
+          renderProjects();
+        } catch { dialog(T('Arquivo inválido'), T('Não consegui ler esse arquivo de projeto.'), '⚠️'); }
+      };
+    }
+    renderProjects();
+    openWin('os-proj');
+  }
+  function mountProjects() {
+    if (!projectsOn()) return;
+    const tb = document.querySelector('.window.app .toolbar');
+    if (!tb) return;
+    const spacer = tb.querySelector('.spacer');
+    const html = `<button data-proj="save" title="Salvar projeto (Ctrl+S)">💾 Salvar</button><button data-proj="open" title="Projetos salvos (Ctrl+O)">📂 Projetos</button>`;
+    if (spacer) spacer.insertAdjacentHTML('beforebegin', html); else tb.insertAdjacentHTML('beforeend', html);
+    tb.querySelector('[data-proj=save]').onclick = saveProject;
+    tb.querySelector('[data-proj=open]').onclick = openProjects;
   }
 
   // ---------- Utilitários ----------
@@ -632,7 +873,9 @@
       'Tudo que você baixa fica guardado em 📂 Meus arquivos. De lá dá pra mandar pra outra ferramenta.',
       'Depois de baixar, use "➡️ Enviar para…" pra abrir o resultado em outra ferramenta sem baixar de novo.',
       'Na área de trabalho, solte um arquivo em cima de um ícone pra abrir a ferramenta já com ele.',
-      'Troque o tema no 🎨 da barra de tarefas: Windows 98, XP ou 7.',
+      'Troque o tema no 🎨 da barra de tarefas: Windows 98, XP, 7, 11, macOS ou Linux.',
+      'Ctrl+K abre a busca de ferramentas. No menu, a ☆ ao lado de cada uma deixa ela nos favoritos.',
+      'O botão 💾 Salvar guarda as opções da ferramenta como projeto, pra abrir depois em 📂 Projetos.',
       'Menu Iniciar › Papel de parede e proteção de tela pra deixar a área de trabalho com a sua cara.',
       'Dá pra instalar o site como aplicativo e usar até sem internet (Menu Iniciar › Instalar).',
     ],
@@ -648,6 +891,7 @@
     'textoanim.html': ['O efeito "Embaralhar" fica ótimo em títulos de tecnologia.', 'Atraso entre letras maior = efeito mais dramático.'],
     'baixador.html': ['Escolha "Só o áudio" pra já sair em MP3.', 'Depois de baixar, use "Enviar para…" pra legendar o vídeo na Legenda automática.'],
     'grafico.html': ['Coloque vários valores separados por ; e escolha "Corrida" pra fazer aquele ranking que troca de lugar.', 'Exporte em WEBM transparente pra colocar o gráfico por cima do vídeo.'],
+    'termometro.html': ['O estilo Meta é ótimo pra live: mostra quanto falta pra bater a meta.', 'Coloque "Termina em" menor que "Começa em" pra o termômetro descer.'],
     'progresso.html': ['Ligue "Travadinhas" pra barra parar em alguns pontos, igual carregamento de verdade.'],
     'inscreva.html': ['Dá pra usar um botão feito no Criador de botões: exporte lá e use "Enviar para…".'],
     'cronometro.html': ['Use fundo transparente e coloque o cronômetro por cima da live ou do vídeo.'],
@@ -697,7 +941,7 @@
     if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 
-  window.OS = { THEMES, TOOLS, ADOBE, adobeIcon, setTheme, store, download, canvasBlob, pickFile, loadMedia, dropZone, onInbox, sendTo, sendMenu, targetsFor, files, kv, recordCanvas, videoMime, dialog, showTab, bindOutputs, openWin, focusWin, slug, openSettings, saver, helper, LANG, setLang, T, here };
+  window.OS = { THEMES, MODERN, setDark, isDark, favs, searchTools, saveProject, openProjects, showKeys, TOOLS, ADOBE, adobeIcon, setTheme, store, download, canvasBlob, pickFile, loadMedia, dropZone, onInbox, sendTo, sendMenu, targetsFor, files, kv, recordCanvas, videoMime, dialog, showTab, bindOutputs, openWin, focusWin, slug, openSettings, saver, helper, LANG, setLang, T, here };
 
   document.addEventListener('DOMContentLoaded', () => {
     pwa();
@@ -715,6 +959,7 @@
     const first = document.querySelector('.window.app') || document.querySelector('.window[data-title]:not(.closed)');
     if (first) focusWin(first);
     bindOutputs();
+    mountProjects();
     if (LANG === 'en' && window.I18N) window.I18N.start();
     helper.boot();
     saver.arm();

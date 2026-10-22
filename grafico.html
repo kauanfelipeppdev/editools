@@ -130,7 +130,7 @@ const PRESETS = [
   { n: '👾 Retrô', d: 'cores de PC antigo', kind: 'bar', v: { data: 'HP = 80\nMP = 45\nXP = 95\nGOLD = 60', title: 'STATUS DO HERÓI', sub: '', pal: 'retro', bg: '#000000', ink: '#ffffff', font: 'Press Start 2P', glow: false, round: 0, ease: 'linear', dur: 3, grid: false } },
 ];
 EXPORT.presets($('presets'), PRESETS, (p) => {
-  EXPORT.setValues({ prefix: '', suffix: '', dec: 0, numfmt: 'std', sort: 'none', stagger: true, round: 25, thick: 70, grid: true, showVal: true, legend: true, smooth: true, hold: 1.5, ...p.v });
+  EXPORT.setValues({ c1: (PALETTES[p.v.pal] || [p.v.c1 || '#4f7cff'])[0], prefix: '', suffix: '', dec: 0, numfmt: 'std', sort: 'none', stagger: true, round: 25, thick: 70, grid: true, showVal: true, legend: true, smooth: true, hold: 1.5, ...p.v });
   setKind(p.kind);
   OS.showTab('t1');
 });
@@ -166,7 +166,8 @@ function parse(s) {
   const P = Math.max(1, ...rows.map((r) => r.vals.length));
   rows.forEach((r) => { while (r.vals.length < P) r.vals.push(r.vals[r.vals.length - 1]); });
   if (s.sort !== 'none' && s.kind !== 'race') rows.sort((a, b) => (s.sort === 'desc' ? 1 : -1) * (b.vals[P - 1] - a.vals[P - 1]));
-  const pal = PALETTES[s.pal];
+  // a cor principal é sempre a primeira da paleta (e a de uma linha/área sozinha)
+  const pal = PALETTES[s.pal] && [s.c1, ...PALETTES[s.pal].slice(1)];
   rows.forEach((r, i) => (r.color ||= pal ? pal[i % pal.length] : mix(s.c1, s.bg, Math.min(.7, i / Math.max(1, rows.length) * .75))));
   return { rows, P, periods };
 }
@@ -447,6 +448,8 @@ $('panel').addEventListener('input', (e) => { if (['data', 'dur', 'ease', 'stagg
 // o canvas não pede a fonte sozinho: carrega todos os pesos usados quando ela muda
 const loadFonts = () => Promise.all([900, 700, 600, 400].map((w) => EXPORT.loadFont(w, $('font').value)));
 $('font').addEventListener('change', () => loadFonts().then(restart));
+// trocar de paleta traz a primeira cor dela pra "Cor principal"
+$('pal').addEventListener('change', (e) => { if (e.isTrusted && PALETTES[$('pal').value]) $('c1').value = PALETTES[$('pal').value][0]; });
 const total = () => { const s = S(); return START + s.dur + s.hold; };
 const ex = EXPORT.mount($('exp'), {
   canvas: cv, draw: drawAt, seconds: total, name: () => 'grafico-' + S().kind, defaultRes: '1920x1080',

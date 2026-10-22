@@ -1,0 +1,34 @@
+/* EdiTools — tema "Linux": mesma base do macOS, com barra de cabeçalho e botões no estilo GNOME/Ubuntu. */
+@import url('macos.css');
+:root {
+  --m-font: Ubuntu, Cantarell, 'Noto Sans', 'Segoe UI', -apple-system, Arial, sans-serif;
+  --m-win: #fafafa;
+  --m-bar: #ebebeb;
+  --m-accent: #e95420;
+  --m-accent-2: #f2703f;
+  --m-radius: 12px;
+}
+html[data-dark] {
+  --m-win: #242424;
+  --m-bar: #303030;
+}
+.window { backdrop-filter: none; -webkit-backdrop-filter: none; border: 1px solid rgba(0, 0, 0, .16); box-shadow: 0 6px 24px rgba(0, 0, 0, .28); }
+.title-bar { height: 40px; border-bottom: 1px solid var(--m-line); padding: 0 8px 0 14px; }
+.title-bar-text { font-weight: 700; }
+.title-bar-controls { margin-left: auto; gap: 10px; }
+/* botões redondos à direita, como no GNOME */
+.title-bar-controls button {
+  width: 22px; height: 22px; border: 0; background: rgba(0, 0, 0, .08) !important; color: var(--m-text);
+  font: 700 12px/1 Ubuntu, Cantarell, Arial, sans-serif;
+}
+html[data-dark] .title-bar-controls button { background: rgba(255, 255, 255, .1) !important; }
+.title-bar-controls button[aria-label=Minimize] { order: 0; }
+.title-bar-controls button[aria-label=Maximize] { order: 1; }
+.title-bar-controls button[aria-label=Close] { order: 2; }
+.title-bar-controls button::before { opacity: 1; color: inherit; }
+.title-bar-controls button[aria-label=Minimize]::before { content: '–'; }
+.title-bar-controls button[aria-label=Maximize]::before { content: '□'; font-size: 13px; }
+.title-bar-controls button[aria-label=Close]::before { content: '✕'; font-size: 10px; margin: 0; }
+.title-bar-controls button[aria-label=Close]:hover { background: var(--m-accent) !important; color: #fff; }
+button { border-radius: 6px; background: var(--m-btn); box-shadow: 0 0 0 1px var(--m-btn-ring); }
+button.default, button[aria-pressed=true] { background: var(--m-accent); box-shadow: none; }

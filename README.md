@@ -22,7 +22,7 @@ Legenda automática com IA, removedor de fundo, conversa animada, terminal, thum
 ## ✨ Por que é legal
 
 - 🔒 **Privado:** tudo roda no seu navegador, até as IAs. Seus vídeos, imagens e áudios não vão pra servidor nenhum.
-- 🪟 **Nostálgico:** janelas que você arrasta, menu Iniciar, barra de tarefas, 4 temas (Windows 98, XP, 7 Aero e macOS, com barra de menu e Dock), papel de parede e proteção de tela.
+- 🪟 **Nostálgico:** janelas que você arrasta, menu Iniciar, barra de tarefas, 6 temas (Windows 98, XP, 7 Aero e 11, macOS e Linux), modo escuro nos temas modernos, busca de ferramentas (Ctrl+K), favoritos na barra e no Dock, projetos salvos e atalhos de teclado, papel de parede e proteção de tela.
 - 🔗 **Tudo conversa:** baixou algo? Clique em **➡️ Enviar para…** e abra o resultado em outra ferramenta. Ou solte um arquivo em cima de um ícone da área de trabalho.
 - 📂 **Meus arquivos:** tudo que você exporta fica guardado no navegador pra baixar de novo.
 - 📲 **Vira aplicativo:** dá pra instalar (Menu Iniciar › Instalar) e usar até sem internet.
@@ -65,6 +65,7 @@ Legenda automática com IA, removedor de fundo, conversa animada, terminal, thum
 |:-:|---|---|
 | 🔤 | **Animação de texto** | 15 efeitos: máquina de escrever, pop, quique, onda, glitch, embaralhar, desfoque, neon, arco-íris, explosão… |
 | 📊 | **Gráfico animado** | Colunas, barras, linha, área, pizza, rosca e corrida de barras; números contando, vários períodos e fundo transparente |
+| 🌡️ | **Termômetro** | 6 estilos (clássico, meta de live, deitado, medidor com ponteiro, carinha que reage e visor digital), cor de frio pra quente, bolhas e fervura no topo |
 | ⏳ | **Barra de progresso** | 9 estilos (blocos retrô, janela de cópia, anel, bateria, pixel…) com "travadinhas" de carregamento de verdade |
 | 🔔 | **Botão de inscreva-se** | No visual do YouTube: o cursor clica em Inscrever-se, ativa o sininho em "Todas" e dá gostei. Cole o link do canal pra puxar foto, nome e inscritos |
 | ⏱️ | **Cronômetro** | Regressiva ou cronômetro em 6 estilos (flip, display digital, LED, anel…), com modo ao vivo em tela cheia |

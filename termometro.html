@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Termômetro · EdiTools</title>
+<link id="theme-css" rel="stylesheet" href="https://unpkg.com/xp.css@0.2.6/dist/XP.css">
+<script src="assets/os.js"></script>
+<link rel="stylesheet" href="assets/os.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Bebas+Neue&family=Bungee&family=Cinzel:wght@700&family=Fredoka:wght@500;700&family=Inter:wght@400;700;900&family=Luckiest+Guy&family=Montserrat:wght@400;700;900&family=Orbitron:wght@700;900&family=Permanent+Marker&family=Poppins:wght@400;700;900&family=Press+Start+2P&family=Roboto+Mono:wght@400;700&family=Special+Elite&family=VT323&display=swap">
+<script src="assets/export.js"></script>
+<style>
+  #pv canvas { max-height: 62vh; }
+  .fx { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  .fx button { height: auto; padding: 5px 2px; font-size: 11px; line-height: 1.25; }
+  .fx button[aria-pressed=true] { font-weight: bold; box-shadow: inset 1px 1px 3px rgba(0,0,0,.45); }
+  .fx button span { display: block; font-size: 17px; }
+</style>
+</head>
+<body class="os">
+<main class="desk">
+  <section class="window app" data-title="termometro.exe" data-icon="🌡️">
+    <div class="window-body">
+      <div class="toolbar"><a class="btn" href="index.html">🏠 Home</a><button data-open="help">? Ajuda</button><span class="spacer"></span><button id="playBtn">▶ Repetir prévia</button></div>
+      <div class="tool wide-panel">
+        <div class="panel" id="panel">
+          <div class="btns grow tabs" role="tablist">
+            <button role="tab" aria-selected="true" data-tab="t1">✏️ Personalizar</button>
+            <button role="tab" aria-selected="false" data-tab="t2">⭐ Modelos prontos</button>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t1">
+            <div class="stack">
+              <div class="fx" id="fx"></div>
+              <input type="hidden" id="style" value="classic">
+              <div class="two">
+                <label class="field"><span>Escala de</span><input type="number" id="min" value="0" step="any"></label>
+                <label class="field"><span>até</span><input type="number" id="max" value="50" step="any"></label>
+                <label class="field"><span>Começa em</span><input type="number" id="from" value="18" step="any"></label>
+                <label class="field"><span>Termina em</span><input type="number" id="to" value="40" step="any"></label>
+                <label class="field"><span>Antes do número</span><input type="text" id="prefix" value="" placeholder="R$ "></label>
+                <label class="field"><span>Unidade (depois)</span><input type="text" id="unit" value="°C"></label>
+                <label class="field"><span>Casas decimais</span><input type="number" id="dec" value="0" min="0" max="2"></label>
+                <span></span>
+                <label class="field"><span>Duração (s)</span><input type="number" id="dur" value="4" min="0.5" max="120" step="0.5"></label>
+                <label class="field"><span>Segurar no fim (s)</span><input type="number" id="hold" value="1.5" min="0" max="30" step="0.5"></label>
+              </div>
+              <label class="field"><span>Ritmo</span><select id="ease"><option value="inout">Suave</option><option value="out">Rápido no começo</option><option value="in">Lento no começo</option><option value="back">Com sobra</option><option value="elastic">Elástico</option><option value="linear">Constante</option></select></label>
+              <div class="two">
+                <label class="field"><span>Título</span><input type="text" id="title" value="Hoje"></label>
+                <label class="field"><span>Texto da meta (em cima)</span><input type="text" id="goal" value=""></label>
+              </div>
+              <label class="field"><span>Ícone / emoji (meta e carinha)</span><input type="text" id="icon" value="🔥"></label>
+              <div class="field-row"><input type="checkbox" id="showVal" checked><label for="showVal">Mostrar o número</label></div>
+              <div class="field-row"><input type="checkbox" id="scale" checked><label for="scale">Mostrar a régua</label></div>
+              <div class="field-row"><input type="checkbox" id="byVal" checked><label for="byVal">Cor muda de frio pra quente</label></div>
+              <div class="field-row"><input type="checkbox" id="bubbles" checked><label for="bubbles">Bolhinhas subindo</label></div>
+              <div class="field-row"><input type="checkbox" id="boil" checked><label for="boil">Ferver e tremer quando chega no topo</label></div>
+              <details open><summary>Estilo</summary>
+                <div class="stack" style="margin-top:6px">
+                  <div class="row"><span class="lbl">Frio → quente</span><input type="color" id="cold" value="#2f8cff"><input type="color" id="hot" value="#ff2d2d"></div>
+                  <div class="row"><span class="lbl">Vidro</span><input type="color" id="glass" value="#ffffff"><span class="lbl" style="min-width:0">Texto</span><input type="color" id="ink" value="#ffffff"></div>
+                  <label class="field"><span>Tamanho <output data-suffix="%"></output></span><input type="range" id="size" min="30" max="130" value="100"></label>
+                  <label class="field"><span>Espessura <output data-suffix="%"></output></span><input type="range" id="thick" min="40" max="200" value="100"></label>
+                  <div class="two">
+                    <label class="field"><span>Fonte</span><select id="font"></select></label>
+                    <label class="field"><span>Posição</span><select id="pos"><option value="c">Centro</option><option value="l">Esquerda</option><option value="r">Direita</option></select></label>
+                  </div>
+                  <div class="row"><span class="lbl">Fundo</span><input type="color" id="bg" value="#101626"></div>
+                </div>
+              </details>
+            </div>
+          </div>
+          <div class="tabpanel" role="tabpanel" id="t2" hidden><div class="presets" id="presets"></div></div>
+          <div id="exp"></div>
+        </div>
+        <div id="pv" class="preview"><canvas id="cv"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="window help closed" id="help" data-title="ajuda.txt" data-icon="📝">
+    <div class="window-body">
+      <ul>
+        <li>Escolha o estilo, a escala (de quanto até quanto) e de onde até onde o termômetro sobe ou desce.</li>
+        <li>Pra <b>descer</b>, é só colocar "Termina em" menor que "Começa em".</li>
+        <li>O estilo <b>Meta</b> serve pra live e campanha: escreva a meta em cima e use a unidade "inscritos", "R$" etc.</li>
+        <li>Exporte com fundo transparente (WEBM ou PNG) pra colocar o termômetro por cima do vídeo.</li>
+      </ul>
+      <div class="btns end"><button onclick="this.closest('.window').classList.add('closed')">OK</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const { EASE, clamp, rnd } = EXPORT;
+const cv = $('cv'), ctx = cv.getContext('2d');
+$('font').innerHTML = EXPORT.fontOptions('Montserrat');
+
+const STYLES = {
+  classic: ['🌡️', 'Clássico'], meta: ['🎯', 'Meta'], horiz: ['➖', 'Deitado'],
+  gauge: ['⏲️', 'Medidor'], face: ['🥵', 'Carinha'], lcd: ['📟', 'Digital'],
+};
+const fxBox = $('fx');
+for (const [k, [i, n]] of Object.entries(STYLES)) fxBox.insertAdjacentHTML('beforeend', `<button data-fx="${k}" aria-pressed="false"><span>${i}</span>${n}</button>`);
+function setStyle(k) { $('style').value = k; fxBox.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.fx === k)); restart(); }
+fxBox.onclick = (e) => { const b = e.target.closest('[data-fx]'); if (b) setStyle(b.dataset.fx); };
+
+const PRESETS = [
+  { n: '🥵 Calor de 40 graus', d: 'sobe até ferver', v: { style: 'classic', min: 0, max: 45, from: 22, to: 45, unit: '°C', title: 'Rio de Janeiro', goal: '', cold: '#ffb020', hot: '#ff2d2d', bg: '#2a0d06', ink: '#ffffff', font: 'Anton', boil: true } },
+  { n: '🤒 Febre', d: 'termômetro de febre', v: { style: 'classic', min: 35, max: 42, from: 36.5, to: 39.2, dec: 1, unit: '°C', title: 'Febre!', cold: '#3fb6ff', hot: '#ff3b3b', bg: '#e9f3ff', ink: '#14233d', glass: '#ffffff', font: 'Poppins', boil: false } },
+  { n: '🥶 Frio extremo', d: 'desce até congelar', v: { style: 'classic', min: -30, max: 20, from: 15, to: -25, unit: '°C', title: 'Sibéria', cold: '#8fe3ff', hot: '#2f8cff', byVal: false, bg: '#07182e', ink: '#dff6ff', font: 'Bebas Neue', boil: false, bubbles: false } },
+  { n: '🎯 Meta da live', d: 'campanha com meta em cima', v: { style: 'meta', min: 0, max: 1000, from: 0, to: 730, unit: ' inscritos', title: '', goal: 'META: 1.000 INSCRITOS', icon: '🎯', cold: '#5b7cff', hot: '#ff3db8', byVal: true, bg: '#0d0b1e', ink: '#ffffff', font: 'Montserrat', boil: true, dur: 5 } },
+  { n: '💰 Vaquinha', d: 'meta de arrecadação', v: { style: 'meta', min: 0, max: 5000, from: 0, to: 5000, prefix: 'R$ ', unit: '', title: '', goal: 'META: R$ 5.000', icon: '💰', cold: '#29c46b', hot: '#ffd23b', byVal: true, bg: '#062014', ink: '#ffffff', font: 'Poppins', boil: true, dur: 5 } },
+  { n: '⏲️ Medidor de hype', d: 'ponteiro até o máximo', v: { style: 'gauge', min: 0, max: 100, from: 0, to: 100, unit: '%', title: 'NÍVEL DE HYPE', cold: '#2ed47a', hot: '#ff2d55', byVal: true, bg: '#0b0b12', ink: '#ffffff', font: 'Bungee', ease: 'elastic', boil: true } },
+  { n: '😳 Vergonhômetro', d: 'carinha que muda', v: { style: 'face', min: 0, max: 100, from: 5, to: 95, unit: '%', title: 'VERGONHA', cold: '#ffd36b', hot: '#ff3d6e', bg: '#fff2f5', ink: '#3a1022', glass: '#ffffff', font: 'Luckiest Guy', boil: true } },
+  { n: '📟 Digital retrô', d: 'visor de LCD', v: { style: 'lcd', min: 0, max: 50, from: 19, to: 33, unit: '°C', title: 'TEMP', cold: '#9cff57', hot: '#ffcf3b', byVal: true, bg: '#121a12', ink: '#9cff57', font: 'VT323', boil: false } },
+  { n: '➖ Barra deitada', d: 'termômetro horizontal', v: { style: 'horiz', min: 0, max: 100, from: 10, to: 82, unit: '°F', title: 'Temperatura', cold: '#00c2d1', hot: '#ff7a3d', bg: '#10131c', ink: '#ffffff', font: 'Inter', boil: false } },
+];
+EXPORT.presets($('presets'), PRESETS, (p) => {
+  EXPORT.setValues({ prefix: '', dec: 0, dur: 4, hold: 1.5, ease: 'inout', title: '', goal: '', icon: '🔥', showVal: true, scale: true, byVal: true, bubbles: true, boil: true, glass: '#ffffff', size: 100, thick: 100, pos: 'c', ...p.v });
+  setStyle(p.v.style);
+  OS.showTab('t1');
+});
+
+const IDS = ['style', 'min', 'max', 'from', 'to', 'prefix', 'unit', 'dec', 'dur', 'hold', 'ease', 'title', 'goal', 'icon', 'showVal', 'scale', 'byVal', 'bubbles', 'boil', 'cold', 'hot', 'glass', 'ink', 'size', 'thick', 'font', 'pos', 'bg'];
+const S = () => EXPORT.values(IDS);
+const START = .35;
+
+const hexRgb = (h) => { const n = parseInt(h.slice(1).replace(/^(.)(.)(.)$/, '$1$1$2$2$3$3'), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+// mistura pela matiz (HSL): de azul pra vermelho passa por roxo/laranja vivos, sem ficar marrom
+const toHsl = (h) => { const [r, g, b] = hexRgb(h).map((x) => x / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+  if (!d) return [0, 0, l]; const s = d / (1 - Math.abs(2 * l - 1)); const hh = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return [(hh * 60 + 360) % 360, s, l]; };
+const mix = (a, b, f) => { const x = toHsl(a), y = toHsl(b); let dh = y[0] - x[0]; if (dh > 180) dh -= 360; if (dh < -180) dh += 360;
+  if (!x[1]) x[0] = y[0]; if (!y[1]) dh = 0;
+  return `hsl(${(x[0] + dh * f + 360) % 360} ${((x[1] + (y[1] - x[1]) * f) * 100).toFixed(1)}% ${((x[2] + (y[2] - x[2]) * f) * 100).toFixed(1)}%)`; };
+const alpha = (c, a) => { const [r, g, b] = hexRgb(c); return `rgba(${r},${g},${b},${a})`; };
+const fmt = (s, v) => new Intl.NumberFormat(OS.LANG === 'en' ? 'en-US' : 'pt-BR', { minimumFractionDigits: s.dec, maximumFractionDigits: s.dec }).format(v);
+/** Passo "redondo" da régua (1, 2, 5, 10…). */
+const niceStep = (span, n) => { const raw = span / n, mag = Math.pow(10, Math.floor(Math.log10(raw))); return [1, 2, 2.5, 5, 10].map((m) => m * mag).find((x) => x >= raw); };
+
+function drawAt(t, transp) {
+  const s = S();
+  const { W, H } = ex.settings();
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  const k = Math.min(W, H) / 1080 * s.size / 100, F = s.font;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  if (!transp) { ctx.fillStyle = s.bg; ctx.fillRect(0, 0, W, H); }
+  const lo = Math.min(s.min, s.max), hi = Math.max(s.min, s.max), span = hi - lo || 1;
+  const u = clamp((t - START) / s.dur), v = s.from + (s.to - s.from) * EASE[s.ease](u);
+  const p = clamp((v - lo) / span), top = p > .985 && s.boil && u > .5;
+  const col = s.byVal ? mix(s.cold, s.hot, p) : s.hot;
+  const fill = (x0, y0, x1, y1) => { if (!s.byVal) return s.hot; const g = ctx.createLinearGradient(x0, y0, x1, y1); for (let i = 0; i <= 4; i++) g.addColorStop(i / 4, mix(s.cold, s.hot, p * i / 4)); return g; };
+  // vapor saindo de (x, y) quando ferve
+  const steam = (x, y) => {
+    if (!top) return;
+    for (let i = 0; i < 9; i++) {
+      const ph = (t * .6 + rnd(i, 9)) % 1, sx = x + (rnd(i, 8) - .5) * 120 * k + Math.sin(t * 2 + i) * 18 * k;
+      ctx.fillStyle = `rgba(255,255,255,${.22 * (1 - ph)})`;
+      ctx.beginPath(); ctx.arc(sx, y - ph * 130 * k, (14 + ph * 30) * k, 0, 7); ctx.fill();
+    }
+  };
+  const text = (txt, x, y, size, { w = 800, align = 'center', base = 'middle', color = s.ink, a = 1 } = {}) => {
+    if (!txt) return;
+    ctx.font = `${w} ${size}px "${F}"`; ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = base;
+    ctx.globalAlpha = a; ctx.fillText(txt, x, y); ctx.globalAlpha = 1;
+  };
+  const valTxt = s.prefix + fmt(s, v) + s.unit;
+  // tamanho de letra que cabe na largura disponível
+  const fit = (txt, size, avail, w = 900) => { ctx.font = `${w} ${size}px "${F}"`; return Math.min(size, size * avail / Math.max(1, ctx.measureText(txt).width)); };
+  const cx = s.pos === 'l' ? W * .3 : s.pos === 'r' ? W * .7 : W / 2, cy = H / 2;
+  // tremidinha quando ferve
+  const shake = top ? k * 5 : 0;
+  ctx.translate(Math.sin(t * 47) * shake, Math.cos(t * 39) * shake);
+  const tw = 64 * k * s.thick / 100;
+
+  if (s.style === 'classic' || s.style === 'meta' || s.style === 'face') {
+    const meta = s.style === 'meta', len = Math.min(H * .62, 760 * k * (H > W * 1.2 ? 1.45 : 1)), w = meta ? tw * 1.6 : tw;
+    const x = s.style === 'face' ? cx - 150 * k : cx, br = w * (meta ? .95 : 1.05);
+    const yTop = cy - len / 2 - (meta ? 0 : 20 * k), yBot = cy + len / 2 - br * .6, inner = w * .52;
+    const yFill = yBot - (yBot - yTop - inner * .5) * p;
+    // vidro
+    ctx.fillStyle = alpha(s.glass, .16); ctx.strokeStyle = alpha(s.glass, .85); ctx.lineWidth = Math.max(2, 5 * k);
+    ctx.beginPath(); ctx.roundRect(x - w / 2, yTop - w / 2, w, yBot - yTop + w / 2, w / 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, yBot + br * .55, br, 0, 7); ctx.fill(); ctx.stroke();
+    // líquido
+    ctx.save();
+    ctx.beginPath(); ctx.roundRect(x - inner / 2, yFill - inner / 2, inner, yBot - yFill + inner, inner / 2); ctx.arc(x, yBot + br * .55, br * .78, 0, 7);
+    ctx.fillStyle = fill(x, yBot + br, x, yFill); ctx.shadowColor = col; ctx.shadowBlur = top ? 40 * k : 14 * k; ctx.fill();
+    ctx.clip();
+    if (s.bubbles) {
+      ctx.fillStyle = 'rgba(255,255,255,.45)';
+      for (let i = 0; i < 14; i++) {
+        const sp = .25 + rnd(i, 1) * .5, ph = (t * sp * (top ? 2.5 : 1) + rnd(i, 2)) % 1;
+        const by = yBot + br - ph * (yBot + br - yFill), bx = x + (rnd(i, 3) - .5) * inner * .7 + Math.sin(t * 5 + i) * inner * .08;
+        ctx.beginPath(); ctx.arc(bx, by, (2 + rnd(i, 4) * 5) * k, 0, 7); ctx.fill();
+      }
+    }
+    ctx.restore();
+    // brilho do vidro
+    ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = w * .1; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x - w * .25, yTop); ctx.lineTo(x - w * .25, yBot - w * .3); ctx.stroke();
+    steam(x, yTop - w / 2);
+    if (meta) text(s.icon, x, yBot + br * .55, br * .9, { w: 400 });
+    // régua
+    if (s.scale) {
+      const step = niceStep(span, meta ? 4 : 8), rx = x + w / 2 + 14 * k;
+      ctx.strokeStyle = alpha(s.ink, .8); ctx.lineWidth = Math.max(1, 3 * k);
+      for (let val = Math.ceil(lo / step) * step; val <= hi + 1e-9; val += step) {
+        const yy = yBot - (yBot - yTop - inner * .5) * ((val - lo) / span);
+        ctx.beginPath(); ctx.moveTo(rx, yy); ctx.lineTo(rx + 22 * k, yy); ctx.stroke();
+        text(fmt({ dec: step < 1 ? 1 : 0 }, val), rx + 32 * k, yy, 26 * k, { w: 600, align: 'left' });
+        const half = yy + (yBot - yTop - inner * .5) * (step / 2 / span);
+        if (half < yBot && !meta) { ctx.beginPath(); ctx.moveTo(rx, half); ctx.lineTo(rx + 11 * k, half); ctx.stroke(); }
+      }
+    }
+    if (meta) {
+      text(s.goal, x, yTop - w / 2 - 60 * k, 52 * k, { w: 900 });
+      if (s.showVal) {
+        // etiqueta que acompanha o nível
+        const lx = x - w / 2 - 24 * k;
+        const ts = fit(valTxt, 44 * k, lx - 40 * k);
+        ctx.font = `900 ${ts}px "${F}"`;
+        const tw2 = ctx.measureText(valTxt).width + 36 * k, th2 = 70 * k;
+        ctx.fillStyle = col; ctx.beginPath(); ctx.roundRect(lx - tw2, yFill - th2 / 2, tw2, th2, 14 * k); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(lx, yFill - 14 * k); ctx.lineTo(lx + 18 * k, yFill); ctx.lineTo(lx, yFill + 14 * k); ctx.fill();
+        text(valTxt, lx - tw2 / 2, yFill + 2 * k, ts, { w: 900, color: '#fff' });
+        text(Math.round(p * 100) + '%', lx - tw2 / 2, yFill + th2 * .95, 30 * k, { w: 700, a: .8 });
+      }
+    } else {
+      text(s.title, x, yTop - w / 2 - 70 * k, 56 * k, { w: 900 });
+      if (s.showVal && s.style !== 'face') text(valTxt, x - w / 2 - 30 * k, yFill, fit(valTxt, 70 * k, x - w / 2 - 60 * k), { w: 900, align: 'right' });
+    }
+    if (s.style === 'face') {
+      // carinha que reage: muda de cara conforme a temperatura e dá um pulinho na troca
+      const FACES = ['🥶', '😨', '🙂', '😅', '🥵', s.icon || '🔥'];
+      const f = Math.min(FACES.length - 1, Math.floor(p * FACES.length)), local = p * FACES.length - f;
+      const pop = 1 + .18 * Math.max(0, 1 - local * 6), fx = cx + 190 * k;
+      text(FACES[f], fx, cy - 40 * k, 230 * k * pop, { w: 400 });
+      if (s.showVal) text(valTxt, fx, cy + 150 * k, fit(valTxt, 80 * k, 2 * (W - fx) - 40 * k), { w: 900 });
+    }
+  } else if (s.style === 'horiz') {
+    const len = Math.min(W * .7, 1300 * k), w = tw, br = w * 1.05;
+    const xL = cx - len / 2 + br, xR = cx + len / 2, y = cy, inner = w * .52;
+    const xFill = xL + (xR - xL - inner * .5) * p;
+    ctx.fillStyle = alpha(s.glass, .16); ctx.strokeStyle = alpha(s.glass, .85); ctx.lineWidth = Math.max(2, 5 * k);
+    ctx.beginPath(); ctx.roundRect(xL, y - w / 2, xR - xL + w / 2, w, w / 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(xL - br * .55, y, br, 0, 7); ctx.fill(); ctx.stroke();
+    ctx.save();
+    ctx.beginPath(); ctx.roundRect(xL - inner, y - inner / 2, xFill - xL + inner * 1.5, inner, inner / 2); ctx.arc(xL - br * .55, y, br * .78, 0, 7);
+    ctx.fillStyle = fill(xL - br, y, xFill, y); ctx.shadowColor = col; ctx.shadowBlur = 14 * k; ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = w * .1; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(xL, y - w * .25); ctx.lineTo(xR - w * .2, y - w * .25); ctx.stroke();
+    steam(xR, y - w / 2);
+    if (s.scale) {
+      const step = niceStep(span, 10);
+      ctx.strokeStyle = alpha(s.ink, .8); ctx.lineWidth = Math.max(1, 3 * k);
+      for (let val = Math.ceil(lo / step) * step; val <= hi + 1e-9; val += step) {
+        const xx = xL + (xR - xL - inner * .5) * ((val - lo) / span);
+        ctx.beginPath(); ctx.moveTo(xx, y + w / 2 + 12 * k); ctx.lineTo(xx, y + w / 2 + 34 * k); ctx.stroke();
+        text(fmt({ dec: step < 1 ? 1 : 0 }, val), xx, y + w / 2 + 62 * k, 26 * k, { w: 600 });
+      }
+    }
+    text(s.title, xL - br * 1.5, y - w / 2 - 70 * k, 52 * k, { w: 900, align: 'left' });
+    if (s.showVal) text(valTxt, xR + w / 2, y - w / 2 - 70 * k, 64 * k, { w: 900, align: 'right' });
+  } else if (s.style === 'gauge') {
+    const R = Math.min(W * .36, H * .42, 460 * k * 1.1), y = cy + R * .35, lw = tw * 1.1;
+    const a0 = Math.PI * .85, a1 = Math.PI * 2.15, ang = a0 + (a1 - a0) * p;
+    // faixa colorida em pedacinhos (frio → quente)
+    const N = 60;
+    for (let i = 0; i < N; i++) {
+      const f0 = i / N, on = f0 < p;
+      ctx.strokeStyle = s.byVal ? mix(s.cold, s.hot, f0) : s.hot; ctx.globalAlpha = on ? 1 : .18;
+      ctx.lineWidth = lw; ctx.beginPath(); ctx.arc(cx, y, R, a0 + (a1 - a0) * f0, a0 + (a1 - a0) * (f0 + 1 / N) + .004); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    if (s.scale) {
+      const step = niceStep(span, 10);
+      for (let val = Math.ceil(lo / step) * step; val <= hi + 1e-9; val += step) {
+        const aa = a0 + (a1 - a0) * ((val - lo) / span);
+        ctx.strokeStyle = alpha(s.ink, .8); ctx.lineWidth = Math.max(1, 4 * k);
+        ctx.beginPath(); ctx.moveTo(cx + Math.cos(aa) * (R - lw / 2 - 10 * k), y + Math.sin(aa) * (R - lw / 2 - 10 * k)); ctx.lineTo(cx + Math.cos(aa) * (R - lw / 2 - 34 * k), y + Math.sin(aa) * (R - lw / 2 - 34 * k)); ctx.stroke();
+        text(fmt({ dec: step < 1 ? 1 : 0 }, val), cx + Math.cos(aa) * (R - lw / 2 - 66 * k), y + Math.sin(aa) * (R - lw / 2 - 66 * k), 24 * k, { w: 600 });
+      }
+    }
+    // ponteiro
+    ctx.save(); ctx.translate(cx, y); ctx.rotate(ang);
+    ctx.fillStyle = s.ink; ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 10 * k;
+    ctx.beginPath(); ctx.moveTo(-26 * k, -10 * k); ctx.lineTo(R - lw * .2, 0); ctx.lineTo(-26 * k, 10 * k); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = col; ctx.beginPath(); ctx.arc(cx, y, 30 * k, 0, 7); ctx.fill();
+    steam(cx, y - R - lw / 2);
+    text(s.title, cx, y - R - lw - 30 * k, 54 * k, { w: 900 });
+    if (s.showVal) text(valTxt, cx, y - R * .4, 96 * k, { w: 900, color: top ? col : s.ink });
+  } else if (s.style === 'lcd') {
+    const bw = Math.min(W * .62, 1000 * k), bh = 420 * k, x = cx - bw / 2, y = cy - bh / 2;
+    ctx.fillStyle = '#2b2b2b'; ctx.beginPath(); ctx.roundRect(x - 26 * k, y - 26 * k, bw + 52 * k, bh + 52 * k, 34 * k); ctx.fill();
+    ctx.fillStyle = '#0b120b'; ctx.beginPath(); ctx.roundRect(x, y, bw, bh, 14 * k); ctx.fill();
+    // linhas do visor
+    ctx.fillStyle = 'rgba(255,255,255,.03)';
+    for (let yy = y; yy < y + bh; yy += 6 * k) ctx.fillRect(x, yy, bw, 2 * k);
+    text(s.title, x + 36 * k, y + 50 * k, 44 * k, { w: 400, align: 'left', color: alpha(s.ink, .8) });
+    ctx.shadowColor = col; ctx.shadowBlur = 18 * k;
+    if (s.showVal) text(valTxt, x + bw - 36 * k, y + bh * .48, 170 * k, { w: 400, align: 'right', color: col });
+    // barra de bloquinhos
+    const n = 20, gap = 8 * k, bwid = (bw - 72 * k - gap * (n - 1)) / n, on = Math.round(p * n);
+    for (let i = 0; i < n; i++) {
+      ctx.fillStyle = i < on ? (s.byVal ? mix(s.cold, s.hot, i / (n - 1)) : s.hot) : 'rgba(255,255,255,.07)';
+      ctx.shadowBlur = i < on ? 10 * k : 0;
+      ctx.fillRect(x + 36 * k + i * (bwid + gap), y + bh - 92 * k, bwid, 52 * k);
+    }
+    ctx.shadowBlur = 0;
+  }
+}
+
+// ---------- prévia ----------
+let t0 = performance.now();
+const restart = () => (t0 = performance.now());
+$('playBtn').onclick = restart;
+$('panel').addEventListener('input', (e) => { if (['from', 'to', 'min', 'max', 'dur', 'ease'].includes(e.target.id)) restart(); });
+const total = () => { const s = S(); return START + s.dur + s.hold; };
+const loadFonts = () => Promise.all([900, 800, 700, 600, 400].map((w) => EXPORT.loadFont(w, $('font').value)));
+$('font').addEventListener('change', () => loadFonts().then(restart));
+const ex = EXPORT.mount($('exp'), {
+  canvas: cv, draw: drawAt, seconds: total, name: () => 'termometro-' + S().style, defaultRes: '1920x1080',
+  prepare: () => loadFonts(),
+  onSettings: (s) => $('pv').classList.toggle('chk', s.transp),
+});
+(function loop() {
+  if (!ex.busy) {
+    const t = (performance.now() - t0) / 1000;
+    drawAt(t, ex.settings().transp);
+    if (t > total() + .8) restart();
+  }
+  requestAnimationFrame(loop);
+})();
+setStyle('classic');
+loadFonts().then(restart);
+</script>
+</body>
+</html>

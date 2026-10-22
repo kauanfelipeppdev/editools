@@ -1,0 +1,44 @@
+/* EdiTools — tema "Windows 11": mesma base do macOS, com janelas, controles e cores no estilo do 11. */
+@import url('macos.css');
+:root {
+  --m-font: 'Segoe UI Variable Text', 'Segoe UI', -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  --m-win: rgba(243, 243, 243, .96);
+  --m-bar: rgba(232, 236, 242, .96);
+  --m-accent: #005fb8;
+  --m-accent-2: #1973c9;
+  --m-radius: 8px;
+}
+html[data-dark] {
+  --m-win: rgba(32, 32, 32, .96);
+  --m-bar: rgba(40, 40, 40, .97);
+  --m-accent: #4cc2ff;
+  --m-accent-2: #60cdff;
+}
+.window { border: 1px solid rgba(0, 0, 0, .12); box-shadow: 0 8px 28px rgba(0, 0, 0, .22); }
+html[data-dark] .window { border-color: rgba(255, 255, 255, .1); }
+.title-bar { height: 32px; padding: 0 0 0 12px; border-bottom: 0; }
+.title-bar-text { position: static; text-align: left; flex: 1; font-weight: 400; font-size: 12px; }
+.title-bar-controls { gap: 0; align-self: stretch; }
+/* controles do 11: minimizar, maximizar e fechar à direita, só o desenho */
+.title-bar-controls button {
+  width: 46px; height: 100%; border-radius: 0; border: 0; background: none !important; box-shadow: none;
+  font: 400 15px/1 'Segoe Fluent Icons', 'Segoe UI Symbol', 'Segoe UI', sans-serif; color: var(--m-text);
+}
+.title-bar-controls button[aria-label=Minimize] { order: 0; }
+.title-bar-controls button[aria-label=Maximize] { order: 1; }
+.title-bar-controls button[aria-label=Close] { order: 2; }
+.title-bar-controls button::before { opacity: 1; color: inherit; }
+.title-bar-controls button[aria-label=Minimize]::before { content: '─'; font-size: 11px; }
+.title-bar-controls button[aria-label=Maximize]::before { content: '☐'; font-size: 13px; }
+.title-bar-controls button[aria-label=Close]::before { content: '✕'; font-size: 12px; margin: 0; }
+.title-bar-controls button:hover { background: rgba(0, 0, 0, .06) !important; }
+html[data-dark] .title-bar-controls button:hover { background: rgba(255, 255, 255, .08) !important; }
+.title-bar-controls button[aria-label=Close]:hover { background: #c42b1c !important; color: #fff; }
+button { border-radius: 4px; background: var(--m-btn); box-shadow: 0 0 0 1px var(--m-btn-ring), 0 1px 0 rgba(0, 0, 0, .06); }
+button.default, button[aria-pressed=true] { background: var(--m-accent); box-shadow: none; }
+html[data-dark] button.default, html[data-dark] button[aria-pressed=true] { color: #000; }
+input[type=text], input[type=number], input[type=search], input[type=url], input[type=password], input:not([type]), textarea, select {
+  border-radius: 4px; border: 1px solid var(--m-field-line); border-bottom: 1px solid rgba(0, 0, 0, .45);
+}
+input:focus, textarea:focus, select:focus { outline: 0; border-bottom: 2px solid var(--m-accent); }
+select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%23888' stroke-width='1.3' stroke-linecap='round'/%3E%3C/svg%3E"); background-position: right 8px center; }
